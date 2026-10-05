@@ -12,7 +12,7 @@ Los riesgos aparecieron en la revisión. El agente evalúa cada historia por sep
 
 ## ¿Puede un agente reemplazar al Product Owner?
 
-No. Puede asistirlo, y bien, pero no reemplazarlo, por tres razones que vimos en esta actividad. En Scrum, el Product Owner decide qué elementos entran al Product Backlog (IEEE Computer Society, 2024, p. 11-10; Sutherland y Schwaber, 2020), y esa decisión depende de cosas que el agente no tiene.
+No. Puede asistirlo, y bien, pero no reemplazarlo, por tres razones que vimos en esta actividad. En Scrum, el Product Owner decide qué elementos entran al Product Backlog (IEEE Computer Society, 2025, p. 11-10; Sutherland y Schwaber, 2020), y esa decisión depende de cosas que el agente no tiene.
 
 El Product Owner es dueño de la relación con los stakeholders, y lo más valioso del producto salió de ahí. El cambio de alcance de DAFI (de un clasificador de lesiones a un intermediario entre la familia y su médico) no lo propuso ningún agente: salió de una entrevista en la que la cliente dijo que no usaría una app que juzgue la salud de sus hijos y que hoy le manda las fotos por WhatsApp a su amiga pediatra. En la comparación de la Parte 3 pasó lo mismo en pequeño. El agente Product Owner puso el perfil de otro adulto por encima del cocuidador con un argumento de mercado razonable, y sin darle peso a que la cliente nos contó que el papá de sus hijos también toma y reenvía fotos; en el SRS ese dato solo aparece como una referencia en la matriz de trazabilidad, y quien estuvo en la entrevista sabe cuánto pesa.
 
@@ -26,7 +26,7 @@ Lo que sí puede hacer el agente es servir como segunda opinión independiente. 
 
 La calidad del SRS se trasladó directo al backlog, tanto en lo bueno como en lo que faltaba.
 
-Lo bueno del backlog se explica por el SRS, y cuánto lo determina tiene que ver con la validación de requerimientos: el SWEBOK la define como ganar confianza en que los requerimientos representan las necesidades reales de los stakeholders (IEEE Computer Society, 2024, p. 1-15), y un agente no puede validar nada que el SRS no le diga. Como cada requerimiento ya tenía criterios en formato Dado que / cuando / entonces con valores concretos (umbrales, textos exactos, estados de origen y destino), el agente no tuvo que inventar criterios: los tomó y los condensó. Las ocho primeras posiciones de la priorización coincidieron entre el agente y nosotros porque el SRS define una máquina de estados explícita y cada historia del tope es una transición de ella. Un SRS con requerimientos vagos («la app debe ser fácil de usar») habría producido historias con criterios igual de vagos.
+Lo bueno del backlog se explica por el SRS, y cuánto lo determina tiene que ver con la validación de requerimientos: el SWEBOK la define como ganar confianza en que los requerimientos representan las necesidades reales de los stakeholders (IEEE Computer Society, 2025, p. 1-15), y un agente no puede validar nada que el SRS no le diga. Como cada requerimiento ya tenía criterios en formato Dado que / cuando / entonces con valores concretos (umbrales, textos exactos, estados de origen y destino), el agente no tuvo que inventar criterios: los tomó y los condensó. Las ocho primeras posiciones de la priorización coincidieron entre el agente y nosotros porque el SRS define una máquina de estados explícita y cada historia del tope es una transición de ella. Un SRS con requerimientos vagos («la app debe ser fácil de usar») habría producido historias con criterios igual de vagos.
 
 Lo que el SRS deja abierto también queda abierto en el backlog. RD-05 deja pendiente quién será el médico que revise las preguntas y los avisos, y el agente lo único que pudo hacer fue marcarlo como impedimento. Además, un agente produce un backlog bien formado para cualquier SRS que le den, incluso para el producto equivocado. Los SRS individuales de S02 que describían la idea original (mostrarle a la persona información médica sobre manchas y lunares) habrían generado un backlog igual de ordenado para un producto con un riesgo regulatorio que no podíamos asumir. Que el SRS describa el producto correcto depende de haberlo validado con el cliente real antes de escribirlo, y por eso dedicamos la Parte 0 a consolidar el SRS antes de pedirle nada al agente.
 
@@ -34,6 +34,6 @@ Lo que el SRS deja abierto también queda abierto en el backlog. RD-05 deja pend
 
 ## Referencias
 
-IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+IEEE Computer Society. (2025). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
 
 Sutherland, J., & Schwaber, K. (2020). *The Scrum guide*. Scrum.org.

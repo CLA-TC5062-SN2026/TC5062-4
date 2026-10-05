@@ -9,11 +9,11 @@
 
 ## Convenciones
 
-**Formato.** Cada historia sigue «Como [tipo de usuario], quiero [acción], para [beneficio]». Los criterios de aceptación están en formato Dado que / cuando / entonces y llevan entre paréntesis el `RF-XX-AC-Y` del SRS del que salen, para que las pruebas de S09 se puedan nombrar igual. Es el formato de historia y de escenario BDD que describe el SWEBOK, donde cada escenario es también la prueba de aceptación (IEEE Computer Society, 2024, pp. 1-12–1-13).
+**Formato.** Cada historia sigue «Como [tipo de usuario], quiero [acción], para [beneficio]». Los criterios de aceptación están en formato Dado que / cuando / entonces y llevan entre paréntesis el `RF-XX-AC-Y` del SRS del que salen, para que las pruebas de S09 se puedan nombrar igual. Es el formato de historia y de escenario BDD que describe el SWEBOK, donde cada escenario es también la prueba de aceptación (IEEE Computer Society, 2025, pp. 1-12–1-13).
 
-**Estimación.** Story Points en Fibonacci (1, 2, 3, 5, 8, 13). La historia de referencia es **HU-15 (historial del paciente) = 3 SP**: una consulta con filtros sobre datos que ya existen y una pantalla, sin reglas de negocio nuevas. Cada estimación se justifica en una línea comparándola con esa referencia. Acordamos que ninguna historia supere 8 SP; una de 13 se divide antes de entrar a un sprint. Usamos los story points como medida del tamaño de los requerimientos, no como horas (IEEE Computer Society, 2024, p. 1-19).
+**Estimación.** Story Points en Fibonacci (1, 2, 3, 5, 8, 13). La historia de referencia es **HU-15 (historial del paciente) = 3 SP**: una consulta con filtros sobre datos que ya existen y una pantalla, sin reglas de negocio nuevas. Cada estimación se justifica en una línea comparándola con esa referencia. Acordamos que ninguna historia supere 8 SP; una de 13 se divide antes de entrar a un sprint. Usamos los story points como medida del tamaño de los requerimientos, no como horas (IEEE Computer Society, 2025, p. 1-19).
 
-**Prioridad.** Usamos una escala enumerada de tres grupos en lugar de una escala numérica fina, como recomienda el SWEBOK: priorizar es encontrar grupos de requerimientos con prioridad similar, no debatir diferencias pequeñas (IEEE Computer Society, 2024, p. 1-18). Los factores que pesamos son los que la misma guía enumera: valor para la familia y el médico, insatisfacción si falta, riesgo técnico y riesgo de que no se use (pp. 1-17–1-18).
+**Prioridad.** Usamos una escala enumerada de tres grupos en lugar de una escala numérica fina, como recomienda el SWEBOK: priorizar es encontrar grupos de requerimientos con prioridad similar, no debatir diferencias pequeñas (IEEE Computer Society, 2025, p. 1-18). Los factores que pesamos son los que la misma guía enumera: valor para la familia y el médico, insatisfacción si falta, riesgo técnico y riesgo de que no se use (pp. 1-17–1-18).
 
 - **Alta:** sin ella no existe el flujo mínimo (la familia abre una conversación, el médico la recibe con contexto y deja indicaciones) o se rompe una restricción de dominio (RD-01, RD-02).
 - **Media:** necesaria para la versión 1, pero el flujo mínimo funciona sin ella.
@@ -343,4 +343,4 @@ RNF-04 (enviar una conversación en 3 minutos o menos) se valida con usuarios un
 
 ## Referencias
 
-IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+IEEE Computer Society. (2025). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

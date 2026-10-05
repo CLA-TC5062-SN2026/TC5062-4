@@ -12,7 +12,7 @@
 
 ### 1.1 Propósito del documento
 
-Este documento especifica qué debe hacer DAFI y bajo qué condiciones. Es el contrato del equipo para el resto del curso: los criterios de aceptación con identificador `RF-XX-AC-Y` son la base del backlog (S03), del diseño de la API (S04, cada operación de `openapi.yaml` declarará los suyos en la extensión `x-acceptance-criteria`) y de las pruebas automatizadas (S09, cada prueba llevará el identificador como nombre). Escribimos los criterios en formato Dado que / cuando / entonces porque es la especificación basada en criterios de aceptación que describe el SWEBOK: los escenarios de BDD son a la vez el requerimiento y el caso de prueba de aceptación, lo que reduce la ambigüedad del lenguaje natural (IEEE Computer Society, 2024, pp. 1-12–1-13).
+Este documento especifica qué debe hacer DAFI y bajo qué condiciones. Es el contrato del equipo para el resto del curso: los criterios de aceptación con identificador `RF-XX-AC-Y` son la base del backlog (S03), del diseño de la API (S04, cada operación de `openapi.yaml` declarará los suyos en la extensión `x-acceptance-criteria`) y de las pruebas automatizadas (S09, cada prueba llevará el identificador como nombre). Escribimos los criterios en formato Dado que / cuando / entonces porque es la especificación basada en criterios de aceptación que describe el SWEBOK: los escenarios de BDD son a la vez el requerimiento y el caso de prueba de aceptación, lo que reduce la ambigüedad del lenguaje natural (IEEE Computer Society, 2025, pp. 1-12–1-13).
 
 Está dirigido al equipo de desarrollo, a quien diseñe las pruebas y a los stakeholders que validan que lo escrito corresponda a lo que pidieron.
 
@@ -509,7 +509,7 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 
 ### 3.5 Matriz de trazabilidad
 
-La matriz traza cada requerimiento hacia atrás, a la elicitación de donde salió; los identificadores `RF-XX-AC-Y` permiten trazarlo hacia adelante, a la API y a las pruebas, que son los dos usos de la trazabilidad que describe el SWEBOK (IEEE Computer Society, 2024, pp. 1-18–1-19).
+La matriz traza cada requerimiento hacia atrás, a la elicitación de donde salió; los identificadores `RF-XX-AC-Y` permiten trazarlo hacia adelante, a la API y a las pruebas, que son los dos usos de la trazabilidad que describe el SWEBOK (IEEE Computer Society, 2025, pp. 1-18–1-19).
 
 «E» es la entrevista con la cliente real de S02-A1 (`transcript_entrevista.md`, sesión B); «V» es la visión de producto acordada por el equipo en S03 (`vision_producto.md`); «D» es el SRS individual de Daniel Ruán (versión 1.2) e «I» el de Isaac González. Las aportaciones de cada SRS individual están en `diferencias_SRS.md`.
 
@@ -540,4 +540,4 @@ La matriz traza cada requerimiento hacia atrás, a la elicitación de donde sali
 
 ## Referencias
 
-IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+IEEE Computer Society. (2025). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

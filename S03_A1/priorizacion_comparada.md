@@ -39,7 +39,7 @@ El SRS ya define un flujo de estados explícito (de `BORRADOR` a `CON_INDICACION
 
 ## 3. Dónde diferimos y por qué
 
-El SWEBOK enumera como factores de prioridad el valor para el usuario, la insatisfacción si el requerimiento falta (modelo de Kano), el costo de entregarlo, el riesgo técnico de implementarlo y el riesgo de que los usuarios no lo usen aunque exista (IEEE Computer Society, 2024, pp. 1-17–1-18). Los dos usamos casi los mismos factores (el agente pesó bloqueo funcional, adopción, riesgo legal y valor por punto); la diferencia de fondo está en el riesgo técnico. Para el agente, la incertidumbre técnica le resta prioridad a una historia; para nosotros es una razón para enfrentarla antes.
+El SWEBOK enumera como factores de prioridad el valor para el usuario, la insatisfacción si el requerimiento falta (modelo de Kano), el costo de entregarlo, el riesgo técnico de implementarlo y el riesgo de que los usuarios no lo usen aunque exista (IEEE Computer Society, 2025, pp. 1-17–1-18). Los dos usamos casi los mismos factores (el agente pesó bloqueo funcional, adopción, riesgo legal y valor por punto); la diferencia de fondo está en el riesgo técnico. Para el agente, la incertidumbre técnica le resta prioridad a una historia; para nosotros es una razón para enfrentarla antes.
 
 ### 3.1 El resumen de contexto (HU-13 y HU-14)
 
@@ -51,7 +51,7 @@ El agente prioriza por el valor que recibe el usuario en el momento; nosotros me
 
 ### 3.2 Eliminación de datos (HU-17)
 
-En términos del modelo de Kano, la eliminación de datos no genera satisfacción cuando existe, pero su ausencia generaría una insatisfacción muy alta en una madre que comparte fotos de sus hijos; el SWEBOK advierte que priorizar solo por satisfacción lleva a errores en casos así (IEEE Computer Society, 2024, p. 1-18). Por eso ni el agente ni nosotros la bajamos de Media.
+En términos del modelo de Kano, la eliminación de datos no genera satisfacción cuando existe, pero su ausencia generaría una insatisfacción muy alta en una madre que comparte fotos de sus hijos; el SWEBOK advierte que priorizar solo por satisfacción lleva a errores en casos así (IEEE Computer Society, 2025, p. 1-18). Por eso ni el agente ni nosotros la bajamos de Media.
 
 El agente la sube 5 lugares, por encima del historial y del resumen. Su argumento es que el derecho de cancelación de la LFPDPPP debe estar garantizado antes de abrir el producto a familias reales. Coincidimos en el argumento y en la prioridad (los dos la dejamos en Media); la diferencia es de orden y viene del método. El agente declaró que «el orden sigue al valor, no al orden de construcción». Nuestro orden sí considera dependencias técnicas: el borrado en cascada (conversación, fotos, eventos, registro mínimo, aviso al médico, exclusión del historial y del resumen) toca entidades que crean HU-07, HU-14 y HU-15, y construirlo antes obliga a rehacerlo cada vez que aparece una entidad nueva.
 
@@ -85,4 +85,4 @@ El orden de `backlog_completo.md` no cambió; resolvimos las diferencias que el 
 
 ## Referencias
 
-IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+IEEE Computer Society. (2025). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

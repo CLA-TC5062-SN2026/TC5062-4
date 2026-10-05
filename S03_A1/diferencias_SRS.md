@@ -15,7 +15,7 @@
 | Daniel Ruán Aguilar | 1.2, «validado técnicamente» | Idea original: la persona sube una foto de su piel y recibe una clasificación orientativa del modelo, con resultado no concluyente bajo un umbral, historial, eliminación, consentimiento para mejorar el modelo, métricas y versiones del modelo para el administrador. 19 RF, 13 RNF y 9 RD. |
 | Francisco Martínez Álvarez | 2.1 | Intermediario entre la familia y su médico de confianza para problemas de piel, con presuposición de la IA para el médico y primeros auxilios para lesiones menores. 23 RF, 11 RNF y 9 RD. |
 
-Los SRS de Daniel e Isaac parten del `proyecto_base.md` original y describen una app en la que DAFI clasifica una imagen y le da a la persona una orientación sobre su lesión. El de Francisco cambió de alcance después de la entrevista con la cliente real, que dijo que no usaría una app que juzgue la salud de sus hijos sin un médico de por medio. La diferencia principal es de producto y la resolvimos primero (C-01); después revisamos requerimiento por requerimiento qué se podía conservar de cada SRS. Tratamos la consolidación como una validación de requerimientos por revisión desde varias perspectivas, que el SWEBOK recomienda para encontrar errores, omisiones y supuestos inválidos (IEEE Computer Society, 2024, pp. 1-15–1-16): cada SRS individual funcionó como la revisión de los otros, y las preguntas guía fueron si un requerimiento representa una necesidad real de la cliente y si es consistente con los demás.
+Los SRS de Daniel e Isaac parten del `proyecto_base.md` original y describen una app en la que DAFI clasifica una imagen y le da a la persona una orientación sobre su lesión. El de Francisco cambió de alcance después de la entrevista con la cliente real, que dijo que no usaría una app que juzgue la salud de sus hijos sin un médico de por medio. La diferencia principal es de producto y la resolvimos primero (C-01); después revisamos requerimiento por requerimiento qué se podía conservar de cada SRS. Tratamos la consolidación como una validación de requerimientos por revisión desde varias perspectivas, que el SWEBOK recomienda para encontrar errores, omisiones y supuestos inválidos (IEEE Computer Society, 2025, pp. 1-15–1-16): cada SRS individual funcionó como la revisión de los otros, y las preguntas guía fueron si un requerimiento representa una necesidad real de la cliente y si es consistente con los demás.
 
 ## 2. Análisis de diferencias
 
@@ -193,4 +193,4 @@ Los cambios de esta consolidación que tocan historias ya creadas se reflejaron 
 
 ## Referencias
 
-IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+IEEE Computer Society. (2025). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

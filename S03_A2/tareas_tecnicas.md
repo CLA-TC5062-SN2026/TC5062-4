@@ -7,7 +7,7 @@
 
 Le pedimos a una sesión de agente que descompusiera el Sprint Backlog acordado en `sprint1_planning.md` (HAB-01, HU-01a y HU-02) en tareas de 4 horas o menos, con responsable, rol, dependencias y criterio de «done». Su propuesta íntegra está en `evidencia/propuesta_agente_tareas.md`; esta es la versión que acordamos, con los cambios de la sección 5. Cada tarea está en GitHub como sub-issue de su historia en el tablero «DAFI · Product Backlog».
 
-La descomposición sigue dos ideas del SWEBOK. Dividir el trabajo en tareas más pequeñas lo vuelve manejable y es la base de una estructura de desglose del trabajo (IEEE Computer Society, 2024, pp. 9-6–9-7), y en los métodos ágiles las historias se descomponen en tareas que se priorizan y estiman (p. 11-10). Asignar a cada tarea un responsable con su rol cumple la función de la matriz de responsabilidades que la guía recomienda para repartir el trabajo según la disponibilidad real de cada persona (p. 9-9).
+La descomposición sigue dos ideas del SWEBOK. Dividir el trabajo en tareas más pequeñas lo vuelve manejable y es la base de una estructura de desglose del trabajo (IEEE Computer Society, 2025, pp. 9-6–9-7), y en los métodos ágiles las historias se descomponen en tareas que se priorizan y estiman (p. 11-10). Asignar a cada tarea un responsable con su rol cumple la función de la matriz de responsabilidades que la guía recomienda para repartir el trabajo según la disponibilidad real de cada persona (p. 9-9).
 
 ## 0. Supuestos
 
@@ -170,4 +170,4 @@ Revisamos además que ninguna tarea superara 4 horas (las más largas tienen 2) 
 
 ## Referencias
 
-IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+IEEE Computer Society. (2025). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

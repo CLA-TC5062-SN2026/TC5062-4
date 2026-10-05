@@ -11,7 +11,7 @@ Le pedimos a una sesión de agente, sin mostrarle la lista preliminar del backlo
 
 ## 1. Cómo se usa
 
-El SWEBOK pide que la planeación del proyecto establezca desde el inicio los procedimientos y responsables de aseguramiento de calidad, verificación, validación y revisiones (IEEE Computer Society, 2024, p. 9-7), con umbrales de calidad aceptables y demostraciones de la funcionalidad terminada (p. 9-10). La DoD es nuestra forma de hacerlo en Scrum: cada punto dice qué se verifica, quién lo verifica y cómo.
+El SWEBOK pide que la planeación del proyecto establezca desde el inicio los procedimientos y responsables de aseguramiento de calidad, verificación, validación y revisiones (IEEE Computer Society, 2025, p. 9-7), con umbrales de calidad aceptables y demostraciones de la funcionalidad terminada (p. 9-10). La DoD es nuestra forma de hacerlo en Scrum: cada punto dice qué se verifica, quién lo verifica y cómo.
 
 Los criterios de aceptación dicen qué hace una historia, y la DoD, con qué calidad se entrega cualquier historia. Una historia que no cumple la DoD no se presenta en la Sprint Review como terminada y regresa al Product Backlog (Guía de Scrum, 2020).
 
@@ -44,7 +44,7 @@ El tiempo de cumplir la DoD ya está dentro de los story points de cada historia
 
 ### Pruebas
 
-**D5. Cada criterio de aceptación tiene su prueba con su identificador.** El nombre de la prueba empieza con el `RF-XX-AC-Y` que cubre, por ejemplo `it('RF-04-AC-2: fecha de nacimiento futura responde DATOS_INVALIDOS', …)`. Si la cubre en parte, lo dice: `RF-17-AC-1 (parcial): …`. Es la práctica de ATDD que describe el SWEBOK: las pruebas de aceptación acordadas definen cuándo una unidad de funcionalidad está correctamente implementada (IEEE Computer Society, 2024, pp. 1-12–1-13).
+**D5. Cada criterio de aceptación tiene su prueba con su identificador.** El nombre de la prueba empieza con el `RF-XX-AC-Y` que cubre, por ejemplo `it('RF-04-AC-2: fecha de nacimiento futura responde DATOS_INVALIDOS', …)`. Si la cubre en parte, lo dice: `RF-17-AC-1 (parcial): …`. Es la práctica de ATDD que describe el SWEBOK: las pruebas de aceptación acordadas definen cuándo una unidad de funcionalidad está correctamente implementada (IEEE Computer Society, 2025, pp. 1-12–1-13).
 *Cómo se verifica:* el revisor compara los criterios del issue con `grep -rhoE "RF-[0-9]{2}-AC-[0-9]+" --include="*.test.*" . | sort -u`.
 
 **D6. Pruebas negativas de acceso en endpoints con datos de la familia.** Además de D5, cada endpoint que devuelve o modifica datos de una familia tiene una prueba con un rol sin permiso (espera `SIN_PERMISOS`) y otra con un recurso de otra familia (espera `NO_ENCONTRADO`), con el sufijo `AUTZ` en el nombre.
@@ -89,7 +89,7 @@ El tiempo de cumplir la DoD ya está dentro de los story points de cada historia
 **D14. Textos sin juicio clínico.** Todo texto que muestra el sistema coincide con el SRS o con el catálogo. Ningún texto nuevo interpreta o califica la salud del paciente (RD-01). Los textos que requieren revisión médica se marcan «pendiente RD-05» en el catálogo.
 *Cómo se verifica:* el PO compara los textos en pantalla con el SRS durante la aceptación.
 
-**D15. Desplegada y aceptada por el PO.** La versión de `main` con la historia está desplegada en el ambiente público con datos sintéticos, y el PO recorrió ahí cada criterio de aceptación. Solo entonces la historia pasa a «Terminada» en el tablero. Es la prueba de aceptación en el sentido del SWEBOK: se hace sobre el sistema desplegado y verifica que satisface los requerimientos y las expectativas de quien lo va a usar (IEEE Computer Society, 2024, p. 5-7).
+**D15. Desplegada y aceptada por el PO.** La versión de `main` con la historia está desplegada en el ambiente público con datos sintéticos, y el PO recorrió ahí cada criterio de aceptación. Solo entonces la historia pasa a «Terminada» en el tablero. Es la prueba de aceptación en el sentido del SWEBOK: se hace sobre el sistema desplegado y verifica que satisface los requerimientos y las expectativas de quien lo va a usar (IEEE Computer Society, 2025, p. 5-7).
 *Cómo se verifica:* comentario del PO en el issue con la fecha, el commit desplegado y el resultado por criterio.
 
 ---
@@ -98,7 +98,7 @@ El tiempo de cumplir la DoD ya está dentro de los story points de cada historia
 
 **I1. Solo se presenta lo terminado.** Toda historia que se muestra en la Review cumple D1 a D15; las demás regresan al Product Backlog con una nota de lo que falta. *Verifica:* el SM, comparando el tablero con los pull requests fusionados.
 
-**I2. Regresión del flujo construido.** En el ambiente desplegado se recorre de extremo a extremo el flujo construido hasta ese sprint, con un guion escrito en el repositorio que crece cada sprint. El SWEBOK considera la regresión una actividad fundamental en desarrollo ágil, después de integrar y antes de liberar (IEEE Computer Society, 2024, p. 5-8). *Verifica:* un Developer que no programó historias de ese flujo en el sprint.
+**I2. Regresión del flujo construido.** En el ambiente desplegado se recorre de extremo a extremo el flujo construido hasta ese sprint, con un guion escrito en el repositorio que crece cada sprint. El SWEBOK considera la regresión una actividad fundamental en desarrollo ágil, después de integrar y antes de liberar (IEEE Computer Society, 2025, p. 5-8). *Verifica:* un Developer que no programó historias de ese flujo en el sprint.
 
 **I3. Privacidad del ambiente desplegado.** Se revisa una muestra de los logs buscando correos, textos de mensajes o tokens, y se confirma que la base solo tiene datos sintéticos. *Verifica:* el SM.
 
@@ -164,6 +164,6 @@ La DoD quedó en 15 puntos de historia y 5 de incremento. La lista para la plant
 
 ## Referencias
 
-IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+IEEE Computer Society. (2025). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
 
 Sutherland, J., & Schwaber, K. (2020). *The Scrum guide*. Scrum.org.
