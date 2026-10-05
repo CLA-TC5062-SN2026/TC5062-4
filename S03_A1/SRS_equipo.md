@@ -133,7 +133,7 @@ Estas reglas aplican a todos los criterios de aceptación y no se repiten en cad
 | Historial completo de la familia (RF-18) | ✔ | ✔ | | |
 | Eliminar fotos y conversaciones (RF-21) | ✔ | ✔ | | |
 | Eliminar perfiles o la cuenta familiar (RF-21) | ✔ | | | |
-| Reportar abuso (RF-22) | ✔ | ✔ | ✔ | |
+| Reportar abuso o problemas técnicos (RF-22) | ✔ | ✔ | ✔ | |
 | Atender reportes y desactivar cuentas (RF-22) | | | | ✔ |
 
 **Acceso indebido.** Si al rol le falta la operación, el sistema responde «sin permisos» (se verifica primero). Si el rol tiene la operación pero el recurso es de otra familia o de una conversación que el médico no puede ver, responde «no encontrado», sin revelar que existe.
@@ -206,6 +206,7 @@ Una persona crea una cuenta familiar con correo y contraseña, y confirma el cor
 - **RF-01-AC-3:** **Dado que** ya existe una cuenta con el correo capturado, **cuando** la persona envía el registro, **entonces** el sistema no crea una cuenta nueva y muestra «Ya existe una cuenta con este correo.»
 - **RF-01-AC-4:** **Dado que** un cuidador se registró y no ha abierto el enlace de verificación, **cuando** intenta enviar una conversación o una invitación, **entonces** la API responde `CUENTA_NO_VERIFICADA` y el cliente muestra «Confirme su correo para continuar.» Crear perfiles y borradores sí está permitido.
 - **RF-01-AC-5:** **Dado que** un usuario aceptó la versión 1 del aviso de privacidad y se publica una versión 2 que requiere aceptación, **cuando** inicia sesión, **entonces** el sistema le muestra la versión 2 y no le permite enviar conversaciones ni mensajes hasta aceptarla; al aceptarla, registra usuario, versión, fecha y hora.
+- **RF-01-AC-6:** **Dado que** una persona sin sesión entra a DAFI, **cuando** abre «Qué es DAFI», **entonces** ve, sin necesidad de registrarse, que DAFI organiza conversaciones con médicos que la familia ya conoce, que no diagnostica ni evalúa la urgencia, que no verifica las credenciales de los médicos y el aviso fijo de emergencias de RF-13.
 
 #### RF-02: Inicio y cierre de sesión
 
@@ -215,12 +216,16 @@ Una persona crea una cuenta familiar con correo y contraseña, y confirma el cor
 - **RF-02-AC-4:** **Dado que** un usuario tiene sesión abierta, **cuando** pulsa «Cerrar sesión», **entonces** el sistema invalida la sesión y cualquier petición posterior con ella se rechaza con `NO_AUTENTICADO`.
 - **RF-02-AC-5:** **Dado que** no existe una sesión válida, **cuando** se solicita cerrar sesión, **entonces** la API no crea ninguna sesión, no devuelve un error interno y el cliente muestra la pantalla de inicio de sesión.
 
-#### RF-03: Recuperación de acceso
+#### RF-03: Recuperación de acceso y gestión de la cuenta
+
+Además de recuperar el acceso, un usuario con sesión puede cambiar su contraseña y editar su nombre. El correo no se edita en la versión 1.
 
 - **RF-03-AC-1:** **Dado que** alguien captura un correo en «Olvidé mi contraseña», **cuando** envía la solicitud, **entonces** el sistema muestra «Si el correo está registrado, recibirá un enlace.» exista o no la cuenta, y si existe envía un enlace de un solo uso válido por `MINUTOS_ENLACE_RESTABLECER` minutos.
 - **RF-03-AC-2:** **Dado que** con `MINUTOS_ENLACE_RESTABLECER` = 30 un enlace se generó hace 31 minutos, **cuando** la persona lo abre, **entonces** el sistema muestra «El enlace venció. Solicite uno nuevo.» y no permite cambiar la contraseña.
 - **RF-03-AC-3:** **Dado que** una persona restableció su contraseña, **cuando** termina el cambio, **entonces** todas sus sesiones abiertas se invalidan.
 - **RF-03-AC-4:** **Dado que** una persona ya usó un enlace de restablecimiento vigente para cambiar su contraseña, **cuando** vuelve a abrir el mismo enlace, **entonces** el sistema muestra «El enlace ya se usó. Solicite uno nuevo.» y no permite otro cambio.
+- **RF-03-AC-5:** **Dado que** un usuario tiene sesión abierta, **cuando** captura su contraseña actual correcta y una nueva de al menos 8 caracteres, **entonces** la contraseña cambia, se invalidan sus demás sesiones y recibe un correo de aviso. Si la contraseña actual es incorrecta, la API responde `DATOS_INVALIDOS` y la contraseña no cambia.
+- **RF-03-AC-6:** **Dado que** un médico cambia su nombre en «Mi cuenta», **cuando** guarda, **entonces** las familias de su círculo ven el nombre nuevo en las conversaciones abiertas y en las anteriores.
 
 #### RF-04: Perfiles de menores y del propio cuidador
 
@@ -437,14 +442,16 @@ Cuidador y cocuidador pueden borrar una foto de una conversación en `BORRADOR` 
 - **RF-21-AC-3:** **Dado que** el cocuidador confirma el borrado de una conversación `CON_INDICACIONES`, **cuando** se procesa, **entonces** la conversación, sus fotos y sus eventos se borran, deja de aparecer en historiales y resúmenes, el médico recibe «La familia eliminó una conversación enviada el 20/09» y queda el registro mínimo.
 - **RF-21-AC-4:** **Dado que** el cuidador escribe «ELIMINAR» y confirma el borrado de la cuenta familiar, **cuando** se procesa, **entonces** se borran la familia, sus perfiles, conversaciones, fotos y la cuenta del cocuidador, y se cierran todas sus sesiones. Las cuentas de los médicos se conservan.
 - **RF-21-AC-5:** **Dado que** el cuidador confirmó el borrado de la cuenta familiar, **cuando** termina la operación, **entonces** el sistema le muestra y le envía por correo qué se borró, qué se conserva (el registro mínimo de conversaciones enviadas) y por cuánto tiempo permanece en los respaldos (`DIAS_RETENCION_RESPALDO` días).
+- **RF-21-AC-6:** **Dado que** un cuidador abre la sección «Privacidad», **cuando** se carga, **entonces** ve qué datos guarda DAFI de cada perfil, qué médicos pueden ver cada perfil (y si tienen «Compartir historial»), el estado del resumen automático, cuánto tiempo se conservan los respaldos y el enlace al aviso de privacidad vigente.
 
-#### RF-22: Reportes de abuso y administración
+#### RF-22: Reportes y administración
 
-Cualquier usuario puede reportar a otro desde su perfil o desde una conversación (por ejemplo, una persona que se hace pasar por médico o un mensaje ofensivo). El administrador ve los reportes con el motivo y los identificadores de las cuentas, pero no el contenido de las conversaciones. Puede desactivar una cuenta.
+Cualquier usuario puede reportar a otro desde su perfil o desde una conversación (por ejemplo, una persona que se hace pasar por médico o un mensaje ofensivo), o reportar un problema técnico desde «Ayuda». El administrador ve los reportes con el motivo y los identificadores de las cuentas, pero no el contenido de las conversaciones. Puede desactivar una cuenta.
 
 - **RF-22-AC-1:** **Dado que** un cuidador reporta a un médico con el motivo «No es médico», **cuando** se guarda, **entonces** el administrador ve el reporte con el motivo, la fecha y las cuentas involucradas, sin mensajes ni fotos.
 - **RF-22-AC-2:** **Dado que** el administrador tiene sesión abierta, **cuando** solicita cualquier conversación, foto o perfil, **entonces** la API responde `SIN_PERMISOS`.
 - **RF-22-AC-3:** **Dado que** el administrador desactiva la cuenta de un médico, **cuando** ese médico intenta iniciar sesión o usar una sesión abierta, **entonces** la API lo rechaza, sus conversaciones abiertas pasan a `SIN_MEDICO` y las familias ven el aviso de RF-08-AC-3.
+- **RF-22-AC-4:** **Dado que** un usuario describe un problema técnico en «Ayuda» y lo envía, **cuando** se guarda, **entonces** el usuario ve «Recibimos su reporte» y el administrador lo ve con la fecha, el rol de quien reporta, la pantalla en la que estaba y el identificador de correlación del último error, sin datos de pacientes. Si el envío falla, el usuario ve «No pudimos enviar su reporte. Intente de nuevo.» y el texto se conserva.
 
 #### RF-23: Fallas de red y del módulo de resumen
 
@@ -462,7 +469,7 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 - **RNF-06:** Ninguna foto guardada ni entregada por la API contiene metadatos EXIF; la API los vuelve a eliminar al recibirla. Las fotos solo se entregan a través de la API a quien puede ver la conversación, sin URL públicas ni permanentes. Las fotos de la zona del pañal o genital se muestran solo en un visor sin opción de descarga y nunca se envían al módulo de resumen. Una app web no puede impedir capturas de pantalla; el aviso de RF-11-AC-6 no promete más. | Categoría: privacidad
 - **RNF-07:** Al borrar una foto, una conversación, un perfil o una cuenta (RF-21), los documentos y archivos se borran físicamente en el momento. Los respaldos se conservan como máximo `DIAS_RETENCION_RESPALDO` días, plazo que se declara en el aviso de privacidad. | Categoría: privacidad
 - **RNF-08:** Cada vez que un médico abre una conversación o una foto, el sistema registra quién, qué y cuándo. La familia ve ese registro en la conversación («Visto por Dra. … el 27/09 a las 18:40»). | Categoría: seguridad (trazabilidad)
-- **RNF-09:** Antes de la entrega, el resumen se evalúa con al menos 20 historiales de prueba sintéticos, cada uno con los hechos relevantes marcados a mano por el equipo. El informe registra: el porcentaje de hechos relevantes que el resumen incluyó (meta: 80 % o más) y el número de citas que, aunque textuales, sacadas de contexto sugieren un diagnóstico (meta: 0, revisado por dos integrantes). En producción se reporta cada semana la tasa de citas marcadas «No es correcto» (RF-17-AC-6). | Categoría: confiabilidad del resumen
+- **RNF-09:** Antes de la entrega, el resumen se evalúa con al menos 20 historiales de prueba sintéticos, cada uno con los hechos relevantes marcados a mano por el equipo. El informe registra, por separado para cada grupo del resumen (alergias y medicamentos, episodios anteriores, indicaciones previas) y no solo como un total, el porcentaje de hechos relevantes que el resumen incluyó (meta: 80 % o más en cada grupo) y el número de citas que, aunque textuales, sacadas de contexto sugieren un diagnóstico (meta: 0, revisado por dos integrantes). En producción se reporta cada semana la tasa de citas marcadas «No es correcto» (RF-17-AC-6). | Categoría: confiabilidad del resumen
 - **RNF-10:** El sistema está disponible el 99 % del tiempo medido por mes. Si la infraestructura gratuita suspende servicios por inactividad, la primera petición tras la suspensión debe cumplir igual RNF-01. | Categoría: disponibilidad
 - **RNF-11:** Agregar una etiqueta nueva requiere solo cargarla en el catálogo con sus preguntas. No requiere cambiar el esquema de la base de datos ni los endpoints de conversaciones. Se verifica en S09 cargando una etiqueta de prueba. | Categoría: mantenibilidad (extensibilidad)
 - **RNF-12:** Las peticiones al módulo de resumen no incluyen nombre, fecha de nacimiento, correo ni nombre de familiares del paciente: el nombre se sustituye por «el paciente» y la edad se envía en años. Se verifica inspeccionando las peticiones en las pruebas de RF-17. | Categoría: privacidad
@@ -502,7 +509,7 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 
 ### 3.5 Matriz de trazabilidad
 
-«E» es la entrevista con la cliente real de S02-A1 (`transcript_entrevista.md`, sesión B); «V» es la visión de producto acordada por el equipo en S03 (`vision_producto.md`); «D» es el SRS individual de Daniel Ruán (versión 1.2). Las aportaciones de cada SRS individual están en `diferencias_SRS.md`.
+«E» es la entrevista con la cliente real de S02-A1 (`transcript_entrevista.md`, sesión B); «V» es la visión de producto acordada por el equipo en S03 (`vision_producto.md`); «D» es el SRS individual de Daniel Ruán (versión 1.2) e «I» el de Isaac González. Las aportaciones de cada SRS individual están en `diferencias_SRS.md`.
 
 | Requerimiento | Origen |
 |---|---|
@@ -525,3 +532,4 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 | RF-01-AC-5, RF-02-AC-5, RF-03-AC-4, RF-11-AC-7, RF-18-AC-4, RF-21-AC-5 | D: RF-03, RF-17, RF-19, RF-06, RF-11, RF-13 |
 | RNF-05 (TLS, cifrado en reposo, revocación de sesiones), RNF-13, RNF-14, contrato de errores con correlación | D: RNF-04, RNF-05, RNF-08, RNF-10 a RNF-13 |
 | Versión del modelo registrada en cada resumen (RF-17) | D: RF-16 (gestión de versiones del modelo) |
+| RF-01-AC-6, RF-03-AC-5, RF-03-AC-6, RF-21-AC-6, RF-22-AC-4, RNF-09 (evaluación por grupo) | I: RF-01, RF-13, RF-14, RF-15, RNF-07 |
