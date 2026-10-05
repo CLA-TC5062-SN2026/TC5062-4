@@ -66,7 +66,7 @@ Lo que la familia necesita antes de abrir su primera conversación: cuenta, perf
 1. **Dado que** una persona sin cuenta captura un correo válido, una contraseña de al menos 8 caracteres y marca las tres declaraciones, **cuando** envía el registro, **entonces** se crea la familia con ella como cuidador principal, se guarda la fecha y versión del aviso aceptado y se abre su sesión. (RF-01-AC-1)
 2. **Dado que** una persona dejó sin marcar alguna de las tres declaraciones, **cuando** envía el registro, **entonces** no se crea la cuenta y se señala la declaración faltante con «Necesitamos esta autorización para usar DAFI.» (RF-01-AC-2)
 3. **Dado que** con `MAX_INTENTOS_LOGIN` = 5 y `MINUTOS_BLOQUEO` = 15 hubo 5 intentos fallidos para un correo desde una IP, **cuando** se hace un sexto intento desde esa IP, **entonces** la API responde `BLOQUEADO` durante 15 minutos. (RF-02-AC-3)
-4. **Dado que** con `MINUTOS_ENLACE_RESTABLECER` = 60 un enlace de restablecimiento se generó hace 61 minutos, **cuando** la persona lo abre, **entonces** ve «El enlace venció. Solicite uno nuevo.» y no puede cambiar la contraseña. (RF-03-AC-2)
+4. **Dado que** con `MINUTOS_ENLACE_RESTABLECER` = 30 un enlace de restablecimiento se generó hace 31 minutos, **cuando** la persona lo abre, **entonces** ve «El enlace venció. Solicite uno nuevo.» y no puede cambiar la contraseña. (RF-03-AC-2)
 
 **Story Points:** 8. Tres flujos distintos (registro con verificación de correo, sesión con bloqueo por IP y restablecimiento) más hash de contraseñas y expiración de sesión; casi tres veces la referencia.
 **Prioridad:** Alta. Nada funciona sin cuenta, y el registro es donde se recoge el consentimiento que exige RD-02.
@@ -326,7 +326,8 @@ Una historia se considera terminada cuando:
 - Cada criterio de aceptación tiene una prueba automatizada con el identificador `RF-XX-AC-Y` en el nombre.
 - Las pantallas funcionan en 360 px de ancho en Chrome para Android y Safari para iOS (RNF-03).
 - La API aplica la matriz de roles y el contrato de errores de la sección 3.0 del SRS.
-- Toda comunicación usa HTTPS y no hay datos de salud en registros, correos ni URL (RNF-05, RF-19).
+- Toda comunicación usa TLS 1.2 o superior y no hay datos de salud, contraseñas ni tokens en registros, correos ni URL (RNF-05, RNF-13, RF-19).
+- El flujo se puede completar solo con teclado y ningún estado se comunica únicamente con color (RNF-14).
 - El cambio está desplegado en el ambiente del curso y ese ambiente cumple la disponibilidad de RNF-10.
 
 RNF-04 (enviar una conversación en 3 minutos o menos) se valida con usuarios una vez que HU-06, HU-07 y HU-09 estén terminadas.

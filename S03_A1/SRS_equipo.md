@@ -12,7 +12,7 @@
 
 ### 1.1 Propósito del documento
 
-Este documento especifica qué debe hacer DAFI y bajo qué condiciones. Es el contrato del equipo para el resto del curso: los criterios de aceptación con identificador `RF-XX-AC-Y` son la base del backlog (S03), del diseño de la API (S04, cada endpoint de `openapi.yaml` referenciará uno o más de ellos) y de las pruebas automatizadas (S09, cada prueba llevará el identificador como nombre).
+Este documento especifica qué debe hacer DAFI y bajo qué condiciones. Es el contrato del equipo para el resto del curso: los criterios de aceptación con identificador `RF-XX-AC-Y` son la base del backlog (S03), del diseño de la API (S04, cada operación de `openapi.yaml` declarará los suyos en la extensión `x-acceptance-criteria`) y de las pruebas automatizadas (S09, cada prueba llevará el identificador como nombre).
 
 Está dirigido al equipo de desarrollo, a quien diseñe las pruebas y a los stakeholders que validan que lo escrito corresponda a lo que pidieron.
 
@@ -174,7 +174,7 @@ Los mensajes (RF-14) no cambian el estado. Una conversación `CERRADA` no se rea
 
 **Fechas y reloj.** Las fechas se registran en UTC y se muestran en la zona horaria America/Mexico_City. La API toma la hora de un reloj inyectable. Los procesos programados (RF-15 y RF-20) corren cada 15 minutos y las pruebas pueden invocarlos directamente.
 
-**Contrato de errores.** Todo rechazo de la API devuelve un código de esta tabla, además del texto que muestra el cliente. Los códigos HTTP son la sugerencia para S04.
+**Contrato de errores.** Todo rechazo de la API devuelve un código de esta tabla y un identificador de correlación, además del texto que muestra el cliente. La respuesta nunca incluye trazas internas, y una falla a mitad de una operación no deja datos a medias. Los códigos HTTP son la sugerencia para S04.
 
 | Código | HTTP | Uso |
 |---|---|---|
@@ -205,6 +205,7 @@ Una persona crea una cuenta familiar con correo y contraseña, y confirma el cor
 - **RF-01-AC-2:** **Dado que** una persona dejó sin marcar cualquiera de las tres declaraciones, **cuando** envía el registro, **entonces** el sistema no crea la cuenta y señala la declaración faltante con el texto «Necesitamos esta autorización para usar DAFI.»
 - **RF-01-AC-3:** **Dado que** ya existe una cuenta con el correo capturado, **cuando** la persona envía el registro, **entonces** el sistema no crea una cuenta nueva y muestra «Ya existe una cuenta con este correo.»
 - **RF-01-AC-4:** **Dado que** un cuidador se registró y no ha abierto el enlace de verificación, **cuando** intenta enviar una conversación o una invitación, **entonces** la API responde `CUENTA_NO_VERIFICADA` y el cliente muestra «Confirme su correo para continuar.» Crear perfiles y borradores sí está permitido.
+- **RF-01-AC-5:** **Dado que** un usuario aceptó la versión 1 del aviso de privacidad y se publica una versión 2 que requiere aceptación, **cuando** inicia sesión, **entonces** el sistema le muestra la versión 2 y no le permite enviar conversaciones ni mensajes hasta aceptarla; al aceptarla, registra usuario, versión, fecha y hora.
 
 #### RF-02: Inicio y cierre de sesión
 
@@ -212,12 +213,14 @@ Una persona crea una cuenta familiar con correo y contraseña, y confirma el cor
 - **RF-02-AC-2:** **Dado que** alguien ingresa credenciales incorrectas, **cuando** envía el formulario, **entonces** el sistema muestra «Los datos no coinciden» sin indicar si el error está en el correo o en la contraseña.
 - **RF-02-AC-3:** **Dado que** con `MAX_INTENTOS_LOGIN` = 5 y `MINUTOS_BLOQUEO` = 15 se registraron 5 intentos fallidos consecutivos para un mismo correo desde una misma dirección IP (exista o no la cuenta), **cuando** se hace un sexto intento desde esa IP aun con credenciales correctas, **entonces** la API responde `BLOQUEADO` durante 15 minutos contados desde el quinto intento y, si la cuenta existe, su titular recibe un correo de aviso. Los intentos desde otra IP no quedan bloqueados.
 - **RF-02-AC-4:** **Dado que** un usuario tiene sesión abierta, **cuando** pulsa «Cerrar sesión», **entonces** el sistema invalida la sesión y cualquier petición posterior con ella se rechaza con `NO_AUTENTICADO`.
+- **RF-02-AC-5:** **Dado que** no existe una sesión válida, **cuando** se solicita cerrar sesión, **entonces** la API no crea ninguna sesión, no devuelve un error interno y el cliente muestra la pantalla de inicio de sesión.
 
 #### RF-03: Recuperación de acceso
 
-- **RF-03-AC-1:** **Dado que** alguien captura un correo en «Olvidé mi contraseña», **cuando** envía la solicitud, **entonces** el sistema muestra «Si el correo está registrado, recibirá un enlace.» exista o no la cuenta, y si existe envía un enlace válido por `MINUTOS_ENLACE_RESTABLECER` minutos.
-- **RF-03-AC-2:** **Dado que** con `MINUTOS_ENLACE_RESTABLECER` = 60 un enlace se generó hace 61 minutos, **cuando** la persona lo abre, **entonces** el sistema muestra «El enlace venció. Solicite uno nuevo.» y no permite cambiar la contraseña.
+- **RF-03-AC-1:** **Dado que** alguien captura un correo en «Olvidé mi contraseña», **cuando** envía la solicitud, **entonces** el sistema muestra «Si el correo está registrado, recibirá un enlace.» exista o no la cuenta, y si existe envía un enlace de un solo uso válido por `MINUTOS_ENLACE_RESTABLECER` minutos.
+- **RF-03-AC-2:** **Dado que** con `MINUTOS_ENLACE_RESTABLECER` = 30 un enlace se generó hace 31 minutos, **cuando** la persona lo abre, **entonces** el sistema muestra «El enlace venció. Solicite uno nuevo.» y no permite cambiar la contraseña.
 - **RF-03-AC-3:** **Dado que** una persona restableció su contraseña, **cuando** termina el cambio, **entonces** todas sus sesiones abiertas se invalidan.
+- **RF-03-AC-4:** **Dado que** una persona ya usó un enlace de restablecimiento vigente para cambiar su contraseña, **cuando** vuelve a abrir el mismo enlace, **entonces** el sistema muestra «El enlace ya se usó. Solicite uno nuevo.» y no permite otro cambio.
 
 #### RF-04: Perfiles de menores y del propio cuidador
 
@@ -306,7 +309,7 @@ Cada conversación incluye las preguntas generales y las de sus etiquetas. Si do
 
 #### RF-11: Fotos
 
-Las fotos son opcionales en todas las etiquetas. La familia puede agregar hasta `MAX_FOTOS` por conversación, desde la cámara o la galería (incluidas las recibidas por WhatsApp), en JPEG, PNG o HEIC. El cliente convierte cada foto a JPEG, reduce su lado mayor a `LADO_MAX_PX` y elimina los metadatos EXIF antes de subirla. La API rechaza con `FOTO_RECHAZADA` las fotos borrosas u oscuras. La nitidez es la varianza de la convolución de la imagen en escala de grises con el kernel laplaciano [[0, 1, 0], [1, −4, 1], [0, 1, 0]]; el brillo es el promedio de la luminancia Y = 0.299 R + 0.587 G + 0.114 B, de 0 a 255. Si la etiqueta es «Piel», antes de la primera foto se muestra una guía (una foto de cerca, una a media distancia donde se vea la parte del cuerpo y una desde otro ángulo, con luz natural). Si P1 es «zona del pañal o genital», aplican las protecciones de RNF-06.
+Las fotos son opcionales en todas las etiquetas. La familia puede agregar hasta `MAX_FOTOS` por conversación, desde la cámara o la galería (incluidas las recibidas por WhatsApp), en JPEG, PNG o HEIC, de hasta `MB_MAX_ORIGINAL` megabytes. El cliente convierte cada foto a JPEG, reduce su lado mayor a `LADO_MAX_PX` y elimina los metadatos EXIF antes de subirla. La API rechaza con `FOTO_RECHAZADA` las fotos borrosas u oscuras. La nitidez es la varianza de la convolución de la imagen en escala de grises con el kernel laplaciano [[0, 1, 0], [1, −4, 1], [0, 1, 0]]; el brillo es el promedio de la luminancia Y = 0.299 R + 0.587 G + 0.114 B, de 0 a 255. Si la etiqueta es «Piel», antes de la primera foto se muestra una guía (una foto de cerca, una a media distancia donde se vea la parte del cuerpo y una desde otro ángulo, con luz natural). Si P1 es «zona del pañal o genital», aplican las protecciones de RNF-06.
 
 - **RF-11-AC-1:** (Prueba de extremo a extremo en Chrome para Android y Safari para iOS.) **Dado que** una madre elige una foto HEIC de 4032 × 3024 píxeles, **cuando** la agrega, **entonces** el archivo que recibe la API es JPEG, su lado mayor mide como máximo `LADO_MAX_PX` píxeles y no contiene EXIF.
 - **RF-11-AC-2:** **Dado que** con `UMBRAL_NITIDEZ` = 100 una foto tiene nitidez de 40, **cuando** se valida, **entonces** el sistema no la agrega y muestra «La foto salió borrosa. Acérquese y mantenga el teléfono quieto.»
@@ -314,6 +317,7 @@ Las fotos son opcionales en todas las etiquetas. La familia puede agregar hasta 
 - **RF-11-AC-4:** **Dado que** con `MAX_FOTOS` = 6 una conversación ya tiene 6 fotos, **cuando** la familia intenta agregar otra, **entonces** la API responde `LIMITE_ALCANZADO` y el cliente muestra «Una conversación admite hasta 6 fotos.»
 - **RF-11-AC-5:** **Dado que** la API recibe directamente un archivo que no es JPEG, o un JPEG de más de 1 048 576 bytes, **cuando** lo procesa, **entonces** responde `ARCHIVO_INVALIDO` sin guardarlo.
 - **RF-11-AC-6:** **Dado que** la familia respondió P1 con «zona del pañal o genital», **cuando** pulsa «Tomar foto», **entonces** el sistema muestra antes de abrir la cámara «Las fotos de esta zona solo las verá su médico y no se podrán descargar.»
+- **RF-11-AC-7:** **Dado que** con `MB_MAX_ORIGINAL` = 10 la familia elige de la galería un archivo de 12 MB, o un archivo que no es JPEG, PNG ni HEIC, **cuando** el cliente lo revisa, **entonces** no lo sube y muestra la causa específica («La foto pesa más de 10 MB.» o «Este formato no se admite. Use JPEG, PNG o HEIC.»), y la familia puede elegir otra.
 
 #### RF-12: Revisión y envío
 
@@ -377,6 +381,7 @@ Al abrir una conversación, el médico ve arriba un resumen con el título «Res
 - La API verifica cada cita antes de mostrarla: el evento citado debe existir, el médico debe poder verlo y el texto debe aparecer tal cual en ese evento. Lo que no cumpla se descarta y no se muestra.
 - El resumen no agrega texto propio aparte de los títulos fijos de los grupos.
 - Se genera al abrir la conversación y se regenera si hay eventos nuevos desde la última vez.
+- Cada resumen registra el proveedor y la versión del modelo de lenguaje que lo generó, para que un cambio de versión se pueda rastrear y, si empeora RNF-09, revertir a la anterior.
 
 La familia puede desactivar el resumen por perfil en «Privacidad».
 
@@ -394,6 +399,7 @@ Cada perfil tiene un historial con todas sus conversaciones, de la más reciente
 - **RF-18-AC-1:** **Dado que** el perfil «Mateo» tiene conversaciones del 1 y del 20 de septiembre, **cuando** el cuidador abre su historial, **entonces** ve primero la del 20 y luego la del 1, cada una con estado, etiquetas, médico, fecha e indicaciones.
 - **RF-18-AC-2:** **Dado que** el cuidador filtra el historial por «Piel», **cuando** se aplica el filtro, **entonces** solo aparecen conversaciones con esa etiqueta.
 - **RF-18-AC-3:** **Dado que** una conversación tiene respuestas iniciales, un mensaje del médico, una foto agregada después e indicaciones, **cuando** la familia la abre, **entonces** ve esos eventos en orden cronológico, cada uno con fecha, hora y autor.
+- **RF-18-AC-4:** **Dado que** el perfil «Mateo» no tiene conversaciones, **cuando** el cuidador abre su historial, **entonces** ve «Aún no hay conversaciones de Mateo» con un acceso a «Nueva conversación», y no un mensaje de error.
 
 #### Épica E4: Privacidad y confianza
 
@@ -430,6 +436,7 @@ Cuidador y cocuidador pueden borrar una foto de una conversación en `BORRADOR` 
 - **RF-21-AC-2:** **Dado que** una conversación fue enviada, **cuando** la familia intenta borrar solo una foto, **entonces** el sistema lo impide y ofrece borrar la conversación completa.
 - **RF-21-AC-3:** **Dado que** el cocuidador confirma el borrado de una conversación `CON_INDICACIONES`, **cuando** se procesa, **entonces** la conversación, sus fotos y sus eventos se borran, deja de aparecer en historiales y resúmenes, el médico recibe «La familia eliminó una conversación enviada el 20/09» y queda el registro mínimo.
 - **RF-21-AC-4:** **Dado que** el cuidador escribe «ELIMINAR» y confirma el borrado de la cuenta familiar, **cuando** se procesa, **entonces** se borran la familia, sus perfiles, conversaciones, fotos y la cuenta del cocuidador, y se cierran todas sus sesiones. Las cuentas de los médicos se conservan.
+- **RF-21-AC-5:** **Dado que** el cuidador confirmó el borrado de la cuenta familiar, **cuando** termina la operación, **entonces** el sistema le muestra y le envía por correo qué se borró, qué se conserva (el registro mínimo de conversaciones enviadas) y por cuánto tiempo permanece en los respaldos (`DIAS_RETENCION_RESPALDO` días).
 
 #### RF-22: Reportes de abuso y administración
 
@@ -449,9 +456,9 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 
 - **RNF-01:** La validación de una foto (RF-11) responde en 5 s o menos en el p95. El detalle de una conversación se muestra en 2 s o menos en el p95 sin esperar al resumen, y el resumen (RF-17) aparece en 15 s o menos en el p95 para historiales de hasta 20 conversaciones. Se mide con 30 aperturas en 10 minutos. | Categoría: rendimiento
 - **RNF-02:** Cada foto que el cliente sube a la API pesa 1 MB o menos. | Categoría: rendimiento (eficiencia de red)
-- **RNF-03:** Las pantallas de cuidador y cocuidador funcionan sin desplazamiento horizontal en pantallas de 360 px de ancho, en Chrome para Android 10 o superior y Safari para iOS 16 o superior. Las del médico funcionan además en navegadores de escritorio desde 1280 px. | Categoría: usabilidad y portabilidad
-- **RNF-04:** Una persona que nunca ha usado DAFI abre y envía una conversación completa (etiqueta, médico, preguntas obligatorias y una foto) en 3 minutos o menos. Se verifica antes de la entrega con al menos 5 personas. | Categoría: usabilidad
-- **RNF-05:** Toda comunicación usa HTTPS. Las contraseñas se guardan con un algoritmo de hash adaptativo (bcrypt o argon2). Las sesiones expiran tras `MINUTOS_SESION` minutos sin peticiones. | Categoría: seguridad
+- **RNF-03:** Las pantallas de cuidador y cocuidador funcionan sin desplazamiento horizontal en pantallas de 360 px de ancho, en Chrome para Android 10 o superior y Safari para iOS 16 o superior. Las del médico funcionan además en las dos versiones más recientes de Chrome, Edge, Firefox y Safari de escritorio, de 1280 a 1920 px. | Categoría: usabilidad y portabilidad
+- **RNF-04:** Se verifica antes de la entrega con al menos 5 personas que nunca han usado DAFI: al menos 4 de 5 abren y envían una conversación completa (etiqueta, médico, preguntas obligatorias y una foto) sin ayuda, y la mediana de tiempo es de 3 minutos o menos. | Categoría: usabilidad
+- **RNF-05:** Toda comunicación usa TLS 1.2 o superior. Las fotos y los datos de salud se cifran en reposo. Las contraseñas se guardan con Argon2id o bcrypt con sal individual, y los enlaces de restablecimiento e invitación se guardan de forma no reversible. Las sesiones expiran tras `MINUTOS_SESION` minutos sin peticiones y se revocan al cerrar sesión, al restablecer la contraseña o al borrar la cuenta. | Categoría: seguridad
 - **RNF-06:** Ninguna foto guardada ni entregada por la API contiene metadatos EXIF; la API los vuelve a eliminar al recibirla. Las fotos solo se entregan a través de la API a quien puede ver la conversación, sin URL públicas ni permanentes. Las fotos de la zona del pañal o genital se muestran solo en un visor sin opción de descarga y nunca se envían al módulo de resumen. Una app web no puede impedir capturas de pantalla; el aviso de RF-11-AC-6 no promete más. | Categoría: privacidad
 - **RNF-07:** Al borrar una foto, una conversación, un perfil o una cuenta (RF-21), los documentos y archivos se borran físicamente en el momento. Los respaldos se conservan como máximo `DIAS_RETENCION_RESPALDO` días, plazo que se declara en el aviso de privacidad. | Categoría: privacidad
 - **RNF-08:** Cada vez que un médico abre una conversación o una foto, el sistema registra quién, qué y cuándo. La familia ve ese registro en la conversación («Visto por Dra. … el 27/09 a las 18:40»). | Categoría: seguridad (trazabilidad)
@@ -459,6 +466,8 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 - **RNF-10:** El sistema está disponible el 99 % del tiempo medido por mes. Si la infraestructura gratuita suspende servicios por inactividad, la primera petición tras la suspensión debe cumplir igual RNF-01. | Categoría: disponibilidad
 - **RNF-11:** Agregar una etiqueta nueva requiere solo cargarla en el catálogo con sus preguntas. No requiere cambiar el esquema de la base de datos ni los endpoints de conversaciones. Se verifica en S09 cargando una etiqueta de prueba. | Categoría: mantenibilidad (extensibilidad)
 - **RNF-12:** Las peticiones al módulo de resumen no incluyen nombre, fecha de nacimiento, correo ni nombre de familiares del paciente: el nombre se sustituye por «el paciente» y la edad se envía en años. Se verifica inspeccionando las peticiones en las pruebas de RF-17. | Categoría: privacidad
+- **RNF-13:** Los registros (logs) no contienen contraseñas, tokens, fotos, texto de mensajes ni correos en texto claro. Los eventos de seguridad (inicio y cierre de sesión, bloqueos, restablecimientos, cambios de permisos, desactivaciones) se registran con fecha UTC, actor, acción, recurso, resultado e identificador de correlación. | Categoría: privacidad y auditoría
+- **RNF-14:** El flujo de la familia (abrir, responder y enviar una conversación) y la bandeja del médico se pueden usar solo con teclado, con foco visible, y ningún estado (por ejemplo, la prioridad o un punto pendiente de RF-12) se comunica solo con color. | Categoría: accesibilidad
 
 ### 3.3 Requerimientos de dominio
 
@@ -475,6 +484,7 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 | Parámetro | Valor inicial | Usado en |
 |---|---|---|
 | `MAX_FOTOS` | 6 | RF-11 |
+| `MB_MAX_ORIGINAL` | 10 MB | RF-11 |
 | `LADO_MAX_PX` | 1024 px | RF-11, RNF-02 |
 | `UMBRAL_NITIDEZ` | 100 (varianza del laplaciano) | RF-11 |
 | `UMBRAL_BRILLO_MIN` | 50 (de 0 a 255) | RF-11 |
@@ -486,13 +496,13 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 | `DIAS_INVITACION` | 7 | RF-05, RF-06, RF-07 |
 | `MAX_INTENTOS_LOGIN` | 5 | RF-02 |
 | `MINUTOS_BLOQUEO` | 15 | RF-02 |
-| `MINUTOS_ENLACE_RESTABLECER` | 60 | RF-03 |
-| `MINUTOS_SESION` | 60 | RNF-05 |
+| `MINUTOS_ENLACE_RESTABLECER` | 30 | RF-03 |
+| `MINUTOS_SESION` | 30 | RNF-05 |
 | `DIAS_RETENCION_RESPALDO` | 7 | RNF-07 |
 
 ### 3.5 Matriz de trazabilidad
 
-«E» es la entrevista con la cliente real de S02-A1 (`transcript_entrevista.md`, sesión B); «V» es la visión de producto acordada por el equipo en S03 (`vision_producto.md`).
+«E» es la entrevista con la cliente real de S02-A1 (`transcript_entrevista.md`, sesión B); «V» es la visión de producto acordada por el equipo en S03 (`vision_producto.md`); «D» es el SRS individual de Daniel Ruán (versión 1.2). Las aportaciones de cada SRS individual están en `diferencias_SRS.md`.
 
 | Requerimiento | Origen |
 |---|---|
@@ -512,3 +522,6 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 | RF-23 | Riesgo de conectividad y de dependencia de un servicio externo |
 | RNF-03, RNF-04 | E: P6 (solo celular), P4 (desinstalaría la app si no le sirve) |
 | RNF-11, RD-07 | Decisión de alcance (etiquetas por catálogo) |
+| RF-01-AC-5, RF-02-AC-5, RF-03-AC-4, RF-11-AC-7, RF-18-AC-4, RF-21-AC-5 | D: RF-03, RF-17, RF-19, RF-06, RF-11, RF-13 |
+| RNF-05 (TLS, cifrado en reposo, revocación de sesiones), RNF-13, RNF-14, contrato de errores con correlación | D: RNF-04, RNF-05, RNF-08, RNF-10 a RNF-13 |
+| Versión del modelo registrada en cada resumen (RF-17) | D: RF-16 (gestión de versiones del modelo) |
