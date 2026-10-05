@@ -6,7 +6,7 @@
 
 Le dimos a una sesión de agente independiente solo el `SRS_equipo.md` y las instrucciones de la actividad (entre 3 y 5 épicas, formato de historia, al menos 2 criterios por historia, Fibonacci y prioridad). Su propuesta íntegra está en `evidencia/propuesta_agente_backlog.md`: 4 épicas, 15 historias y 99 SP, con 10 historias Alta, 4 Media y 1 Baja.
 
-La propuesta era buena de entrada. Respetó las épicas del SRS, sacó los criterios de los `RF-XX-AC-Y` con su referencia y justificó cada estimación. Los cambios que hicimos fueron de tamaño y de prioridad, no de contenido; el resultado es `backlog_completo.md`, con 18 historias y 97 SP.
+La propuesta era buena de entrada. Respetó las épicas del SRS, sacó los criterios de los `RF-XX-AC-Y` con su referencia y justificó cada estimación. La mayoría de nuestros cambios fueron de tamaño y de prioridad, más cuatro criterios que faltaban; el resultado es `backlog_completo.md`, con 18 historias y 97 SP.
 
 ## 1. Cambios de tamaño (división de historias)
 

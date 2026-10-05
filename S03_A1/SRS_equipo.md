@@ -20,7 +20,7 @@ Está dirigido al equipo de desarrollo, a quien diseñe las pruebas y a los stak
 
 DAFI es una aplicación web para celular donde una familia agrega a los médicos que ya conoce (amigos, conocidos, el médico de siempre) y conversa con ellos sobre la salud de sus seres queridos en un espacio dedicado, fuera de WhatsApp. Cada conversación pertenece a un paciente, tiene una o más etiquetas (Piel, Fiebre, Estómago, Respiratorio, Otro) y llega al médico con las respuestas a unas preguntas de contexto fijas, para que no tenga que pedirlas cada vez.
 
-DAFI es un intermediario, no un experto en salud. No diagnostica, no evalúa la urgencia y no recomienda tratamientos. La única función con IA es el **resumen de contexto**: cuando el médico abre una conversación, DAFI le muestra citas textuales del historial del paciente que son relevantes (alergias, medicamentos, episodios anteriores con la misma etiqueta, indicaciones previas), cada una con enlace al mensaje de donde salió. Las conclusiones son del médico.
+DAFI es un intermediario: no diagnostica, no evalúa la urgencia y no recomienda tratamientos. La única función con IA es el **resumen de contexto**: cuando el médico abre una conversación, DAFI le muestra citas textuales del historial del paciente que son relevantes (alergias, medicamentos, episodios anteriores con la misma etiqueta, indicaciones previas), cada una con enlace al mensaje de donde salió. Las conclusiones son del médico.
 
 **Incluido en la versión 1:**
 

@@ -9,7 +9,7 @@
 
 ## 1. Qué es DAFI
 
-DAFI es una aplicación web para celular donde una familia agrega a los médicos que ya conoce (amigos, conocidos, el pediatra de siempre) y conversa con ellos sobre la salud de sus seres queridos en un espacio dedicado, fuera de WhatsApp. DAFI no es un experto en salud: es un intermediario que ordena las conversaciones y, cuando el médico abre una, le reúne lo relevante del historial de ese paciente para que pueda dar una mejor valoración. Las conclusiones y las recomendaciones son siempre del médico.
+DAFI es una aplicación web para celular donde una familia agrega a los médicos que ya conoce (amigos, conocidos, el pediatra de siempre) y conversa con ellos sobre la salud de sus seres queridos en un espacio dedicado, fuera de WhatsApp. DAFI funciona como intermediario: ordena las conversaciones y, cuando el médico abre una, le reúne lo relevante del historial de ese paciente para que pueda dar una mejor valoración. Las conclusiones y las recomendaciones son siempre del médico.
 
 ## 2. El problema
 

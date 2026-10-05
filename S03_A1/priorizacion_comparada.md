@@ -35,17 +35,17 @@ El agente dejó 10 historias en Alta (60 SP); nosotros, 12 (76 SP).
 
 Las ocho primeras posiciones son idénticas, y también la última. Los dos llegamos al mismo camino mínimo (cuenta, perfil, médico en el círculo, conversación con contexto, envío, bandeja, mensajes e indicaciones), y por la misma razón: si falta cualquiera de esas historias, la familia no puede completar una sola consulta. Coincidimos también en poner el círculo médico (HU-05) antes de abrir la conversación, porque el riesgo de negocio más grande de la visión es que el médico no adopte DAFI y ese riesgo empieza en la invitación.
 
-La coincidencia no es casual. El SRS ya define un flujo de estados explícito (de `BORRADOR` a `CON_INDICACIONES`) y cada historia del tope corresponde a una transición de ese flujo; cualquiera que lea el SRS con atención llega al mismo orden. Esto le da peso a la discusión de las diferencias, que están todas de la mitad para abajo.
+El SRS ya define un flujo de estados explícito (de `BORRADOR` a `CON_INDICACIONES`) y cada historia del tope corresponde a una transición de ese flujo, por lo que quien lea el SRS con atención llega al mismo orden. Todas las diferencias están de la mitad para abajo.
 
 ## 3. Dónde diferimos y por qué
 
 ### 3.1 El resumen de contexto (HU-13 y HU-14)
 
-Es la diferencia más importante. El agente puso el resumen con citas en el lugar 14 y en prioridad Media, con un argumento de negocio sólido: **el resumen no aporta en las primeras semanas porque todavía no hay historial que resumir**. Además señala que es la historia con más incertidumbre técnica y la que agrega un riesgo regulatorio (enviar conversaciones a un proveedor externo, RD-06).
+Aquí está la diferencia más grande. El agente puso el resumen con citas en el lugar 14 y en prioridad Media, con un argumento de negocio sólido: **el resumen no aporta en las primeras semanas porque todavía no hay historial que resumir**. Además señala que es la historia con más incertidumbre técnica y la que agrega un riesgo regulatorio (enviar conversaciones a un proveedor externo, RD-06).
 
-Nosotros la dejamos en Alta por dos razones. La de negocio es que el resumen es lo único que distingue a DAFI de un chat con formularios, y si no está en el alcance comprometido es la primera historia que se cae cuando el calendario se aprieta. La técnica es que, justo por ser la de mayor incertidumbre, conviene enfrentarla pronto: si el proveedor no cumple RD-06 o la verificación de citas descarta demasiadas, necesitamos saberlo en el sprint 3 y no en el 10.
+Nosotros la dejamos en Alta por dos razones. La de negocio es que el resumen es lo único que distingue a DAFI de un chat con formularios, y si no está en el alcance comprometido es la primera historia que se cae cuando el calendario se aprieta. La técnica es que, por ser la de mayor incertidumbre, conviene enfrentarla pronto: si el proveedor no cumple RD-06 o la verificación de citas descarta demasiadas, necesitamos saberlo en el sprint 3 y no en el 10.
 
-**Lo que aprendimos de la diferencia.** El agente prioriza por valor entregado al usuario en el momento; nosotros mezclamos valor con reducción de riesgo técnico. Las dos lecturas son válidas, pero responden a preguntas distintas. Además, el agente que generó el backlog también había puesto el resumen en Media sin conocer la priorización del agente Product Owner. Que dos sesiones independientes coincidan es una señal que no podemos ignorar, así que acordamos una salida intermedia: HU-13 (sin modelo, 3 SP) sigue en Alta, y antes de comprometer HU-14 completa haremos en S04 una prueba técnica con el proveedor (*spike*) que se limite a la verificación de citas. Si la prueba sale mal, HU-14 baja a Media.
+El agente prioriza por el valor que recibe el usuario en el momento; nosotros mezclamos valor con reducción de riesgo técnico. Las dos lecturas son válidas, pero responden a preguntas distintas. Además, el agente que generó el backlog también había puesto el resumen en Media sin conocer la priorización del agente Product Owner. Como dos sesiones independientes coincidieron, acordamos una salida intermedia: HU-13 (sin modelo, 3 SP) sigue en Alta, y antes de comprometer HU-14 completa haremos en S04 una prueba técnica con el proveedor (*spike*) que se limite a la verificación de citas. Si la prueba sale mal, HU-14 baja a Media.
 
 ### 3.2 Eliminación de datos (HU-17)
 
@@ -57,7 +57,7 @@ Mantenemos el orden, pero adoptamos la condición del agente como regla de liber
 
 El agente pone el perfil de otro adulto por encima del cocuidador, porque abre un segmento nuevo (el hijo que cuida a un padre mayor), y baja al cocuidador a Baja porque tiene un sustituto informal: compartir la cuenta o reenviar el aviso.
 
-Nosotros invertimos ese orden con evidencia de la entrevista. La cliente real contó que el padre de sus hijos también toma y reenvía fotos (S02-A1, P2 y P3); el cocuidador sale de un comportamiento observado. El perfil de otro adulto, en cambio, salió de la visión de producto y nadie lo ha validado con un usuario. Además, el sustituto que propone el agente (compartir la cuenta) rompe la trazabilidad de autoría que piden RF-14-AC-4 y RNF-08: el médico no sabría quién le escribe. Es un caso en que el agente razonó bien sobre el mercado, pero sin el dato vivido de la entrevista.
+Nosotros invertimos ese orden con evidencia de la entrevista. La cliente real contó que el padre de sus hijos también toma y reenvía fotos (S02-A1, P2 y P3); el cocuidador sale de un comportamiento observado. El perfil de otro adulto, en cambio, salió de la visión de producto y nadie lo ha validado con un usuario. Además, el sustituto que propone el agente (compartir la cuenta) rompe la trazabilidad de autoría que piden RF-14-AC-4 y RNF-08: el médico no sabría quién le escribe.
 
 ### 3.4 Reportes de abuso (HU-18)
 
@@ -75,4 +75,4 @@ Intercambiamos un lugar. El agente pone las fotos antes porque son el hábito ac
 - HU-17 pasa a ser requisito de liberación para cualquier prueba con familias reales.
 - HU-18 queda marcada como la primera candidata a salir del alcance.
 
-El orden de `backlog_completo.md` no cambió: las diferencias que el agente detectó se resolvieron con condiciones sobre el orden y no moviéndolo.
+El orden de `backlog_completo.md` no cambió; resolvimos las diferencias que el agente detectó con estas tres condiciones.
