@@ -18,11 +18,13 @@ Le dimos a una sesión de agente el backlog, el SRS y el contexto del equipo, y 
 | **Scrum Master** (rota cada sprint) | Daniel Ruán | Facilita los eventos y cuida sus tiempos, lleva el tablero y los impedimentos, revisa la DoD de incremento antes de la Sprint Review y modera si hay desacuerdo sobre si algo está terminado. En el Sprint 2 el rol pasa a Isaac González. |
 | **Developers** | Armando Arredondo, Isaac González, Daniel Ruán y Francisco Martínez | Estimaron, eligieron cuánto trabajo cabe y se descompusieron el Sprint Backlog en tareas (`tareas_tecnicas.md`). Son dueños del plan y de cumplir la Definition of Done. |
 
-Francisco y Daniel cumplen dos roles cada uno. Sus horas de PO y de SM se reservan aparte (sección 2) y sus decisiones se registran según el rol desde el que las tomaron: el PO decide qué se construye y en qué orden, y los Developers deciden cómo se construye y cuánto cabe. La Guía de Scrum (2020) le da al equipo completo la definición del Sprint Goal; aquí el PO trajo el objetivo de negocio y los Developers lo ajustaron a lo que podían terminar.
+Francisco y Daniel cumplen dos roles cada uno. Sus horas de PO y de SM se reservan aparte (sección 2) y sus decisiones se registran según el rol desde el que las tomaron: el PO decide qué se construye y en qué orden, y los Developers deciden cómo se construye y cuánto cabe. La Guía de Scrum le da al equipo completo la definición del Sprint Goal (Sutherland y Schwaber, 2020), y el SWEBOK resume la división así: el Product Owner decide qué entra al Product Backlog y el Scrum Master gestiona las actividades dentro del sprint (IEEE Computer Society, 2024, p. 11-10); aquí el PO trajo el objetivo de negocio y los Developers lo ajustaron a lo que podían terminar.
 
 ---
 
 ## 2. Capacidad del equipo
+
+El SWEBOK advierte que estimar esfuerzo en software es propenso a error porque depende de la experiencia de las personas, de su interacción y del entorno, y recomienda usar más de un enfoque y conciliarlos, con estimaciones de abajo hacia arriba hechas por quienes harán el trabajo (IEEE Computer Society, 2024, pp. 9-8–9-9). Por eso la capacidad se calcula aquí de arriba hacia abajo (horas disponibles) y se contrasta en `tareas_tecnicas.md` con la suma de abajo hacia arriba de las tareas (29.25 horas planeadas contra unas 29 disponibles).
 
 | Concepto | Cálculo | Horas |
 |---|---|---|
@@ -43,7 +45,7 @@ Francisco y Daniel cumplen dos roles cada uno. Sus horas de PO y de SM se reserv
 | Sprint Retrospective | Incluye calcular la velocidad real | 1 |
 | **Total** | | **5.5** |
 
-**Equivalencia horas a story points.** Sin velocidad histórica, partimos de la historia de referencia del backlog: HU-15 (3 SP) le tomaría a un integrante unas 6 horas productivas cumpliendo la Definition of Done, es decir, 2 horas por SP. Con 18 horas, la capacidad para historias es de 9 SP. Es la parte más frágil del cálculo, porque con 2.5 h/SP bajaría a 7 SP. En la Retrospective registramos las horas reales y desde el Sprint 2 usamos la velocidad medida.
+**Equivalencia horas a story points.** Sin velocidad histórica, partimos de la historia de referencia del backlog: HU-15 (3 SP) le tomaría a un integrante unas 6 horas productivas cumpliendo la Definition of Done, es decir, 2 horas por SP. Con 18 horas, la capacidad para historias es de 9 SP. Es la parte más frágil del cálculo, porque con 2.5 h/SP bajaría a 7 SP. En la Retrospective registramos las horas reales y desde el Sprint 2 usamos la velocidad medida, que es la base de la planeación de sprint que describe el SWEBOK: solo entra al sprint el trabajo que razonablemente se puede terminar en él (IEEE Computer Society, 2024, p. 1-17).
 
 ---
 
@@ -62,6 +64,8 @@ Es el primer paso del flujo mínimo: sin cuenta y sin perfiles no hay a quién a
 ---
 
 ## 4. Historias seleccionadas
+
+Seguimos el orden del Product Backlog: en un ciclo ágil, solo los requerimientos de mayor prioridad entran a un sprint (IEEE Computer Society, 2024, pp. 1-16–1-17), y el ajuste de alcance se hace quitando los de menor prioridad cuando no caben en la capacidad (p. 1-17).
 
 | Orden | ID | Historia | SP | Prioridad | Compromiso |
 |---|---|---|---|---|---|
@@ -142,6 +146,8 @@ La propuesta fue realista y estuvo enfocada en valor: eligió la primera rebanad
 
 ## 8. Riesgos
 
+Esta tabla funciona como registro de riesgos del sprint; el SWEBOK pide identificarlos, priorizarlos, definir su mitigación y revisarlos periódicamente, no solo al inicio (IEEE Computer Society, 2024, p. 9-9). El Scrum Master la revisa en cada Daily.
+
 | Riesgo | Qué hacemos |
 |---|---|
 | La equivalencia de 2 h/SP no tiene datos detrás | HU-01a va primero porque sola cumple buena parte del goal; registramos horas reales para la Retrospective. |
@@ -150,3 +156,11 @@ La propuesta fue realista y estuvo enfocada en valor: eligió la primera rebanad
 | El aviso de privacidad no tiene texto final | El PO entrega la versión 0 el día 3; lo que se guarda es la versión y el texto se puede actualizar con RF-01-AC-5 en el Sprint 2. |
 | Francisco es PO y Developer | Sus horas de PO están reservadas y las dudas sobre criterios se resuelven en el canal del equipo en menos de 24 horas. |
 | Cookies de sesión bloqueadas en Safari para iOS si cliente y API quedan en dominios distintos | Next.js reenvía `/api` a Express para que todo salga del mismo dominio; se decide el día 1. |
+
+---
+
+## Referencias
+
+IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
+
+Sutherland, J., & Schwaber, K. (2020). *The Scrum guide*. Scrum.org.

@@ -39,15 +39,19 @@ El SRS ya define un flujo de estados explícito (de `BORRADOR` a `CON_INDICACION
 
 ## 3. Dónde diferimos y por qué
 
+El SWEBOK enumera como factores de prioridad el valor para el usuario, la insatisfacción si el requerimiento falta (modelo de Kano), el costo de entregarlo, el riesgo técnico de implementarlo y el riesgo de que los usuarios no lo usen aunque exista (IEEE Computer Society, 2024, pp. 1-17–1-18). Los dos usamos casi los mismos factores (el agente pesó bloqueo funcional, adopción, riesgo legal y valor por punto); la diferencia de fondo está en el riesgo técnico. Para el agente, la incertidumbre técnica le resta prioridad a una historia; para nosotros es una razón para enfrentarla antes.
+
 ### 3.1 El resumen de contexto (HU-13 y HU-14)
 
 Aquí está la diferencia más grande. El agente puso el resumen con citas en el lugar 14 y en prioridad Media, con un argumento de negocio sólido: **el resumen no aporta en las primeras semanas porque todavía no hay historial que resumir**. Además señala que es la historia con más incertidumbre técnica y la que agrega un riesgo regulatorio (enviar conversaciones a un proveedor externo, RD-06).
 
-Nosotros la dejamos en Alta por dos razones. La de negocio es que el resumen es lo único que distingue a DAFI de un chat con formularios, y si no está en el alcance comprometido es la primera historia que se cae cuando el calendario se aprieta. La técnica es que, por ser la de mayor incertidumbre, conviene enfrentarla pronto: si el proveedor no cumple RD-06 o la verificación de citas descarta demasiadas, necesitamos saberlo en el sprint 3 y no en el 10.
+Nosotros la dejamos en Alta por dos razones, que corresponden a dos de los factores del SWEBOK citados arriba: el riesgo de que no se use y el riesgo técnico. La de negocio es que el resumen es lo único que distingue a DAFI de un chat con formularios, y si no está en el alcance comprometido es la primera historia que se cae cuando el calendario se aprieta. La técnica es que, por ser la de mayor incertidumbre, conviene enfrentarla pronto: si el proveedor no cumple RD-06 o la verificación de citas descarta demasiadas, necesitamos saberlo en el sprint 3 y no en el 10.
 
 El agente prioriza por el valor que recibe el usuario en el momento; nosotros mezclamos valor con reducción de riesgo técnico. Las dos lecturas son válidas, pero responden a preguntas distintas. Además, el agente que generó el backlog también había puesto el resumen en Media sin conocer la priorización del agente Product Owner. Como dos sesiones independientes coincidieron, acordamos una salida intermedia: HU-13 (sin modelo, 3 SP) sigue en Alta, y antes de comprometer HU-14 completa haremos en S04 una prueba técnica con el proveedor (*spike*) que se limite a la verificación de citas. Si la prueba sale mal, HU-14 baja a Media.
 
 ### 3.2 Eliminación de datos (HU-17)
+
+En términos del modelo de Kano, la eliminación de datos no genera satisfacción cuando existe, pero su ausencia generaría una insatisfacción muy alta en una madre que comparte fotos de sus hijos; el SWEBOK advierte que priorizar solo por satisfacción lleva a errores en casos así (IEEE Computer Society, 2024, p. 1-18). Por eso ni el agente ni nosotros la bajamos de Media.
 
 El agente la sube 5 lugares, por encima del historial y del resumen. Su argumento es que el derecho de cancelación de la LFPDPPP debe estar garantizado antes de abrir el producto a familias reales. Coincidimos en el argumento y en la prioridad (los dos la dejamos en Media); la diferencia es de orden y viene del método. El agente declaró que «el orden sigue al valor, no al orden de construcción». Nuestro orden sí considera dependencias técnicas: el borrado en cascada (conversación, fotos, eventos, registro mínimo, aviso al médico, exclusión del historial y del resumen) toca entidades que crean HU-07, HU-14 y HU-15, y construirlo antes obliga a rehacerlo cada vez que aparece una entidad nueva.
 
@@ -76,3 +80,9 @@ Intercambiamos un lugar. El agente pone las fotos antes porque son el hábito ac
 - HU-18 queda marcada como la primera candidata a salir del alcance.
 
 El orden de `backlog_completo.md` no cambió; resolvimos las diferencias que el agente detectó con estas tres condiciones.
+
+---
+
+## Referencias
+
+IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

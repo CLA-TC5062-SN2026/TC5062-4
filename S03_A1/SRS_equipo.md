@@ -12,7 +12,7 @@
 
 ### 1.1 Propósito del documento
 
-Este documento especifica qué debe hacer DAFI y bajo qué condiciones. Es el contrato del equipo para el resto del curso: los criterios de aceptación con identificador `RF-XX-AC-Y` son la base del backlog (S03), del diseño de la API (S04, cada operación de `openapi.yaml` declarará los suyos en la extensión `x-acceptance-criteria`) y de las pruebas automatizadas (S09, cada prueba llevará el identificador como nombre).
+Este documento especifica qué debe hacer DAFI y bajo qué condiciones. Es el contrato del equipo para el resto del curso: los criterios de aceptación con identificador `RF-XX-AC-Y` son la base del backlog (S03), del diseño de la API (S04, cada operación de `openapi.yaml` declarará los suyos en la extensión `x-acceptance-criteria`) y de las pruebas automatizadas (S09, cada prueba llevará el identificador como nombre). Escribimos los criterios en formato Dado que / cuando / entonces porque es la especificación basada en criterios de aceptación que describe el SWEBOK: los escenarios de BDD son a la vez el requerimiento y el caso de prueba de aceptación, lo que reduce la ambigüedad del lenguaje natural (IEEE Computer Society, 2024, pp. 1-12–1-13).
 
 Está dirigido al equipo de desarrollo, a quien diseñe las pruebas y a los stakeholders que validan que lo escrito corresponda a lo que pidieron.
 
@@ -509,6 +509,8 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 
 ### 3.5 Matriz de trazabilidad
 
+La matriz traza cada requerimiento hacia atrás, a la elicitación de donde salió; los identificadores `RF-XX-AC-Y` permiten trazarlo hacia adelante, a la API y a las pruebas, que son los dos usos de la trazabilidad que describe el SWEBOK (IEEE Computer Society, 2024, pp. 1-18–1-19).
+
 «E» es la entrevista con la cliente real de S02-A1 (`transcript_entrevista.md`, sesión B); «V» es la visión de producto acordada por el equipo en S03 (`vision_producto.md`); «D» es el SRS individual de Daniel Ruán (versión 1.2) e «I» el de Isaac González. Las aportaciones de cada SRS individual están en `diferencias_SRS.md`.
 
 | Requerimiento | Origen |
@@ -533,3 +535,9 @@ Cualquier usuario puede reportar a otro desde su perfil o desde una conversació
 | RNF-05 (TLS, cifrado en reposo, revocación de sesiones), RNF-13, RNF-14, contrato de errores con correlación | D: RNF-04, RNF-05, RNF-08, RNF-10 a RNF-13 |
 | Versión del modelo registrada en cada resumen (RF-17) | D: RF-16 (gestión de versiones del modelo) |
 | RF-01-AC-6, RF-03-AC-5, RF-03-AC-6, RF-21-AC-6, RF-22-AC-4, RNF-09 (evaluación por grupo) | I: RF-01, RF-13, RF-14, RF-15, RNF-07 |
+
+---
+
+## Referencias
+
+IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

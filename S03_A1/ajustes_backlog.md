@@ -6,7 +6,7 @@
 
 Le dimos a una sesión de agente independiente solo el `SRS_equipo.md` y las instrucciones de la actividad (entre 3 y 5 épicas, formato de historia, al menos 2 criterios por historia, Fibonacci y prioridad). Su propuesta íntegra está en `evidencia/propuesta_agente_backlog.md`: 4 épicas, 15 historias y 99 SP, con 10 historias Alta, 4 Media y 1 Baja.
 
-La propuesta era buena de entrada. Respetó las épicas del SRS, sacó los criterios de los `RF-XX-AC-Y` con su referencia y justificó cada estimación. La mayoría de nuestros cambios fueron de tamaño y de prioridad, más cuatro criterios que faltaban; el resultado es `backlog_completo.md`, con 18 historias y 97 SP.
+La propuesta era buena de entrada. Respetó las épicas del SRS, sacó los criterios de los `RF-XX-AC-Y` con su referencia y justificó cada estimación. La mayoría de nuestros cambios fueron de tamaño y de prioridad, más cuatro criterios que faltaban; el resultado es `backlog_completo.md`, con 18 historias y 97 SP. Las divisiones de la sección 1 aplican lo que el SWEBOK llama ajuste de alcance (*scope matching*): en una planeación de sprint basada en velocidad solo entra el trabajo que razonablemente se puede terminar en el sprint, y una historia de 13 SP no cumple esa condición (IEEE Computer Society, 2024, p. 1-17).
 
 ## 1. Cambios de tamaño (división de historias)
 
@@ -47,3 +47,9 @@ También acordamos la regla de que ninguna historia supere 8 SP antes de entrar 
 - Las estimaciones de las 12 historias que no se dividieron.
 - La propuesta de llevar RNF-03, RNF-04 y RNF-10 a la Definition of Done, porque aplican a todas las pantallas y no a una historia. La escribimos en `backlog_completo.md`.
 - La dependencia de RD-05 (un médico que revise preguntas y avisos), que dejamos como impedimento.
+
+---
+
+## Referencias
+
+IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.

@@ -15,7 +15,7 @@
 | Daniel Ruán Aguilar | 1.2, «validado técnicamente» | Idea original: la persona sube una foto de su piel y recibe una clasificación orientativa del modelo, con resultado no concluyente bajo un umbral, historial, eliminación, consentimiento para mejorar el modelo, métricas y versiones del modelo para el administrador. 19 RF, 13 RNF y 9 RD. |
 | Francisco Martínez Álvarez | 2.1 | Intermediario entre la familia y su médico de confianza para problemas de piel, con presuposición de la IA para el médico y primeros auxilios para lesiones menores. 23 RF, 11 RNF y 9 RD. |
 
-Los SRS de Daniel e Isaac parten del `proyecto_base.md` original y describen una app en la que DAFI clasifica una imagen y le da a la persona una orientación sobre su lesión. El de Francisco cambió de alcance después de la entrevista con la cliente real, que dijo que no usaría una app que juzgue la salud de sus hijos sin un médico de por medio. La diferencia principal es de producto y la resolvimos primero (C-01); después revisamos requerimiento por requerimiento qué se podía conservar de cada SRS.
+Los SRS de Daniel e Isaac parten del `proyecto_base.md` original y describen una app en la que DAFI clasifica una imagen y le da a la persona una orientación sobre su lesión. El de Francisco cambió de alcance después de la entrevista con la cliente real, que dijo que no usaría una app que juzgue la salud de sus hijos sin un médico de por medio. La diferencia principal es de producto y la resolvimos primero (C-01); después revisamos requerimiento por requerimiento qué se podía conservar de cada SRS. Tratamos la consolidación como una validación de requerimientos por revisión desde varias perspectivas, que el SWEBOK recomienda para encontrar errores, omisiones y supuestos inválidos (IEEE Computer Society, 2024, pp. 1-15–1-16): cada SRS individual funcionó como la revisión de los otros, y las preguntas guía fueron si un requerimiento representa una necesidad real de la cliente y si es consistente con los demás.
 
 ## 2. Análisis de diferencias
 
@@ -188,3 +188,9 @@ Los RF se renumeraron por épica en el SRS de equipo. Estas tablas permiten rast
 ## 5. Efecto en el backlog
 
 Los cambios de esta consolidación que tocan historias ya creadas se reflejaron en `backlog_completo.md` y en GitHub: HU-01 usa ahora 30 minutos para el enlace de restablecimiento, y RNF-13 y RNF-14 se agregaron a la Definition of Done. Los demás criterios nuevos quedan cubiertos por las historias que ya incluyen su RF y se probarán con su identificador: RF-01-AC-5, RF-01-AC-6, RF-02-AC-5, RF-03-AC-4 a AC-6 en HU-01; RF-11-AC-7 en HU-07; RF-18-AC-4 en HU-15; RF-21-AC-5 y AC-6 en HU-17, y RF-22-AC-4 en HU-18. HU-01 y HU-18 crecieron, así que su estimación se revisará en la primera planeación de sprint.
+
+---
+
+## Referencias
+
+IEEE Computer Society. (2024). *Guide to the software engineering body of knowledge (SWEBOK Guide)* (Versión 4.0a; H. Washizaki, Ed.). IEEE Computer Society.
