@@ -1,0 +1,3612 @@
+openapi: 3.0.3
+info:
+  title: DAFI REST API
+  version: 1.0.0
+  description: Contrato spec-first de la API de DAFI. Los clientes no deben depender de campos no declarados.
+servers:
+- url: https://api.dafi.example.com
+  description: Producción
+- url: http://localhost:3001
+  description: Desarrollo
+tags:
+- name: Identidad
+- name: Familias
+- name: Perfiles
+- name: Circulo medico
+- name: Conversaciones
+- name: Eventos
+- name: Fotos
+- name: Resumen
+- name: Notificaciones
+- name: Reportes
+- name: Catalogos
+- name: Privacidad
+- name: Administracion
+paths:
+  /api/v1/users:
+    post:
+      tags:
+      - Identidad
+      summary: Registrar cuidador principal
+      operationId: registerUser
+      x-acceptance-criteria:
+      - RF-01-AC-1
+      - RF-01-AC-2
+      - RF-01-AC-3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/email-verifications/{token}:
+    post:
+      tags:
+      - Identidad
+      summary: Verificar correo
+      operationId: verifyEmail
+      x-acceptance-criteria:
+      - RF-01-AC-4
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/privacy-consents:
+    post:
+      tags:
+      - Identidad
+      summary: Aceptar nueva versión del aviso
+      operationId: acceptPrivacyNotice
+      x-acceptance-criteria:
+      - RF-01-AC-5
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivacyConsentRequest'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/sessions:
+    post:
+      tags:
+      - Identidad
+      summary: Iniciar sesión
+      operationId: createSession
+      x-acceptance-criteria:
+      - RF-02-AC-1
+      - RF-02-AC-2
+      - RF-02-AC-3
+      - RF-01-AC-5
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/sessions/current:
+    delete:
+      tags:
+      - Identidad
+      summary: Cerrar sesión
+      operationId: deleteSession
+      x-acceptance-criteria:
+      - RF-02-AC-4
+      - RF-02-AC-5
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Operación realizada sin contenido.
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/password-resets:
+    post:
+      tags:
+      - Identidad
+      summary: Solicitar recuperación de acceso
+      operationId: requestPasswordReset
+      x-acceptance-criteria:
+      - RF-03-AC-1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '202':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/password-resets/{token}:
+    put:
+      tags:
+      - Identidad
+      summary: Restablecer contraseña
+      operationId: resetPassword
+      x-acceptance-criteria:
+      - RF-03-AC-2
+      - RF-03-AC-3
+      - RF-03-AC-4
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPasswordRequest'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/users/me:
+    patch:
+      tags:
+      - Identidad
+      summary: Actualizar cuenta
+      operationId: updateCurrentUser
+      x-acceptance-criteria:
+      - RF-03-AC-6
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+      - Identidad
+      summary: Solicitar eliminación de cuenta
+      operationId: deleteCurrentUser
+      x-acceptance-criteria:
+      - RF-21-AC-4
+      - RF-21-AC-5
+      responses:
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '202':
+          description: Solicitud de eliminación aceptada para procesamiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionStatus'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+  /api/v1/profiles:
+    get:
+      tags:
+      - Perfiles
+      summary: Listar perfiles de la familia
+      operationId: listProfiles
+      x-acceptance-criteria:
+      - RF-04-AC-1
+      - RF-04-AC-2
+      - RF-05-AC-1
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfilePage'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+      - Perfiles
+      summary: Crear perfil de paciente
+      operationId: createProfile
+      x-acceptance-criteria:
+      - RF-04-AC-1
+      - RF-04-AC-2
+      - RF-04-AC-3
+      - RF-04-AC-5
+      - RF-05-AC-1
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileCreate'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/profiles/{profileId}:
+    patch:
+      tags:
+      - Perfiles
+      summary: Actualizar perfil
+      operationId: updateProfile
+      x-acceptance-criteria:
+      - RF-04-AC-4
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfilePatch'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+      - Perfiles
+      summary: Solicitar eliminación de perfil
+      operationId: deleteProfile
+      x-acceptance-criteria:
+      - RF-21-AC-4
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '202':
+          description: Solicitud de eliminación aceptada para procesamiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionStatus'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+  /api/v1/consents/{token}:
+    post:
+      tags:
+      - Perfiles
+      summary: Aceptar consentimiento de otro adulto
+      operationId: acceptAdultConsent
+      x-acceptance-criteria:
+      - RF-05-AC-3
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentDecision'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+      - Perfiles
+      summary: Revocar consentimiento de otro adulto
+      operationId: revokeAdultConsent
+      x-acceptance-criteria:
+      - RF-05-AC-4
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '202':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionStatus'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/families/current/co-caregivers:
+    post:
+      tags:
+      - Familias
+      summary: Invitar cocuidador
+      operationId: inviteCoCaregiver
+      x-acceptance-criteria:
+      - RF-06-AC-1
+      - RF-06-AC-3
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationCreate'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/families/current/co-caregivers/{membershipId}:
+    delete:
+      tags:
+      - Familias
+      summary: Retirar cocuidador
+      operationId: removeCoCaregiver
+      x-acceptance-criteria:
+      - RF-06-AC-4
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: membershipId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Operación realizada sin contenido.
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/medical-memberships:
+    post:
+      tags:
+      - Circulo medico
+      summary: Invitar médico
+      operationId: inviteDoctor
+      x-acceptance-criteria:
+      - RF-07-AC-1
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoctorInvitationCreate'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+      - Circulo medico
+      summary: Listar círculo médico
+      operationId: listMedicalMemberships
+      x-acceptance-criteria:
+      - RF-08-AC-1
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalMembershipPage'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/medical-memberships/{token}/acceptance:
+    post:
+      tags:
+      - Circulo medico
+      summary: Aceptar invitación médica
+      operationId: acceptDoctorInvitation
+      x-acceptance-criteria:
+      - RF-07-AC-2
+      - RF-07-AC-3
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationAcceptance'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalMembership'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/medical-memberships/{membershipId}:
+    patch:
+      tags:
+      - Circulo medico
+      summary: Cambiar permisos de historial
+      operationId: updateMedicalMembership
+      x-acceptance-criteria:
+      - RF-08-AC-2
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: membershipId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalMembershipPatch'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalMembership'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+      - Circulo medico
+      summary: Retirar médico del círculo
+      operationId: removeDoctor
+      x-acceptance-criteria:
+      - RF-08-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: membershipId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Operación realizada sin contenido.
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations:
+    post:
+      tags:
+      - Conversaciones
+      summary: Crear borrador de conversación
+      operationId: createConversation
+      x-acceptance-criteria:
+      - RF-09-AC-1
+      - RF-09-AC-2
+      - RF-09-AC-3
+      - RF-09-AC-4
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreate'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+      - Conversaciones
+      summary: Listar conversaciones con filtros
+      operationId: listConversations
+      x-acceptance-criteria:
+      - RF-16-AC-1
+      - RF-16-AC-3
+      - RF-16-AC-4
+      - RF-18-AC-1
+      - RF-18-AC-2
+      - RF-18-AC-4
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: profileId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: tag
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - updatedAt:desc
+          default: updatedAt:desc
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationPage'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}:
+    get:
+      tags:
+      - Conversaciones
+      summary: Consultar detalle e historial
+      operationId: getConversation
+      x-acceptance-criteria:
+      - RF-16-AC-2
+      - RF-17-AC-1
+      - RF-18-AC-3
+      - RF-23-AC-1
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetail'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+      - Conversaciones
+      summary: Actualizar borrador o prioridad
+      operationId: updateConversationDraft
+      x-acceptance-criteria:
+      - RF-10-AC-4
+      - RF-10-AC-5
+      - RF-16-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationPatch'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+      - Conversaciones
+      summary: Eliminar conversación completa
+      operationId: deleteConversation
+      x-acceptance-criteria:
+      - RF-21-AC-2
+      - RF-21-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '202':
+          description: Eliminación aceptada para procesamiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionStatus'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/submissions:
+    post:
+      tags:
+      - Conversaciones
+      summary: Enviar conversación al médico
+      operationId: submitConversation
+      x-acceptance-criteria:
+      - RF-01-AC-4
+      - RF-05-AC-2
+      - RF-12-AC-1
+      - RF-12-AC-2
+      - RF-12-AC-3
+      - RF-23-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionRequest'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/events:
+    post:
+      tags:
+      - Eventos
+      summary: Agregar mensaje, respuesta o indicación
+      operationId: createConversationEvent
+      x-acceptance-criteria:
+      - RF-14-AC-1
+      - RF-14-AC-2
+      - RF-14-AC-3
+      - RF-14-AC-4
+      - RF-15-AC-1
+      - RF-15-AC-2
+      - RF-15-AC-4
+      - RF-15-AC-5
+      - RF-23-AC-2
+      - RF-23-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/state:
+    patch:
+      tags:
+      - Conversaciones
+      summary: Cambiar estado de conversación
+      operationId: changeConversationState
+      x-acceptance-criteria:
+      - RF-14-AC-2
+      - RF-15-AC-2
+      - RF-15-AC-3
+      - RF-20-AC-2
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateChange'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/photos:
+    post:
+      tags:
+      - Fotos
+      summary: Adjuntar foto a conversación
+      operationId: uploadPhoto
+      x-acceptance-criteria:
+      - RF-11-AC-1
+      - RF-11-AC-4
+      - RF-11-AC-5
+      - RF-11-AC-6
+      - RF-23-AC-2
+      - RF-23-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PhotoUpload'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photo'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/photos/{photoId}:
+    get:
+      tags:
+      - Fotos
+      summary: Obtener foto autorizada
+      operationId: getPhoto
+      x-acceptance-criteria:
+      - RF-11-AC-5
+      - RF-16-AC-2
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: photoId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoContent'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+      - Fotos
+      summary: Eliminar foto del borrador
+      operationId: deletePhoto
+      x-acceptance-criteria:
+      - RF-21-AC-1
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: photoId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Operación realizada sin contenido.
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/summary:
+    get:
+      tags:
+      - Resumen
+      summary: Consultar resumen verificable
+      operationId: getConversationSummary
+      x-acceptance-criteria:
+      - RF-17-AC-1
+      - RF-17-AC-2
+      - RF-17-AC-3
+      - RF-17-AC-4
+      - RF-17-AC-5
+      - RF-23-AC-1
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Summary'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/summary/feedback:
+    post:
+      tags:
+      - Resumen
+      summary: Reportar cita incorrecta
+      operationId: createSummaryFeedback
+      x-acceptance-criteria:
+      - RF-17-AC-6
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummaryFeedbackCreate'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/notifications:
+    get:
+      tags:
+      - Notificaciones
+      summary: Listar notificaciones
+      operationId: listNotifications
+      x-acceptance-criteria:
+      - RF-19-AC-1
+      - RF-19-AC-2
+      - RF-20-AC-1
+      - RF-20-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPage'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/reports:
+    post:
+      tags:
+      - Reportes
+      summary: Crear reporte
+      operationId: createReport
+      x-acceptance-criteria:
+      - RF-22-AC-1
+      - RF-22-AC-4
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportCreate'
+      responses:
+        '201':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/reports:
+    get:
+      tags:
+      - Reportes
+      summary: Listar reportes para administración
+      operationId: listReports
+      x-acceptance-criteria:
+      - RF-22-AC-1
+      - RF-22-AC-2
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportPage'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/reports/{reportId}:
+    patch:
+      tags:
+      - Reportes
+      summary: Atender reporte sin acceder a contenido clínico
+      operationId: resolveReport
+      x-acceptance-criteria:
+      - RF-22-AC-1
+      - RF-22-AC-2
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportPatch'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio o validación semántica incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/users/me/password:
+    patch:
+      tags:
+      - Identidad
+      summary: Cambiar contraseña del usuario autenticado
+      operationId: changeCurrentPassword
+      x-acceptance-criteria:
+      - RF-03-AC-5
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/families/current/co-caregivers/{token}/acceptance:
+    post:
+      tags:
+      - Familias
+      summary: Aceptar invitación de cocuidador
+      operationId: acceptCoCaregiverInvitation
+      x-acceptance-criteria:
+      - RF-06-AC-2
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoCaregiverAcceptanceRequest'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/families/current/co-caregivers/me:
+    delete:
+      tags:
+      - Familias
+      summary: Salir voluntariamente de la familia
+      operationId: leaveCurrentFamily
+      x-acceptance-criteria:
+      - RF-06-AC-5
+      security:
+      - bearerAuth: []
+      responses:
+        '202':
+          description: Salida aceptada para procesamiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionStatus'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/context-questions:
+    get:
+      tags:
+      - Catalogos
+      summary: Consultar preguntas de contexto por etiquetas
+      operationId: listContextQuestions
+      x-acceptance-criteria:
+      - RF-10-AC-1
+      - RF-10-AC-2
+      - RF-10-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: tags
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextQuestionPage'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/privacy-overview:
+    get:
+      tags:
+      - Privacidad
+      summary: Consultar datos, permisos y retención
+      operationId: getPrivacyOverview
+      x-acceptance-criteria:
+      - RF-21-AC-6
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyOverview'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/users/{userId}:
+    patch:
+      tags:
+      - Administracion
+      summary: Activar o desactivar una cuenta
+      operationId: updateUserStatus
+      x-acceptance-criteria:
+      - RF-22-AC-3
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUserPatch'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/conversations/{conversationId}/assignment:
+    patch:
+      tags:
+      - Conversaciones
+      summary: Reasignar conversación a un médico
+      operationId: assignConversationDoctor
+      x-acceptance-criteria:
+      - RF-08-AC-4
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationAssignmentPatch'
+      responses:
+        '200':
+          description: Operación realizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente o inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operación no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/medical-invitations/{token}:
+    delete:
+      tags:
+      - Circulo medico
+      summary: Rechazar invitación médica
+      operationId: rejectDoctorInvitation
+      x-acceptance-criteria:
+      - RF-07-AC-4
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Invitación rechazada.
+        '400':
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recurso no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Regla de negocio incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno con identificador de correlación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      - correlationId
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        correlationId:
+          type: string
+    MessageResponse:
+      type: object
+      required:
+      - message
+      properties:
+        message:
+          type: string
+    AuthResponse:
+      type: object
+      required:
+      - accessToken
+      - tokenType
+      - expiresIn
+      - user
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          enum:
+          - Bearer
+        expiresIn:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      required:
+      - id
+      - email
+      - name
+      - role
+      - emailVerified
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+          - CAREGIVER
+          - CO_CAREGIVER
+          - DOCTOR
+          - ADMIN
+        emailVerified:
+          type: boolean
+    RegisterRequest:
+      type: object
+      required:
+      - email
+      - password
+      - name
+      - adultDeclaration
+      - healthDataConsent
+      - minorDataConsent
+      - privacyNoticeVersion
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        adultDeclaration:
+          type: boolean
+        healthDataConsent:
+          type: boolean
+        minorDataConsent:
+          type: boolean
+        privacyNoticeVersion:
+          type: string
+    PrivacyConsentRequest:
+      type: object
+      required:
+      - version
+      - accepted
+      properties:
+        version:
+          type: string
+        accepted:
+          type: boolean
+          enum:
+          - true
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    PasswordResetRequest:
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+    NewPasswordRequest:
+      type: object
+      required:
+      - password
+      properties:
+        password:
+          type: string
+          minLength: 8
+    UserPatch:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+    Profile:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        type:
+          type: string
+          enum:
+          - MINOR
+          - SELF
+          - OTHER_ADULT
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - PENDING_CONSENT
+          - DELETION_PENDING
+        allergies:
+          type: array
+          items:
+            type: string
+        continuousMedications:
+          type: array
+          items:
+            type: string
+    ProfileCreate:
+      type: object
+      required:
+      - name
+      - birthDate
+      - type
+      properties:
+        name:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        type:
+          type: string
+          enum:
+          - MINOR
+          - SELF
+          - OTHER_ADULT
+        representedAdultEmail:
+          type: string
+          format: email
+        allergies:
+          type: array
+          items:
+            type: string
+        continuousMedications:
+          type: array
+          items:
+            type: string
+    ProfilePatch:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+        allergies:
+          type: array
+          items:
+            type: string
+        continuousMedications:
+          type: array
+          items:
+            type: string
+        summaryEnabled:
+          type: boolean
+    ProfilePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile'
+    ConsentDecision:
+      type: object
+      required:
+      - accepted
+      - privacyNoticeVersion
+      properties:
+        accepted:
+          type: boolean
+          enum:
+          - true
+        privacyNoticeVersion:
+          type: string
+    InvitationCreate:
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+    DoctorInvitationCreate:
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+        profileIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+    InvitationAcceptance:
+      type: object
+      required:
+      - acceptedTerms
+      properties:
+        acceptedTerms:
+          type: boolean
+          enum:
+          - true
+        name:
+          type: string
+        specialty:
+          type: string
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - PENDING
+          - ACCEPTED
+          - EXPIRED
+        expiresAt:
+          type: string
+          format: date-time
+    MedicalMembership:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        historyPermissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+    MedicalMembershipPatch:
+      type: object
+      properties:
+        historyPermissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+    MedicalMembershipPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalMembership'
+    Conversation:
+      type: object
+      required:
+      - id
+      - profileId
+      - doctorMembershipId
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+        doctorMembershipId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - SENT
+          - NEEDS_INFORMATION
+          - ANSWERED
+          - CLOSED
+          - SIN_MEDICO
+        priorityFamily:
+          type: boolean
+        tags:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: string
+    ConversationCreate:
+      type: object
+      required:
+      - profileId
+      - doctorMembershipId
+      - tags
+      properties:
+        profileId:
+          type: string
+          format: uuid
+        doctorMembershipId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        tags:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: string
+    ConversationPatch:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+        tags:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: string
+        contextAnswers:
+          type: object
+          additionalProperties:
+            type: string
+        priorityFamily:
+          type: boolean
+        doctorMembershipId:
+          type: string
+          format: uuid
+          description: Permite reasignar una conversación en estado SIN_MEDICO.
+    SubmissionRequest:
+      type: object
+      required:
+      - confirmEmergencyNotice
+      properties:
+        confirmEmergencyNotice:
+          type: boolean
+          enum:
+          - true
+    Event:
+      type: object
+      required:
+      - id
+      - type
+      - occurredAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - MESSAGE
+          - CONTEXT_ANSWER
+          - INDICATION
+          - STATE_CHANGE
+        text:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+    EventCreate:
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - MESSAGE
+          - CONTEXT_ANSWER
+          - INDICATION
+        text:
+          type: string
+        decision:
+          type: string
+        deadlineDays:
+          type: integer
+          minimum: 1
+    StateChange:
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          type: string
+          enum:
+          - NEEDS_INFORMATION
+          - ANSWERED
+          - CLOSED
+        reason:
+          type: string
+    ConversationDetail:
+      allOf:
+      - $ref: '#/components/schemas/Conversation'
+      - type: object
+        properties:
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/Event'
+          summaryStatus:
+            type: string
+            enum:
+            - READY
+            - PENDING
+            - UNAVAILABLE
+    ConversationPage:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        nextCursor:
+          type: string
+          nullable: true
+    PhotoUpload:
+      type: object
+      required:
+      - file
+      - sensitiveZone
+      properties:
+        file:
+          type: string
+          format: binary
+        sensitiveZone:
+          type: boolean
+    Photo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mime:
+          type: string
+          enum:
+          - image/jpeg
+        bytes:
+          type: integer
+        sensitiveZone:
+          type: boolean
+    PhotoContent:
+      type: string
+      format: binary
+    Summary:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - READY
+          - PENDING
+          - UNAVAILABLE
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              citations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    text:
+                      type: string
+                    sourceEventId:
+                      type: string
+                      format: uuid
+    SummaryFeedbackCreate:
+      type: object
+      required:
+      - citationEventId
+      - reason
+      properties:
+        citationEventId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+    NotificationPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+        nextCursor:
+          type: string
+          nullable: true
+    ReportCreate:
+      type: object
+      required:
+      - type
+      - reason
+      properties:
+        type:
+          type: string
+        reason:
+          type: string
+        resourceId:
+          type: string
+          format: uuid
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        reason:
+          type: string
+        status:
+          type: string
+          enum:
+          - OPEN
+          - RESOLVED
+          - DISMISSED
+    ReportPatch:
+      type: object
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          enum:
+          - RESOLVED
+          - DISMISSED
+        resolutionNote:
+          type: string
+    ReportPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+        nextCursor:
+          type: string
+          nullable: true
+    DeletionStatus:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - PENDING
+          - COMPLETED
+    PasswordChangeRequest:
+      type: object
+      required:
+      - currentPassword
+      - newPassword
+      properties:
+        currentPassword:
+          type: string
+          minLength: 8
+        newPassword:
+          type: string
+          minLength: 8
+    CoCaregiverAcceptanceRequest:
+      type: object
+      required:
+      - name
+      - password
+      - adultDeclaration
+      - healthDataConsent
+      - minorDataConsent
+      - privacyNoticeVersion
+      properties:
+        name:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        adultDeclaration:
+          type: boolean
+          enum:
+          - true
+        healthDataConsent:
+          type: boolean
+          enum:
+          - true
+        minorDataConsent:
+          type: boolean
+          enum:
+          - true
+        privacyNoticeVersion:
+          type: string
+    ConversationAssignmentPatch:
+      type: object
+      required:
+      - doctorMembershipId
+      properties:
+        doctorMembershipId:
+          type: string
+          format: uuid
+    ContextQuestion:
+      type: object
+      required:
+      - code
+      - text
+      - type
+      - required
+      properties:
+        code:
+          type: string
+        text:
+          type: string
+        type:
+          type: string
+          enum:
+          - TEXT
+          - BOOLEAN
+          - NUMBER
+          - DATE
+        required:
+          type: boolean
+        group:
+          type: string
+        tagCodes:
+          type: array
+          items:
+            type: string
+    ContextQuestionPage:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextQuestion'
+    PrivacyOverview:
+      type: object
+      required:
+      - profiles
+      - medicalMemberships
+      - retentionPolicy
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile'
+        medicalMemberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalMembership'
+        retentionPolicy:
+          type: string
+        privacyNoticeVersion:
+          type: string
+    AdminUserPatch:
+      type: object
+      required:
+      - status
+      - reason
+      properties:
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - DISABLED
+        reason:
+          type: string
+          minLength: 3
+    AdminUser:
+      allOf:
+      - $ref: '#/components/schemas/User'
+      - type: object
+        properties:
+          status:
+            type: string
+            enum:
+            - ACTIVE
+            - DISABLED
+          disabledAt:
+            type: string
+            format: date-time
+            nullable: true

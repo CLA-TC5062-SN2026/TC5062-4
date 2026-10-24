@@ -1,0 +1,23 @@
+== 1. Registro: usuario + familia + cuidador principal en una transacción (debe pasar)
+== 2. Familia sin cuidador principal (debe fallar al confirmar)
+psql:evidencia/prueba_esquema.sql:13: ERROR:  La familia 98cea098-9519-4f95-b20b-fac8a417f571 no tiene cuidador principal
+CONTEXT:  PL/pgSQL function verificar_cuidador_principal() line 14 at RAISE
+== 3. Perfil, médica en el círculo, conversación con etiqueta y mensaje solo con foto (debe pasar)
+== 3b. Un médico sale del círculo: su permiso de «Compartir historial» se borra (consolidación con Daniel)
+ permisos_restantes 
+--------------------
+                  0
+(1 row)
+
+== 4. Conversación dirigida a un médico fuera del círculo (debe fallar)
+psql:evidencia/prueba_esquema.sql:47: ERROR:  El médico 99999999-9999-4999-8999-999999999999 no pertenece al círculo de la familia del perfil 33333333-3333-4333-8333-333333333333
+CONTEXT:  PL/pgSQL function verificar_medico_en_circulo() line 19 at RAISE
+== 5. Correo duplicado sin distinguir mayúsculas (debe fallar)
+psql:evidencia/prueba_esquema.sql:50: ERROR:  duplicate key value violates unique constraint "uq_usuario_correo"
+DETAIL:  Key (lower(correo::text))=(ana@example.com) already exists.
+== 6. Borrar la familia borra en cascada perfiles, conversaciones, eventos y la cuenta del cuidador
+ cuidadores | perfiles | conversaciones | eventos | medicos_conservados 
+------------+----------+----------------+---------+---------------------
+          0 |        0 |              0 |       0 |                   2
+(1 row)
+

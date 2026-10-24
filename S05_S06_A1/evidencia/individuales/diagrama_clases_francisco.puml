@@ -1,0 +1,408 @@
+@startuml diagrama_clases
+' DAFI: diagrama de clases del dominio. S04-A1, Parte 3.
+' Francisco Martínez Álvarez, A01840483
+' Versión revisada de la propuesta del agente (evidencia/propuesta_agente_clases.puml).
+' Los cambios y sus razones están en revision_diagrama_clases.md (D1 a D6).
+' Coherente con el SRS de equipo v3.0 y con S04_A2/openapi.yaml.
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam ArrowColor #444444
+skinparam classBorderColor #333333
+skinparam classBackgroundColor #FFFFFF
+skinparam packageBorderColor #9AA0A6
+skinparam packageBackgroundColor #F7F8FA
+skinparam noteBackgroundColor #FFFBE6
+skinparam noteBorderColor #C9B458
+hide empty members
+hide enum methods
+scale max 4000 width
+
+title DAFI · Diagrama de clases del dominio
+
+package "Cuentas y familia" {
+  abstract class Usuario {
+    id : ObjectId
+    nombre : String
+    correo : String {unique}
+    hashContrasena : String
+    correoVerificado : Boolean
+    activo : Boolean
+    creadoEn : DateTime
+  }
+  class Cuidador {
+    tipo : TipoCuidador
+    declaraMayorDeEdad : Boolean
+    consienteDatosPropios : Boolean
+    consienteDatosMenores : Boolean
+    declaradoEn : DateTime
+  }
+  class Medico {
+    especialidad : String [0..1]
+    versionTerminos : Integer
+    terminosAceptadosEn : DateTime
+  }
+  class Administrador
+  class Familia {
+    id : ObjectId
+    nombre : String
+    creadaEn : DateTime
+  }
+  class MiembroCirculo <<asociación>> {
+    aceptadoEn : DateTime
+  }
+  class Invitacion {
+    id : ObjectId
+    tipo : TipoInvitacion
+    correo : String
+    estado : EstadoInvitacion
+    creadaEn : DateTime
+    venceEn : DateTime
+  }
+  class Aviso {
+    codigo : CodigoAviso
+    version : Integer
+    texto : String
+    requiereAceptacion : Boolean
+    revisadoPor : String [0..1]
+    publicadoEn : DateTime
+  }
+  class AceptacionAviso {
+    aceptadoEn : DateTime
+  }
+}
+
+package "Pacientes" {
+  class PerfilPaciente {
+    id : ObjectId
+    tipo : TipoPerfil
+    nombre : String
+    fechaNacimiento : Date
+    alergias : String [0..*]
+    medicamentos : String [0..*]
+    compartirConCocuidador : Boolean
+    resumenActivo : Boolean
+    /edadAnios : Integer
+    /estado : EstadoPerfil
+  }
+  class ConsentimientoAdulto {
+    correo : String
+    estado : EstadoConsentimiento
+    venceEn : DateTime
+    otorgadoEn : DateTime [0..1]
+    revocadoEn : DateTime [0..1]
+  }
+  class PermisoHistorial <<asociación>> {
+    compartirHistorial : Boolean
+    actualizadoEn : DateTime
+  }
+}
+
+package "Catálogos" {
+  class Etiqueta {
+    codigo : String
+    nombre : String
+  }
+  class PreguntaContexto {
+    codigo : String
+    texto : String
+    tipoRespuesta : TipoRespuesta
+    opciones : String [0..*]
+    obligatoria : Boolean
+    esGeneral : Boolean
+  }
+}
+
+package "Conversaciones" {
+  class Conversacion {
+    id : ObjectId
+    titulo : String
+    estado : EstadoConversacion
+    prioridadIndicada : Boolean
+    creadaEn : DateTime
+    enviadaEn : DateTime [0..1]
+    avisoSinRespuestaEn : DateTime [0..1]
+    /ultimoEventoEn : DateTime
+  }
+  class Respuesta {
+    opcion : String [0..1]
+    texto : String [0..1]
+    numero : Decimal [0..1]
+    actualizadaEn : DateTime
+  }
+  class Foto {
+    id : ObjectId
+    claveArchivo : String
+    bytes : Integer
+    anchoPx : Integer
+    altoPx : Integer
+    zonaSensible : Boolean
+    subidaEn : DateTime
+  }
+  abstract class Evento {
+    id : ObjectId
+    fecha : DateTime
+  }
+  class Mensaje {
+    texto : String
+    respondeASolicitud : Boolean
+  }
+  class SolicitudInformacion {
+    texto : String
+    tipo : TipoSolicitud
+  }
+  class Indicacion {
+    texto : String
+    decision : DecisionMedica [0..1]
+    plazoDias : Integer [0..1]
+    vigente : Boolean
+  }
+  class CambioEstado {
+    estadoAnterior : EstadoConversacion [0..1]
+    estadoNuevo : EstadoConversacion
+  }
+  class RespuestaRegistrada {
+    valor : String
+  }
+  class FotoAgregada
+  class CitaMarcada {
+    citaId : String
+  }
+}
+
+package "Contexto para el médico" {
+  class ResumenContexto {
+    estado : EstadoResumen
+    proveedorModelo : String [0..1]
+    versionModelo : String [0..1]
+    generadoEn : DateTime
+  }
+  class CitaTextual {
+    /id : String
+    grupo : GrupoResumen
+    inicio : Integer
+    fin : Integer
+    texto : String
+  }
+}
+
+package "Privacidad y confianza" {
+  class RegistroAcceso {
+    recurso : TipoRecurso
+    fecha : DateTime
+  }
+  class Notificacion {
+    tipo : TipoNotificacion
+    texto : String
+    leida : Boolean
+    creadaEn : DateTime
+  }
+  class RegistroBorrado {
+    conversacionId : ObjectId
+    enviadaEn : DateTime
+    borradaEn : DateTime
+  }
+  abstract class Reporte {
+    id : ObjectId
+    creadoEn : DateTime
+    atendido : Boolean
+  }
+  class ReporteAbuso {
+    motivo : String
+  }
+  class ReporteTecnico {
+    descripcion : String
+    pantalla : String
+    ultimoCorrelacionId : String [0..1]
+  }
+}
+
+package "Enumeraciones" {
+  enum TipoCuidador {
+    PRINCIPAL
+    COCUIDADOR
+  }
+  enum TipoPerfil {
+    MENOR
+    PROPIO
+    ADULTO_REPRESENTADO
+  }
+  enum EstadoPerfil {
+    ACTIVO
+    PENDIENTE_CONSENTIMIENTO
+  }
+  enum EstadoConsentimiento {
+    PENDIENTE
+    OTORGADO
+    REVOCADO
+    VENCIDO
+  }
+  enum EstadoConversacion {
+    BORRADOR
+    ENVIADA
+    EN_REVISION
+    INFO_SOLICITADA
+    CON_INDICACIONES
+    CERRADA
+    SIN_MEDICO
+  }
+  enum TipoInvitacion {
+    COCUIDADOR
+    MEDICO
+  }
+  enum EstadoInvitacion {
+    PENDIENTE
+    ACEPTADA
+    RECHAZADA
+    VENCIDA
+    CANCELADA
+  }
+  enum DecisionMedica {
+    CUIDADO_EN_CASA
+    CONSULTA_PRESENCIAL
+    ACUDIR_A_URGENCIAS
+  }
+  enum TipoSolicitud {
+    FOTOS
+    RESPUESTA
+    AMBAS
+  }
+  enum TipoRespuesta {
+    OPCION
+    TEXTO
+    OPCION_CON_TEXTO
+    NUMERO_U_OPCION
+    ZONA_CUERPO
+  }
+  enum GrupoResumen {
+    ALERGIAS_Y_MEDICAMENTOS
+    EPISODIOS_ANTERIORES
+    INDICACIONES_PREVIAS
+  }
+  enum EstadoResumen {
+    DISPONIBLE
+    NO_DISPONIBLE
+    DESACTIVADO_POR_FAMILIA
+  }
+  enum CodigoAviso {
+    PRIVACIDAD
+    EMERGENCIAS
+    SIN_RESPUESTA
+    QUE_ES_DAFI
+  }
+  enum TipoNotificacion {
+    CONVERSACION_ENVIADA
+    INFO_SOLICITADA
+    RESPUESTA_FAMILIA
+    MENSAJE_MEDICO
+    INDICACIONES
+    SIN_RESPUESTA
+    CONVERSACION_BORRADA
+    CONSENTIMIENTO
+    COCUIDADOR_SALIO
+    MEDICO_SALIO
+  }
+  enum TipoRecurso {
+    CONVERSACION
+    FOTO
+  }
+}
+
+' ───── Herencia ─────
+Usuario <|-- Cuidador
+Usuario <|-- Medico
+Usuario <|-- Administrador
+
+Evento <|-- Mensaje
+Evento <|-- SolicitudInformacion
+Evento <|-- Indicacion
+Evento <|-- CambioEstado
+Evento <|-- RespuestaRegistrada
+Evento <|-- FotoAgregada
+Evento <|-- CitaMarcada
+
+Reporte <|-- ReporteAbuso
+Reporte <|-- ReporteTecnico
+
+' ───── Familia y círculo ─────
+Familia "1" *-- "1..2" Cuidador : cuidadores
+note on link
+  {exactamente un PRINCIPAL
+   y a lo más un COCUIDADOR}
+end note
+Familia "0..*" -- "0..*" Medico : círculo médico
+(Familia, Medico) .. MiembroCirculo
+Familia "1" *-- "0..*" Invitacion : emite
+Invitacion "0..*" --> "0..1" Usuario : aceptadaPor
+Usuario "1" *-- "0..*" AceptacionAviso
+AceptacionAviso "0..*" --> "1" Aviso : versión aceptada
+
+' ───── Pacientes ─────
+Familia "1" *-- "0..*" PerfilPaciente : perfiles
+PerfilPaciente "1" *-- "0..1" ConsentimientoAdulto
+note on link
+  {solo si tipo = ADULTO_REPRESENTADO}
+end note
+ConsentimientoAdulto "0..*" --> "0..1" Aviso : versión aceptada
+PerfilPaciente "0..*" -- "0..*" Medico : historial compartido
+(PerfilPaciente, Medico) .. PermisoHistorial
+
+' ───── Conversaciones ─────
+PerfilPaciente "1" *-- "0..*" Conversacion : historial
+Conversacion "0..*" --> "1..3" Etiqueta : etiquetas
+Conversacion "0..*" --> "0..1" Medico : destinatario
+Conversacion "0..*" --> "0..1" Cuidador : abiertaPor
+Etiqueta "0..*" o-- "0..*" PreguntaContexto : preguntas específicas
+Conversacion "1" *-- "0..*" Respuesta : respuestas
+Respuesta "0..*" --> "1" PreguntaContexto : responde a
+Conversacion "1" *-- "0..6" Foto : fotos
+note on link
+  0..MAX_FOTOS (6)
+end note
+Conversacion "1" *-- "0..*" Evento : eventos {ordered}
+Evento "0..*" --> "0..1" Usuario : autor
+RespuestaRegistrada "0..*" --> "1" PreguntaContexto
+FotoAgregada "0..1" --> "1" Foto
+
+' ───── Resumen ─────
+Conversacion "1" *-- "0..*" ResumenContexto : resúmenes
+ResumenContexto "0..*" --> "1" Medico : generadoPara
+ResumenContexto "1" *-- "0..*" CitaTextual : citas
+CitaTextual "0..*" --> "1" Evento : origen
+note bottom of CitaTextual
+  id = SHA-256(eventoId + inicio + fin): estable
+  entre regeneraciones del resumen (D5).
+  inicio y fin delimitan el fragmento en el texto
+  seudonimizado del evento; al médico se le
+  muestra el fragmento original (ADR-001).
+end note
+
+' ───── Privacidad y confianza ─────
+Conversacion "1" *-- "0..*" RegistroAcceso : accesos
+RegistroAcceso "0..*" --> "1" Medico : quién
+RegistroAcceso "0..*" --> "0..1" Foto : foto vista
+Notificacion "0..*" --> "1" Usuario : destinatario
+Notificacion "0..*" --> "0..1" Conversacion : sobre
+Reporte "0..*" --> "1" Usuario : reportante
+ReporteAbuso "0..*" --> "1" Usuario : reportado
+ReporteAbuso "0..*" --> "0..1" Conversacion : desde
+
+' ───── Acomodo de las enumeraciones (solo diseño) ─────
+TipoCuidador -[hidden]down- TipoPerfil
+TipoPerfil -[hidden]down- EstadoPerfil
+EstadoPerfil -[hidden]down- EstadoConsentimiento
+EstadoConsentimiento -[hidden]down- EstadoConversacion
+TipoInvitacion -[hidden]down- EstadoInvitacion
+EstadoInvitacion -[hidden]down- DecisionMedica
+DecisionMedica -[hidden]down- TipoSolicitud
+TipoSolicitud -[hidden]down- TipoRespuesta
+GrupoResumen -[hidden]down- EstadoResumen
+EstadoResumen -[hidden]down- CodigoAviso
+CodigoAviso -[hidden]down- TipoNotificacion
+TipoNotificacion -[hidden]down- TipoRecurso
+TipoCuidador -[hidden]right- TipoInvitacion
+TipoInvitacion -[hidden]right- GrupoResumen
+
+@enduml

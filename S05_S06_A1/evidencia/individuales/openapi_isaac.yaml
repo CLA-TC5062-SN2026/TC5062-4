@@ -1,0 +1,4442 @@
+openapi: 3.0.3
+info:
+  title: DAFI — API REST (contrato spec-first)
+  version: 1.0.0
+  description: Contrato de API para DAFI v1, derivado de SRS_equipo.md v3.0 y backlog_completo.md. DAFI no
+    diagnostica, clasifica urgencias ni genera indicaciones médicas. Los mensajes e indicaciones son responsabilidad
+    de los participantes. x-acceptance-criteria liga cada operación con criterios del SRS; las validaciones
+    UI y procesos automáticos se listan por separado en x-non-http-acceptance-criteria. La selección de proveedor
+    cloud, correo e IA sigue pendiente.
+servers:
+- url: https://api.dafi.example/api/v1
+  description: URL de ejemplo; sustituir antes del despliegue
+tags:
+- name: Autenticacion
+- name: Cuentas
+- name: Familias
+- name: Perfiles
+- name: Consentimientos
+- name: Cuidadores
+- name: Medicos
+- name: Permisos
+- name: Catalogos
+- name: Conversaciones
+- name: Eventos
+- name: Fotos
+- name: Indicaciones
+- name: Historial
+- name: Resumen
+- name: Notificaciones
+- name: Privacidad
+- name: Reportes
+- name: Administracion
+security:
+- bearerAuth: []
+paths:
+  /public/info:
+    get:
+      tags:
+      - Catalogos
+      summary: Información pública, límites del sistema y aviso fijo
+      operationId: get_public_info
+      description: Información pública, límites del sistema y aviso fijo
+      x-acceptance-criteria:
+      - RF-01-AC-6
+      - RF-13-AC-1
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  descripcion:
+                    type: string
+                  avisoEmergencias:
+                    type: string
+                  numeroEmergencias:
+                    type: string
+                required:
+                - descripcion
+                - avisoEmergencias
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      parameters: []
+  /auth/register:
+    post:
+      tags:
+      - Autenticacion
+      summary: Registrar cuidador y familia
+      operationId: post_auth_register
+      description: Registrar cuidador y familia
+      x-acceptance-criteria:
+      - RF-01-AC-1
+      - RF-01-AC-2
+      - RF-01-AC-3
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sesion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Registro'
+      parameters: []
+  /auth/login:
+    post:
+      tags:
+      - Autenticacion
+      summary: Iniciar sesión y aplicar bloqueo por IP
+      operationId: post_auth_login
+      description: Iniciar sesión y aplicar bloqueo por IP
+      x-acceptance-criteria:
+      - RF-02-AC-1
+      - RF-02-AC-2
+      - RF-02-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sesion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Demasiados intentos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credenciales'
+      parameters: []
+  /auth/logout:
+    post:
+      tags:
+      - Autenticacion
+      summary: Revocar sesión vigente de forma idempotente
+      operationId: post_auth_logout
+      description: Se revoca el token cuando existe; en ausencia de sesión también responde 204 y no crea sesión.
+      x-acceptance-criteria:
+      - RF-02-AC-4
+      - RF-02-AC-5
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      parameters: []
+  /auth/verify-email:
+    post:
+      tags:
+      - Autenticacion
+      summary: Confirmar correo de registro
+      operationId: post_auth_verify_email
+      description: Confirmar correo de registro
+      x-acceptance-criteria:
+      - RF-01-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+              required:
+              - token
+      parameters: []
+  /auth/password-reset-requests:
+    post:
+      tags:
+      - Autenticacion
+      summary: Solicitar enlace de recuperación sin revelar cuenta
+      operationId: post_auth_password_reset_requests
+      description: Solicitar enlace de recuperación sin revelar cuenta
+      x-acceptance-criteria:
+      - RF-03-AC-1
+      responses:
+        '202':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correo:
+                  type: string
+                  format: email
+              required:
+              - correo
+      parameters: []
+  /auth/password-resets:
+    post:
+      tags:
+      - Autenticacion
+      summary: Restablecer contraseña con token de un solo uso
+      operationId: post_auth_password_resets
+      description: Restablecer contraseña con token de un solo uso
+      x-acceptance-criteria:
+      - RF-03-AC-2
+      - RF-03-AC-3
+      - RF-03-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                nuevaContrasena:
+                  type: string
+                  minLength: 8
+              required:
+              - token
+              - nuevaContrasena
+      parameters: []
+  /me:
+    get:
+      tags:
+      - Cuentas
+      summary: Consultar usuario y aceptación de aviso
+      operationId: get_me
+      description: Consultar usuario y aceptación de aviso
+      x-acceptance-criteria:
+      - RF-01-AC-5
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+    patch:
+      tags:
+      - Cuentas
+      summary: Editar nombre del usuario
+      operationId: patch_me
+      description: Editar nombre del usuario
+      x-acceptance-criteria:
+      - RF-03-AC-6
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+              required:
+              - nombre
+      parameters: []
+    delete:
+      tags:
+      - Privacidad
+      summary: Eliminar cuenta familiar y registrar informe de borrado
+      operationId: delete_me
+      description: 'Solo cuidador principal: elimina físicamente la cuenta familiar, perfiles, conversaciones
+        y fotos; revoca sesiones, conserva solo registros mínimos y devuelve informe de eliminación. El cliente
+        exige escribir ELIMINAR; la API vuelve a comprobarlo en X-Delete-Confirmation.'
+      x-acceptance-criteria:
+      - RF-21-AC-4
+      - RF-21-AC-5
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformeEliminacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: X-Delete-Confirmation
+        in: header
+        required: true
+        description: Confirmación explícita del cuidador principal; nunca se incluye en la URL.
+        schema:
+          type: string
+          enum:
+          - ELIMINAR
+  /me/privacy-consents:
+    post:
+      tags:
+      - Cuentas
+      summary: Aceptar nueva versión del aviso
+      operationId: post_me_privacy_consents
+      description: Aceptar nueva versión del aviso
+      x-acceptance-criteria:
+      - RF-01-AC-5
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                versionAviso:
+                  type: string
+                acepta:
+                  type: boolean
+              required:
+              - versionAviso
+              - acepta
+      parameters: []
+  /me/privacy:
+    get:
+      tags:
+      - Privacidad
+      summary: Panel privacidad, permisos y retención
+      operationId: get_me_privacy
+      description: Panel privacidad, permisos y retención
+      x-acceptance-criteria:
+      - RF-21-AC-6
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  perfiles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Perfil'
+                  diasRetencionRespaldo:
+                    type: integer
+                  avisoPrivacidadUrl:
+                    type: string
+                required:
+                - perfiles
+                - diasRetencionRespaldo
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+  /families/me:
+    get:
+      tags:
+      - Familias
+      summary: Consultar familia del cuidador
+      operationId: get_families_me
+      description: Consultar familia del cuidador
+      x-acceptance-criteria:
+      - RF-01-AC-1
+      - RF-06-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Familia'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+  /families/me/profiles:
+    get:
+      tags:
+      - Perfiles
+      summary: Listar perfiles visibles de la familia
+      operationId: get_families_me_profiles
+      description: Listar perfiles visibles de la familia
+      x-acceptance-criteria:
+      - RF-04-AC-1
+      - RF-06-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Perfil'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+    post:
+      tags:
+      - Perfiles
+      summary: Crear perfil y gestionar consentimiento según tipo
+      operationId: post_families_me_profiles
+      description: Crear perfil y gestionar consentimiento según tipo
+      x-acceptance-criteria:
+      - RF-04-AC-1
+      - RF-04-AC-2
+      - RF-04-AC-3
+      - RF-04-AC-5
+      - RF-05-AC-1
+      - RF-07-AC-5
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Perfil'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerfilInput'
+      parameters: []
+  /profiles/{profileId}:
+    get:
+      tags:
+      - Perfiles
+      summary: Consultar perfil autorizado
+      operationId: get_profiles_profileId
+      description: Consultar perfil autorizado
+      x-acceptance-criteria:
+      - RF-04-AC-1
+      - RF-10-AC-5
+      - RF-22-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Perfil'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de profileId
+    patch:
+      tags:
+      - Perfiles
+      summary: Actualizar perfil y datos usados en resumen
+      operationId: patch_profiles_profileId
+      description: Actualizar perfil y datos usados en resumen
+      x-acceptance-criteria:
+      - RF-04-AC-3
+      - RF-04-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Perfil'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                alergias:
+                  type: array
+                  items:
+                    type: string
+                medicamentos:
+                  type: array
+                  items:
+                    type: string
+                compartirConCocuidador:
+                  type: boolean
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de profileId
+    delete:
+      tags:
+      - Privacidad
+      summary: Eliminar perfil y datos vinculados
+      operationId: delete_profiles_profileId
+      description: Eliminar perfil y datos vinculados
+      x-acceptance-criteria:
+      - RF-21-AC-4
+      - RF-05-AC-4
+      - RF-04-AC-3
+      - RF-22-AC-2
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de profileId
+  /profiles/{profileId}/summary-preferences:
+    patch:
+      tags:
+      - Resumen
+      summary: Activar o desactivar resumen automático para un perfil
+      operationId: patch_profiles_profileId_summary_preferences
+      description: Activar o desactivar resumen automático para un perfil
+      x-acceptance-criteria:
+      - RF-17-AC-5
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Perfil'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                habilitado:
+                  type: boolean
+              required:
+              - habilitado
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de profileId
+  /adult-consents/accept:
+    post:
+      tags:
+      - Consentimientos
+      summary: Aceptar consentimiento del adulto representado
+      operationId: post_adult_consents_accept
+      description: Aceptar consentimiento del adulto representado
+      x-acceptance-criteria:
+      - RF-05-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                versionAviso:
+                  type: string
+              required:
+              - token
+              - versionAviso
+      parameters: []
+  /adult-consents/revoke:
+    post:
+      tags:
+      - Consentimientos
+      summary: Revocar consentimiento y borrar datos del adulto
+      operationId: post_adult_consents_revoke
+      description: Revocar consentimiento y borrar datos del adulto
+      x-acceptance-criteria:
+      - RF-05-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                confirmar:
+                  type: boolean
+              required:
+              - token
+              - confirmar
+      parameters: []
+  /families/me/co-caregiver-invitations:
+    post:
+      tags:
+      - Cuidadores
+      summary: Invitar cocuidador
+      operationId: post_families_me_co_caregiver_invitations
+      description: Invitar cocuidador
+      x-acceptance-criteria:
+      - RF-06-AC-1
+      - RF-06-AC-3
+      - RF-01-AC-4
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correo:
+                  type: string
+                  format: email
+              required:
+              - correo
+      parameters: []
+  /co-caregiver-invitations/accept:
+    post:
+      tags:
+      - Cuidadores
+      summary: Aceptar invitación y registrar cocuidador
+      operationId: post_co_caregiver_invitations_accept
+      description: Aceptar invitación y registrar cocuidador
+      x-acceptance-criteria:
+      - RF-06-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sesion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                registro:
+                  $ref: '#/components/schemas/Registro'
+              required:
+              - token
+              - registro
+      parameters: []
+  /families/me/co-caregiver:
+    delete:
+      tags:
+      - Cuidadores
+      summary: Quitar cocuidador y revocar acceso
+      operationId: delete_families_me_co_caregiver
+      description: Quitar cocuidador y revocar acceso
+      x-acceptance-criteria:
+      - RF-06-AC-4
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+  /me/family-membership:
+    delete:
+      tags:
+      - Cuidadores
+      summary: Cocuidador abandona familia
+      operationId: delete_me_family_membership
+      description: Cocuidador abandona familia
+      x-acceptance-criteria:
+      - RF-06-AC-5
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+  /families/me/doctor-invitations:
+    post:
+      tags:
+      - Medicos
+      summary: Invitar médico por correo
+      operationId: post_families_me_doctor_invitations
+      description: Invitar médico por correo
+      x-acceptance-criteria:
+      - RF-07-AC-1
+      - RF-01-AC-4
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correo:
+                  type: string
+                  format: email
+              required:
+              - correo
+      parameters: []
+  /doctor-invitations/accept:
+    post:
+      tags:
+      - Medicos
+      summary: Aceptar invitación; registrar médico si es necesario
+      operationId: post_doctor_invitations_accept
+      description: Aceptar invitación; registrar médico si es necesario
+      x-acceptance-criteria:
+      - RF-07-AC-2
+      - RF-07-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                nombre:
+                  type: string
+                contrasena:
+                  type: string
+                especialidad:
+                  type: string
+                aceptaTerminos:
+                  type: boolean
+              required:
+              - token
+              - aceptaTerminos
+      parameters: []
+  /doctor-invitations/reject:
+    post:
+      tags:
+      - Medicos
+      summary: Rechazar invitación
+      operationId: post_doctor_invitations_reject
+      description: Rechazar invitación
+      x-acceptance-criteria:
+      - RF-07-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+              required:
+              - token
+      parameters: []
+  /families/me/doctors:
+    get:
+      tags:
+      - Medicos
+      summary: Listar círculo médico
+      operationId: get_families_me_doctors
+      description: Listar círculo médico
+      x-acceptance-criteria:
+      - RF-07-AC-1
+      - RF-07-AC-3
+      - RF-09-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicoCirculo'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+  /families/me/doctors/{doctorId}:
+    delete:
+      tags:
+      - Medicos
+      summary: Quitar médico del círculo y pasar conversaciones a SIN_MEDICO
+      operationId: delete_families_me_doctors_doctorId
+      description: Quitar médico del círculo y pasar conversaciones a SIN_MEDICO
+      x-acceptance-criteria:
+      - RF-08-AC-3
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: doctorId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de doctorId
+  /me/doctor-families/{familyId}:
+    delete:
+      tags:
+      - Medicos
+      summary: Médico se retira de una familia
+      operationId: delete_me_doctor_families_familyId
+      description: Médico se retira de una familia
+      x-acceptance-criteria:
+      - RF-08-AC-3
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: familyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de familyId
+  /profiles/{profileId}/doctors/{doctorId}/history-permission:
+    put:
+      tags:
+      - Permisos
+      summary: Establecer permiso de compartir historial por médico y perfil
+      operationId: put_profiles_profileId_doctors_doctorId_history_permission
+      description: Establecer permiso de compartir historial por médico y perfil
+      x-acceptance-criteria:
+      - RF-08-AC-1
+      - RF-08-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                compartirHistorial:
+                  type: boolean
+              required:
+              - compartirHistorial
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de profileId
+      - name: doctorId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de doctorId
+  /catalog/tags:
+    get:
+      tags:
+      - Catalogos
+      summary: Consultar etiquetas y preguntas configurables
+      operationId: get_catalog_tags
+      description: Consultar etiquetas y preguntas configurables
+      x-acceptance-criteria:
+      - RF-09-AC-1
+      - RF-10-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Etiqueta'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      parameters: []
+  /catalog/emergency-notice:
+    get:
+      tags:
+      - Catalogos
+      summary: Consultar aviso fijo y número 911
+      operationId: get_catalog_emergency_notice
+      description: Consultar aviso fijo y número 911
+      x-acceptance-criteria:
+      - RF-13-AC-1
+      - RF-13-AC-2
+      - RF-13-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  texto:
+                    type: string
+                  telefono:
+                    type: string
+                required:
+                - texto
+                - telefono
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+      parameters: []
+  /conversations:
+    post:
+      tags:
+      - Conversaciones
+      summary: Crear borrador de conversación
+      operationId: post_conversations
+      description: Crear borrador de conversación
+      x-acceptance-criteria:
+      - RF-09-AC-1
+      - RF-09-AC-2
+      - RF-09-AC-3
+      - RF-07-AC-5
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversacionInput'
+      parameters: []
+    get:
+      tags:
+      - Conversaciones
+      summary: Bandeja del médico y listado de conversaciones
+      operationId: get_conversations
+      description: Bandeja del médico y listado de conversaciones
+      x-acceptance-criteria:
+      - RF-16-AC-1
+      - RF-16-AC-3
+      - RF-16-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaConversaciones'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: estado
+        in: query
+        required: false
+        schema:
+          type: string
+        description: estado
+      - name: familiaId
+        in: query
+        required: false
+        schema:
+          type: string
+        description: familiaId
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        description: cursor
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+        description: limit
+  /conversations/{conversationId}:
+    get:
+      tags:
+      - Conversaciones
+      summary: Consultar detalle autorizado de una conversación
+      operationId: get_conversations_conversationId
+      description: Consulta sin transiciones de estado. Controla permisos por familia, perfil y médico; responde
+        404 cuando el recurso existe pero no es visible. Registra auditoría de lectura RNF-08, sin modificar
+        el estado de negocio.
+      x-acceptance-criteria:
+      - RF-08-AC-1
+      - RF-14-AC-4
+      - RF-22-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+    patch:
+      tags:
+      - Conversaciones
+      summary: Editar borrador y etiquetas sin superar máximo
+      operationId: patch_conversations_conversationId
+      description: Editar borrador y etiquetas sin superar máximo
+      x-acceptance-criteria:
+      - RF-09-AC-2
+      - RF-09-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titulo:
+                  type: string
+                etiquetas:
+                  type: array
+                  minItems: 1
+                  maxItems: 3
+                  items:
+                    type: string
+                prioridadFamilia:
+                  type: boolean
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+    delete:
+      tags:
+      - Privacidad
+      summary: Borrar conversación, fotos y eventos
+      operationId: delete_conversations_conversationId
+      description: Borrar conversación, fotos y eventos
+      x-acceptance-criteria:
+      - RF-21-AC-3
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /conversations/{conversationId}/context-answers:
+    put:
+      tags:
+      - Eventos
+      summary: Guardar respuestas de contexto en borrador
+      operationId: put_conversations_conversationId_context_answers
+      description: Guardar respuestas de contexto en borrador
+      x-acceptance-criteria:
+      - RF-10-AC-1
+      - RF-10-AC-3
+      - RF-10-AC-4
+      - RF-10-AC-5
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evento'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespuestaContextoInput'
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /conversations/{conversationId}/send:
+    post:
+      tags:
+      - Conversaciones
+      summary: Enviar borrador con Idempotency-Key
+      operationId: post_conversations_conversationId_send
+      description: Enviar borrador con Idempotency-Key
+      x-acceptance-criteria:
+      - RF-12-AC-2
+      - RF-12-AC-3
+      - RF-05-AC-2
+      - RF-23-AC-3
+      - RF-09-AC-4
+      - RF-01-AC-4
+      - RF-01-AC-5
+      - RF-19-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Única por usuario por HORAS_IDEMPOTENCIA = 24 h
+  /conversations/{conversationId}/redirect:
+    post:
+      tags:
+      - Conversaciones
+      summary: Redirigir conversación SIN_MEDICO a médico activo
+      operationId: post_conversations_conversationId_redirect
+      description: Redirigir conversación SIN_MEDICO a médico activo
+      x-acceptance-criteria:
+      - RF-08-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                medicoId:
+                  type: string
+                  format: uuid
+              required:
+              - medicoId
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /conversations/{conversationId}/close:
+    post:
+      tags:
+      - Conversaciones
+      summary: Cerrar conversación por cuidador
+      operationId: post_conversations_conversationId_close
+      description: Cerrar conversación por cuidador
+      x-acceptance-criteria:
+      - RF-15-AC-3
+      - RF-14-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /conversations/{conversationId}/photos:
+    post:
+      tags:
+      - Fotos
+      summary: Subir JPEG depurado en almacenamiento privado
+      operationId: post_conversations_conversationId_photos
+      description: Subir JPEG depurado en almacenamiento privado
+      x-acceptance-criteria:
+      - RF-11-AC-1
+      - RF-11-AC-2
+      - RF-11-AC-3
+      - RF-11-AC-4
+      - RF-11-AC-5
+      - RF-23-AC-2
+      - RF-23-AC-3
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Foto'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Archivo inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+              required:
+              - archivo
+            encoding:
+              archivo:
+                contentType: image/jpeg
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+      - Fotos
+      summary: Listar fotografías permitidas
+      operationId: get_conversations_conversationId_photos
+      description: Listar fotografías permitidas
+      x-acceptance-criteria:
+      - RF-11-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Foto'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /conversations/{conversationId}/photos/{photoId}/content:
+    get:
+      tags:
+      - Fotos
+      summary: Ver JPEG autorizado sin URL permanente
+      operationId: get_conversations_conversationId_photos_photoId_content
+      description: 'Éxito: 200 image/jpeg con Content-Disposition inline; para imágenes sensibles no se ofrecen
+        opciones de descarga y se mantiene autorización en cada solicitud. La web no puede impedir capturas.'
+      x-acceptance-criteria:
+      - RF-08-AC-1
+      - RF-11-AC-6
+      - RF-21-AC-2
+      - RF-22-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: Visualizacion en linea, sin URL publica
+              schema:
+                type: string
+              example: inline
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: photoId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de photoId
+  /conversations/{conversationId}/photos/{photoId}:
+    delete:
+      tags:
+      - Fotos
+      summary: Borrar foto solamente si conversación sigue en borrador
+      operationId: delete_conversations_conversationId_photos_photoId
+      description: Borrar foto solamente si conversación sigue en borrador
+      x-acceptance-criteria:
+      - RF-21-AC-1
+      - RF-21-AC-2
+      responses:
+        '204':
+          description: Respuesta exitosa
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: photoId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de photoId
+  /conversations/{conversationId}/events:
+    get:
+      tags:
+      - Eventos
+      summary: Consultar eventos visibles cronológicamente
+      operationId: get_conversations_conversationId_events
+      description: Consultar eventos visibles cronológicamente
+      x-acceptance-criteria:
+      - RF-18-AC-3
+      - RF-14-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaEventos'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        description: cursor
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+        description: limit
+  /conversations/{conversationId}/messages:
+    post:
+      tags:
+      - Eventos
+      summary: Enviar mensaje de texto idempotente
+      operationId: post_conversations_conversationId_messages
+      description: Enviar mensaje de texto idempotente
+      x-acceptance-criteria:
+      - RF-14-AC-3
+      - RF-14-AC-4
+      - RF-23-AC-2
+      - RF-23-AC-3
+      - RF-01-AC-5
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evento'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                texto:
+                  type: string
+              required:
+              - texto
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+  /conversations/{conversationId}/information-requests:
+    post:
+      tags:
+      - Eventos
+      summary: Médico solicita más información
+      operationId: post_conversations_conversationId_information_requests
+      description: Médico solicita más información
+      x-acceptance-criteria:
+      - RF-14-AC-1
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evento'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                texto:
+                  type: string
+                requiereFotos:
+                  type: boolean
+              required:
+              - texto
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /conversations/{conversationId}/information-responses:
+    post:
+      tags:
+      - Eventos
+      summary: Familia responde información solicitada
+      operationId: post_conversations_conversationId_information_responses
+      description: Familia responde información solicitada
+      x-acceptance-criteria:
+      - RF-14-AC-2
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evento'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                texto:
+                  type: string
+                fotoIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+  /conversations/{conversationId}/indications:
+    post:
+      tags:
+      - Indicaciones
+      summary: Registrar o sustituir indicaciones vigentes del médico
+      operationId: post_conversations_conversationId_indications
+      description: Registrar o sustituir indicaciones vigentes del médico
+      x-acceptance-criteria:
+      - RF-15-AC-1
+      - RF-15-AC-2
+      - RF-15-AC-4
+      - RF-15-AC-5
+      - RF-19-AC-1
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Indicacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndicacionInput'
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /profiles/{profileId}/history:
+    get:
+      tags:
+      - Historial
+      summary: Listar historial filtrable según permisos
+      operationId: get_profiles_profileId_history
+      description: Listar historial filtrable según permisos
+      x-acceptance-criteria:
+      - RF-18-AC-1
+      - RF-18-AC-2
+      - RF-18-AC-4
+      - RF-08-AC-1
+      - RF-08-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaConversaciones'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de profileId
+      - name: etiqueta
+        in: query
+        required: false
+        schema:
+          type: string
+        description: etiqueta
+      - name: medicoId
+        in: query
+        required: false
+        schema:
+          type: string
+        description: medicoId
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        description: cursor
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+        description: limit
+  /conversations/{conversationId}/summary:
+    get:
+      tags:
+      - Resumen
+      summary: Obtener resumen verificable sin bloquear detalle
+      operationId: get_conversations_conversationId_summary
+      description: Solo citas literales del historial permitido; datos de perfil sin LLM; no se envían identificadores;
+        se descarta cita inválida; en fallo del proveedor se devuelve estado NO_DISPONIBLE y el detalle sigue
+        accesible.
+      x-acceptance-criteria:
+      - RF-17-AC-1
+      - RF-17-AC-2
+      - RF-17-AC-3
+      - RF-17-AC-4
+      - RF-17-AC-5
+      - RF-23-AC-1
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resumen'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /conversations/{conversationId}/summary/citations/{citationId}/feedback:
+    post:
+      tags:
+      - Resumen
+      summary: Marcar cita incorrecta o fuera de contexto
+      operationId: post_conversations_conversationId_summary_citations_citationId_feedback
+      description: Marcar cita incorrecta o fuera de contexto
+      x-acceptance-criteria:
+      - RF-17-AC-6
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                incorrecta:
+                  type: boolean
+              required:
+              - incorrecta
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+      - name: citationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de citationId
+  /notifications:
+    get:
+      tags:
+      - Notificaciones
+      summary: Consultar notificaciones in-app sin contenido clínico
+      operationId: get_notifications
+      description: Consultar notificaciones in-app sin contenido clínico
+      x-acceptance-criteria:
+      - RF-19-AC-1
+      - RF-19-AC-2
+      - RF-20-AC-1
+      - RF-20-AC-2
+      - RF-20-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notificacion'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+  /reports:
+    post:
+      tags:
+      - Reportes
+      summary: Enviar reporte de abuso o incidencia técnica
+      operationId: post_reports
+      description: Enviar reporte de abuso o incidencia técnica
+      x-acceptance-criteria:
+      - RF-22-AC-1
+      - RF-22-AC-4
+      responses:
+        '201':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reporte'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo:
+                  type: string
+                  enum:
+                  - ABUSO
+                  - TECNICO
+                motivo:
+                  type: string
+                usuarioReportadoId:
+                  type: string
+                  format: uuid
+                pantalla:
+                  type: string
+                correlationId:
+                  type: string
+              required:
+              - tipo
+              - motivo
+      parameters: []
+  /admin/reports:
+    get:
+      tags:
+      - Administracion
+      summary: Listar reportes sin datos clínicos
+      operationId: get_admin_reports
+      description: Listar reportes sin datos clínicos
+      x-acceptance-criteria:
+      - RF-22-AC-1
+      - RF-22-AC-2
+      - RF-22-AC-4
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reporte'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters: []
+  /admin/users/{userId}/activation:
+    patch:
+      tags:
+      - Administracion
+      summary: Desactivar cuenta y revocar acceso
+      operationId: patch_admin_users_userId_activation
+      description: Desactivar cuenta y revocar acceso
+      x-acceptance-criteria:
+      - RF-22-AC-3
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activo:
+                  type: boolean
+              required:
+              - activo
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de userId
+  /conversations/{conversationId}/openings:
+    post:
+      tags:
+      - Conversaciones
+      summary: Registrar primera apertura por el médico
+      operationId: post_conversations_conversationId_openings
+      description: Solo médico destinatario. Al abrir por primera vez ENVIADA, cambia a EN_REVISION, registra
+        auditoría de acceso y notifica a la familia. Aperturas posteriores no duplican la transición de estado.
+        Recursos de otras familias devuelven 404.
+      x-acceptance-criteria:
+      - RF-16-AC-2
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversacion'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Identificador UUID de conversationId
+  /me/password-changes:
+    post:
+      tags:
+      - Cuentas
+      summary: Cambiar contraseña y revocar otras sesiones
+      operationId: post_me_password_changes
+      description: Crea un cambio de credenciales tras verificar contraseñaActual, revoca otras sesiones y
+        envía un aviso; reintentar con la contraseña anterior no equivale a reemplazar un recurso vía PUT.
+      x-acceptance-criteria:
+      - RF-03-AC-5
+      responses:
+        '200':
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Sin permisos o cuenta no verificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto, límite o transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contrasenaActual:
+                  type: string
+                nuevaContrasena:
+                  type: string
+                  minLength: 8
+              required:
+              - contrasenaActual
+              - nuevaContrasena
+      parameters: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT sujeto a revocación de sesión, expiración por inactividad y aceptación vigente del aviso
+        de privacidad.
+  schemas:
+    Error:
+      type: object
+      properties:
+        codigo:
+          type: string
+          enum:
+          - NO_AUTENTICADO
+          - SIN_PERMISOS
+          - CUENTA_NO_VERIFICADA
+          - NO_ENCONTRADO
+          - TRANSICION_INVALIDA
+          - LIMITE_ALCANZADO
+          - CONSENTIMIENTO_PENDIENTE
+          - ARCHIVO_INVALIDO
+          - DATOS_INVALIDOS
+          - FOTO_RECHAZADA
+          - CONVERSACION_INCOMPLETA
+          - BLOQUEADO
+          - ERROR_INTERNO
+        mensaje:
+          type: string
+        correlationId:
+          type: string
+        campos:
+          type: array
+          items:
+            type: string
+      required:
+      - codigo
+      - mensaje
+      - correlationId
+    Mensaje:
+      type: object
+      properties:
+        mensaje:
+          type: string
+      required:
+      - mensaje
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        rol:
+          type: string
+          enum:
+          - CUIDADOR
+          - COCUIDADOR
+          - MEDICO
+          - ADMINISTRADOR
+        activo:
+          type: boolean
+      required:
+      - id
+      - nombre
+      - correo
+      - rol
+    Sesion:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT
+        tokenType:
+          type: string
+          enum:
+          - Bearer
+        expiresIn:
+          type: integer
+        usuario:
+          $ref: '#/components/schemas/Usuario'
+      required:
+      - accessToken
+      - tokenType
+      - expiresIn
+      - usuario
+    Familia:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cuidadorPrincipalId:
+          type: string
+          format: uuid
+        cocuidadorId:
+          type: string
+          format: uuid
+        fechaCreacion:
+          type: string
+          format: date-time
+      required:
+      - id
+      - cuidadorPrincipalId
+    Perfil:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        familiaId:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        fechaNacimiento:
+          type: string
+          format: date
+        edad:
+          type: integer
+        tipo:
+          type: string
+          enum:
+          - MENOR
+          - PROPIO_CUIDADOR
+          - ADULTO_REPRESENTADO
+        alergias:
+          type: array
+          items:
+            type: string
+        medicamentos:
+          type: array
+          items:
+            type: string
+        compartirConCocuidador:
+          type: boolean
+        resumenHabilitado:
+          type: boolean
+        estadoConsentimiento:
+          type: string
+          enum:
+          - PENDIENTE
+          - ACEPTADO
+          - REVOCADO
+      required:
+      - id
+      - familiaId
+      - nombre
+      - fechaNacimiento
+      - tipo
+    MedicoCirculo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        medicoId:
+          type: string
+          format: uuid
+        familiaId:
+          type: string
+          format: uuid
+        estado:
+          type: string
+          enum:
+          - PENDIENTE
+          - ACEPTADA
+          - RECHAZADA
+        nombre:
+          type: string
+        leyenda:
+          type: string
+          example: Contacto agregado por usted
+      required:
+      - id
+      - familiaId
+      - estado
+    Etiqueta:
+      type: object
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        preguntas:
+          type: array
+          items:
+            type: object
+            properties:
+              codigo:
+                type: string
+              texto:
+                type: string
+              tipo:
+                type: string
+              obligatoria:
+                type: boolean
+            required:
+            - codigo
+            - texto
+            - obligatoria
+      required:
+      - codigo
+      - nombre
+      - preguntas
+    Conversacion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        perfilId:
+          type: string
+          format: uuid
+        medicoId:
+          type: string
+          format: uuid
+          nullable: true
+        titulo:
+          type: string
+        etiquetas:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: string
+        estado:
+          type: string
+          enum:
+          - BORRADOR
+          - ENVIADA
+          - EN_REVISION
+          - INFO_SOLICITADA
+          - CON_INDICACIONES
+          - CERRADA
+          - SIN_MEDICO
+        prioridadFamilia:
+          type: boolean
+        fechaCreacion:
+          type: string
+          format: date-time
+        fechaEnvio:
+          type: string
+          format: date-time
+        fechaCierre:
+          type: string
+          format: date-time
+      required:
+      - id
+      - perfilId
+      - titulo
+      - etiquetas
+      - estado
+      - prioridadFamilia
+    Evento:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conversacionId:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+          enum:
+          - RESPUESTA_CONTEXTO
+          - MENSAJE
+          - FOTOGRAFIA
+          - SOLICITUD_INFORMACION
+          - INDICACION
+          - CAMBIO_ESTADO
+          - MARCA_CITA
+        autorId:
+          type: string
+          format: uuid
+        fechaHora:
+          type: string
+          format: date-time
+        texto:
+          type: string
+        codigoPregunta:
+          type: string
+        fotoId:
+          type: string
+          format: uuid
+      required:
+      - id
+      - conversacionId
+      - tipo
+      - fechaHora
+    Foto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conversacionId:
+          type: string
+          format: uuid
+        tipoMime:
+          type: string
+          enum:
+          - image/jpeg
+        tamanoBytes:
+          type: integer
+          maximum: 1048576
+        fechaCreacion:
+          type: string
+          format: date-time
+      required:
+      - id
+      - conversacionId
+      - tipoMime
+      - tamanoBytes
+    Indicacion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conversacionId:
+          type: string
+          format: uuid
+        texto:
+          type: string
+        decision:
+          type: string
+          nullable: true
+          enum:
+          - CUIDADO_CASA
+          - CONSULTA_PRESENCIAL
+          - URGENCIAS
+        plazoDias:
+          type: integer
+          minimum: 1
+          nullable: true
+        vigente:
+          type: boolean
+        fechaHora:
+          type: string
+          format: date-time
+      required:
+      - id
+      - conversacionId
+      - texto
+      - vigente
+    CitaResumen:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        textoLiteral:
+          type: string
+        categoria:
+          type: string
+          enum:
+          - EPISODIO_ANTERIOR
+          - INDICACION_PREVIA
+        eventoOrigenId:
+          type: string
+          format: uuid
+        autorId:
+          type: string
+          format: uuid
+        fechaHora:
+          type: string
+          format: date-time
+        marcadaIncorrecta:
+          type: boolean
+      required:
+      - id
+      - textoLiteral
+      - eventoOrigenId
+      - fechaHora
+    Resumen:
+      type: object
+      properties:
+        estado:
+          type: string
+          enum:
+          - DISPONIBLE
+          - DESACTIVADO
+          - SIN_HISTORIAL
+          - NO_DISPONIBLE
+        textoFijo:
+          type: string
+        alergias:
+          type: array
+          items:
+            type: string
+        medicamentos:
+          type: array
+          items:
+            type: string
+        citas:
+          type: array
+          items:
+            $ref: '#/components/schemas/CitaResumen'
+        proveedorModelo:
+          type: string
+        versionModelo:
+          type: string
+      required:
+      - estado
+      - citas
+    Notificacion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        leida:
+          type: boolean
+        mensaje:
+          type: string
+          description: Texto seguro, nunca contenido clínico ni nombre de paciente
+      required:
+      - id
+      - tipo
+      - fechaHora
+      - leida
+    Reporte:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+          enum:
+          - ABUSO
+          - TECNICO
+        motivo:
+          type: string
+        usuarioReportadoId:
+          type: string
+          format: uuid
+        fechaHora:
+          type: string
+          format: date-time
+        estado:
+          type: string
+      required:
+      - id
+      - tipo
+      - motivo
+    PaginaConversaciones:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversacion'
+        nextCursor:
+          type: string
+          nullable: true
+      required:
+      - items
+    PaginaEventos:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evento'
+        nextCursor:
+          type: string
+          nullable: true
+      required:
+      - items
+    Registro:
+      type: object
+      properties:
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        contrasena:
+          type: string
+          minLength: 8
+          writeOnly: true
+        esMayor18:
+          type: boolean
+        consentimientoDatosSalud:
+          type: boolean
+        declaracionTutelaMenores:
+          type: boolean
+        versionAviso:
+          type: string
+      required:
+      - nombre
+      - correo
+      - contrasena
+      - esMayor18
+      - consentimientoDatosSalud
+      - declaracionTutelaMenores
+      - versionAviso
+    Credenciales:
+      type: object
+      properties:
+        correo:
+          type: string
+          format: email
+        contrasena:
+          type: string
+      required:
+      - correo
+      - contrasena
+    PerfilInput:
+      type: object
+      properties:
+        nombre:
+          type: string
+        fechaNacimiento:
+          type: string
+          format: date
+        tipo:
+          type: string
+          enum:
+          - MENOR
+          - PROPIO_CUIDADOR
+          - ADULTO_REPRESENTADO
+        alergias:
+          type: array
+          items:
+            type: string
+        medicamentos:
+          type: array
+          items:
+            type: string
+        correoAdulto:
+          type: string
+          format: email
+      required:
+      - nombre
+      - fechaNacimiento
+      - tipo
+    ConversacionInput:
+      type: object
+      properties:
+        perfilId:
+          type: string
+          format: uuid
+        medicoId:
+          type: string
+          format: uuid
+        titulo:
+          type: string
+        etiquetas:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: string
+        prioridadFamilia:
+          type: boolean
+      required:
+      - perfilId
+      - medicoId
+      - titulo
+      - etiquetas
+    IndicacionInput:
+      type: object
+      properties:
+        texto:
+          type: string
+        decision:
+          type: string
+          enum:
+          - CUIDADO_CASA
+          - CONSULTA_PRESENCIAL
+          - URGENCIAS
+        plazoDias:
+          type: integer
+          minimum: 1
+      required:
+      - texto
+    RespuestaContextoInput:
+      type: object
+      properties:
+        respuestas:
+          type: array
+          items:
+            type: object
+            properties:
+              codigoPregunta:
+                type: string
+              valor:
+                type: string
+            required:
+            - codigoPregunta
+            - valor
+      required:
+      - respuestas
+    InformeEliminacion:
+      type: object
+      properties:
+        eliminado:
+          type: array
+          items:
+            type: string
+        conservado:
+          type: array
+          items:
+            type: string
+        diasRetencionRespaldo:
+          type: integer
+      required:
+      - eliminado
+      - conservado
+      - diasRetencionRespaldo
+x-non-http-acceptance-criteria:
+  RF-10-AC-2: El navegador construye y deduplica cuestionario desde GET /catalog/tags.
+  RF-11-AC-1: El cliente convierte HEIC a JPEG y elimina EXIF; POST /photos valida resultado.
+  RF-11-AC-6: El cliente muestra advertencia antes de abrir cámara; API protege visualización de imágenes.
+  RF-11-AC-7: Validación local de tamaño/formato original antes de subir JPEG.
+  RF-12-AC-1: Checklist y deshabilitar botón es UI; POST /send valida de nuevo.
+  RF-13-AC-2: Identidad del aviso entre respuestas diferentes es una prueba de UI y catálogo fijo.
+  RF-13-AC-3: Comportamiento visual del aviso en conversaciones cerradas.
+  RF-15-AC-3: Cierre por cron cada 15 minutos; no endpoint público para ejecutar scheduler.
+  RF-17-AC-2: El chequeo de citas del servicio LLM ocurre dentro del backend, no en ruta aparte.
+  RF-19-AC-1: Correo se emite desde evento guardar indicación; no endpoint para enviar correos arbitrarios.
+  RF-19-AC-2: Correo se emite tras enviar conversación con prioridad.
+  RF-20-AC-1: Aviso temporal automático por worker; GET /notifications permite consultarlo.
+  RF-20-AC-2: 'No enviar aviso después de apertura del médico: condición de worker.'
+  RF-20-AC-3: 'Plazo de 30 minutos por prioridad: condición de worker.'
+  RF-23-AC-2: El botón Reintentar es UI; Idempotency-Key protege reintentos en rutas POST.
+x-coverage-summary:
+  srsCriteria: 103
+  mappedToEndpoints: 101
+  mappedToNonHttpNotes: 15
+  endpoints: 61

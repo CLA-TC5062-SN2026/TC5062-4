@@ -1,0 +1,206 @@
+
+@startuml
+title DAFI - Diagrama de clases del dominio
+
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+hide methods
+
+package "Cuentas, familias y permisos" {
+
+  class Usuario {
+    +id: UUID
+    +nombre: String
+    +correo: String
+    +passwordHash: String
+    +rol: RolUsuario
+    +activo: Boolean
+  }
+
+  enum RolUsuario {
+    CUIDADOR
+    COCUIDADOR
+    MEDICO
+    ADMINISTRADOR
+  }
+
+  class Familia {
+    +id: UUID
+    +fechaCreacion: DateTime
+  }
+
+  class PerfilPaciente {
+    +id: UUID
+    +nombre: String
+    +fechaNacimiento: Date
+    +alergias: String[]
+    +medicamentos: String[]
+    +tipoPerfil: TipoPerfil
+    +compartirConCocuidador: Boolean
+    +resumenHabilitado: Boolean
+  }
+
+  enum TipoPerfil {
+    MENOR
+    PROPIO_CUIDADOR
+    ADULTO_REPRESENTADO
+  }
+
+  class Consentimiento {
+    +id: UUID
+    +correoAdulto: String
+    +fechaAceptacion: DateTime
+    +versionAviso: String
+    +estado: EstadoConsentimiento
+  }
+
+  enum EstadoConsentimiento {
+    PENDIENTE
+    ACEPTADO
+    REVOCADO
+  }
+
+  class CirculoMedico {
+    +id: UUID
+    +fechaInvitacion: DateTime
+    +estado: EstadoInvitacion
+  }
+
+  enum EstadoInvitacion {
+    PENDIENTE
+    ACEPTADA
+    RECHAZADA
+  }
+
+  class PermisoHistorial {
+    +id: UUID
+    +compartirHistorial: Boolean
+    +fechaModificacion: DateTime
+  }
+}
+
+package "Conversaciones y eventos" {
+
+  class Conversacion {
+    +id: UUID
+    +titulo: String
+    +estado: EstadoConversacion
+    +prioridadFamilia: Boolean
+    +fechaCreacion: DateTime
+    +fechaEnvio: DateTime
+    +fechaCierre: DateTime
+  }
+
+  enum EstadoConversacion {
+    BORRADOR
+    ENVIADA
+    EN_REVISION
+    INFO_SOLICITADA
+    CON_INDICACIONES
+    CERRADA
+    SIN_MEDICO
+  }
+
+  class Etiqueta {
+    +codigo: String
+    +nombre: String
+    +activa: Boolean
+  }
+
+  abstract class Evento {
+    +id: UUID
+    +fechaHora: DateTime
+    +autorId: UUID
+  }
+
+  class Mensaje {
+    +texto: String
+  }
+
+  class RespuestaContexto {
+    +codigoPregunta: String
+    +respuesta: String
+  }
+
+  class Fotografia {
+    +rutaPrivada: String
+    +tipoMime: String
+    +tamanoBytes: Long
+  }
+
+  class Indicacion {
+    +texto: String
+    +tipoDecision: String
+    +plazoDias: Integer
+    +vigente: Boolean
+  }
+}
+
+package "Resumen de contexto" {
+
+  class ResumenContexto {
+    +id: UUID
+    +fechaGeneracion: DateTime
+    +proveedorModelo: String
+    +versionModelo: String
+  }
+
+  class CitaResumen {
+    +id: UUID
+    +textoLiteral: String
+    +categoria: String
+    +marcadaIncorrecta: Boolean
+  }
+}
+
+' Relaciones de cuentas y familia
+
+Usuario "1" -- "0..1" Familia : cuidador principal >
+Usuario "0..1" -- "0..1" Familia : cocuidador >
+Familia "1" *-- "0..*" PerfilPaciente : contiene >
+PerfilPaciente "1" *-- "0..1" Consentimiento : consentimiento >
+Familia "1" *-- "0..*" CirculoMedico : administra >
+Usuario "1" -- "0..*" CirculoMedico : medico invitado >
+
+PerfilPaciente "1" -- "0..*" PermisoHistorial : configura >
+CirculoMedico "1" -- "0..*" PermisoHistorial : acceso por perfil >
+
+' Relaciones de conversaciones
+
+PerfilPaciente "1" -- "0..*" Conversacion : historial >
+Usuario "1" -- "0..*" Conversacion : medico asignado >
+Usuario "1" -- "0..*" Conversacion : creada por >
+Conversacion "0..*" -- "1..3" Etiqueta : clasificada con >
+
+Conversacion "1" *-- "0..*" Evento : contiene >
+Usuario "1" -- "0..*" Evento : autor >
+
+Evento <|-- Mensaje
+Evento <|-- RespuestaContexto
+Evento <|-- Fotografia
+Evento <|-- Indicacion
+
+' Relaciones del resumen
+
+Conversacion "1" -- "0..*" ResumenContexto : genera >
+ResumenContexto "1" *-- "0..*" CitaResumen : contiene >
+CitaResumen "0..*" --> "1" Evento : cita original >
+
+note right of PermisoHistorial
+  El permiso se configura
+  por medico y paciente.
+  No concede acceso a
+  otras familias.
+end note
+
+note right of CitaResumen
+  Cada cita debe coincidir
+  literalmente con su evento
+  de origen y estar autorizada.
+end note
+
+@enduml

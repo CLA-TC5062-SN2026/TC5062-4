@@ -1,0 +1,223 @@
+@startuml
+top to bottom direction
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 55
+skinparam ranksep 75
+skinparam packageStyle rectangle
+
+skinparam classBackgroundColor #F8FAFC
+skinparam classBorderColor #334155
+skinparam classArrowColor #334155
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #A16207
+
+hide methods
+
+title DAFI - Diagrama de clases del dominio
+
+package "Identidad, familia y permisos" as Identidad {
+
+  abstract class Usuario {
+    +id: UUID
+    +correo: String
+    +nombre: String
+    +passwordHash: String
+    +estado: EstadoCuenta
+    +rol: Rol
+  }
+
+  class CuidadorPrincipal
+
+  class Cocuidador
+
+  class Medico {
+    +especialidad: String [0..1]
+    +terminosAceptadosEn: DateTime
+  }
+
+  class Administrador
+
+  class Familia {
+    +id: UUID
+    +nombre: String
+    +creadaEn: DateTime
+  }
+
+  class PerfilPaciente {
+    +id: UUID
+    +nombre: String
+    +fechaNacimiento: Date
+    +tipo: TipoPerfil
+    +resumenHabilitado: Boolean
+  }
+
+  class MembresiaMedica {
+    +id: UUID
+    +estado: EstadoInvitacion
+    +aceptadaEn: DateTime [0..1]
+  }
+
+  class Consentimiento {
+    +id: UUID
+    +tipo: TipoConsentimiento
+    +estado: EstadoConsentimiento
+    +otorgadoEn: DateTime [0..1]
+  }
+
+  class PermisoHistorial {
+    +id: UUID
+    +compartirHistorial: Boolean
+    +actualizadoEn: DateTime
+  }
+}
+
+package "Conversación y línea de tiempo" as ConversacionDominio {
+
+  class Conversacion {
+    +id: UUID
+    +titulo: String
+    +estado: EstadoConversacion
+    +prioridadFamilia: Boolean
+    +ultimoEventoEn: DateTime
+  }
+
+  class Etiqueta {
+    +codigo: String
+    +nombre: String
+    +activa: Boolean
+  }
+
+  class PreguntaContexto {
+    +codigo: String
+    +texto: String
+    +tipoRespuesta: TipoRespuesta
+    +obligatoria: Boolean
+  }
+
+  abstract class Evento {
+    +id: UUID
+    +ocurrioEn: DateTime
+    +tipo: TipoEvento
+  }
+
+  class Mensaje {
+    +texto: String
+  }
+
+  class RespuestaContexto {
+    +preguntaCodigo: String
+    +valor: String
+  }
+
+  class Foto {
+    +objectKey: String
+    +mime: String
+    +bytes: Long
+    +zonaSensible: Boolean
+  }
+
+  class Indicacion {
+    +texto: String
+    +decision: DecisionMedica [0..1]
+    +plazoDias: Integer [0..1]
+    +vigente: Boolean
+  }
+
+  class CambioEstado {
+    +origen: EstadoConversacion [0..1]
+    +destino: EstadoConversacion
+  }
+}
+
+package "Resumen verificable" as ResumenDominio {
+
+  class ResumenContexto {
+    +id: UUID
+    +proveedor: String
+    +versionModelo: String
+    +generadoEn: DateTime
+  }
+
+  class CitaResumen {
+    +textoExacto: String
+    +grupo: GrupoResumen
+    +marcadaIncorrecta: Boolean
+  }
+}
+
+' Herencia de usuarios
+Usuario <|-- CuidadorPrincipal
+Usuario <|-- Cocuidador
+Usuario <|-- Medico
+Usuario <|-- Administrador
+
+' Familia, perfiles y permisos
+Familia "1" *-- "1" CuidadorPrincipal : titular
+Familia "1" o-- "0..1" Cocuidador
+Familia "1" *-- "0..*" PerfilPaciente
+Familia "1" *-- "0..*" MembresiaMedica
+
+Medico "1" -- "0..*" MembresiaMedica
+PerfilPaciente "1" *-- "0..*" Consentimiento
+PerfilPaciente "1" -- "0..*" PermisoHistorial
+MembresiaMedica "1" -- "0..*" PermisoHistorial
+
+' Conversación y catálogos
+PerfilPaciente "1" -- "0..*" Conversacion : historial
+MembresiaMedica "1" -- "0..*" Conversacion : asignadas
+
+Conversacion "1" -- "1..3" Etiqueta
+Etiqueta "0..*" -- "0..*" PreguntaContexto
+
+' Línea de tiempo
+Conversacion "1" *-- "1..*" Evento
+Usuario "1" -- "0..*" Evento : autor
+
+Evento <|-- Mensaje
+Evento <|-- RespuestaContexto
+Evento <|-- Foto
+Evento <|-- Indicacion
+Evento <|-- CambioEstado
+
+PreguntaContexto "1" -- "0..*" RespuestaContexto
+
+' Resumen verificable
+Conversacion "1" *-- "0..*" ResumenContexto
+ResumenContexto "1" *-- "0..*" CitaResumen
+CitaResumen "0..*" --> "1" Evento : fuente
+
+' Relaciones ocultas para orientar la distribución
+Usuario -[hidden]- Familia
+Familia -[hidden]- PerfilPaciente
+PerfilPaciente -[hidden]- MembresiaMedica
+MembresiaMedica -[hidden]- PermisoHistorial
+
+Conversacion -[hidden]- Etiqueta
+Etiqueta -[hidden]- PreguntaContexto
+
+Mensaje -[hidden]- RespuestaContexto
+RespuestaContexto -[hidden]- Foto
+Foto -[hidden]- Indicacion
+Indicacion -[hidden]- CambioEstado
+
+Conversacion -[hidden]- ResumenContexto
+
+note right of PermisoHistorial
+  El permiso depende de la combinación
+  PerfilPaciente + MembresiaMedica.
+end note
+
+note right of Evento
+  Evento unifica la línea de tiempo
+  y conserva autor, fecha y tipo.
+end note
+
+note right of CitaResumen
+  Cada cita referencia un Evento exacto
+  cuyo texto verifica la API.
+end note
+
+@enduml

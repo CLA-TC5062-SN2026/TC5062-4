@@ -1,0 +1,3154 @@
+openapi: 3.0.3
+info:
+  title: DAFI API (equipo)
+  version: 2.0.0
+  description: |
+    Contrato consolidado del equipo para el backend de DAFI (Node.js con Express y
+    PostgreSQL). Es la fuente de verdad a partir de S05-S06 (Spec Driven Design): el
+    esquema `esquema_bd.sql` y el código de `backend/` se derivan de él.
+
+    Consolida las especificaciones de S04-A2 de Francisco Martínez (base, 1.1.0), Isaac
+    González y Daniel Ruán, adaptadas a PostgreSQL (identificadores UUID). El análisis de
+    diferencias y la resolución de cada conflicto están en `diferencias_diseno.md`.
+
+    Esta especificación es spec-first: precede al código de S05-S06 y a las pruebas de S09.
+    Cada operación declara en `x-acceptance-criteria` los criterios Given-When-Then del
+    SRS de equipo v3.0 (`S03_A1/SRS_equipo.md`) que satisface.
+
+    **Autenticación.** Bearer token JWT (HS256) con `sub` (usuario), `rol`, `familiaId` y
+    `jti`. La API guarda el `jti` con su última actividad, de modo que la sesión expira tras
+    `MINUTOS_SESION` minutos sin peticiones y se revoca al cerrar sesión, al restablecer la
+    contraseña o al borrar la cuenta (RF-02-AC-4, RF-03-AC-3, RNF-05).
+
+    **Autorización.** La matriz de roles de la sección 3.0 del SRS se verifica antes de
+    buscar el recurso: si al rol le falta la operación responde 403 `SIN_PERMISOS`; si el
+    recurso es de otra familia o el médico no puede verlo responde 404 `NO_ENCONTRADO`.
+
+    **Errores.** Todo rechazo usa el esquema `Error` con un código del contrato de errores
+    y el identificador de correlación, también en la cabecera `X-Correlation-Id`. La
+    frontera entre códigos de validación es fija:
+
+    - 400 `SOLICITUD_MALFORMADA`: el cuerpo no se puede leer como JSON, un parámetro de
+      query viola su esquema o falta una cabecera obligatoria (`Idempotency-Key`).
+    - 404 `NO_ENCONTRADO`: un identificador de path con formato inválido se trata como
+      inexistente, para no revelar el formato de los identificadores.
+    - 413 / 415 `ARCHIVO_INVALIDO`: cuerpo demasiado grande / tipo de contenido no admitido.
+    - 422: el JSON es legible pero viola el esquema o una regla de negocio.
+
+    **Idempotencia.** Las operaciones POST con efectos que no deben repetirse (enviar una
+    conversación, subir fotos, enviar mensajes, pedir información, registrar indicaciones
+    e invitar) exigen la cabecera `Idempotency-Key`. Una repetición con la misma clave y el
+    mismo cuerpo devuelve el código y el cuerpo originales con `Idempotency-Replayed: true`
+    y sin duplicar efectos (RF-23-AC-3); la misma clave con otro cuerpo responde 422 y una
+    repetición mientras la original sigue en curso responde 409. GET, PUT y DELETE son
+    idempotentes por definición: repetir un PUT no genera eventos nuevos si el valor no
+    cambió, y un DELETE sobre un recurso ya borrado responde 404.
+
+    **PATCH.** Los PATCH usan JSON Merge Patch (RFC 7396, `application/merge-patch+json`):
+    los campos ausentes no cambian y los arreglos se reemplazan completos.
+
+    **Concurrencia.** Cuidador y cocuidador pueden editar el mismo borrador. Las
+    respuestas de lectura de conversaciones y respuestas llevan `ETag`; las escrituras
+    aceptan `If-Match` y responden 412 si el recurso cambió entretanto.
+
+    **Paginación.** Las colecciones que pueden crecer sin límite aceptan `pagina` y
+    `limite` y devuelven `{datos, paginacion}`. Las colecciones acotadas por diseño
+    (miembros de una familia, perfiles, invitaciones, familias de un médico) devuelven
+    un arreglo.
+  contact:
+    name: Equipo 4 (Armando Arredondo, Isaac González, Francisco Martínez, Daniel Ruán)
+  x-criterios-fuera-de-api:
+    - id: RF-11-AC-6
+      motivo: Aviso que el cliente muestra antes de abrir la cámara; no hay petición a la API.
+    - id: RF-11-AC-7
+      motivo: Validación de tamaño y formato del original en el cliente, antes de convertirlo.
+    - id: RF-15-AC-3
+      motivo: Cierre automático por proceso programado; su efecto se observa en GET /conversaciones/{conversacionId}.
+    - id: RF-20-AC-1
+      motivo: Aviso por proceso programado; su efecto se observa en GET /notificaciones.
+    - id: RF-20-AC-2
+      motivo: Aviso por proceso programado; su efecto se observa en GET /notificaciones.
+    - id: RF-20-AC-3
+      motivo: Aviso por proceso programado; su efecto se observa en GET /notificaciones.
+
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Desarrollo local
+  - url: https://dafi-api.onrender.com/api/v1
+    description: Ambiente del curso (Render)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Autenticación y cuenta
+    description: Registro, sesiones, verificación de correo, restablecimiento y datos de la propia cuenta (RF-01 a RF-03).
+  - name: Familias
+    description: Familia, miembros, círculo médico, privacidad y borrado de la cuenta familiar (RF-06 a RF-08, RF-21).
+  - name: Invitaciones
+    description: Invitaciones a cocuidador y médicos (RF-06, RF-07). El registro por invitación está en `POST /auth/register`.
+  - name: Perfiles
+    description: Perfiles de paciente, consentimiento de adultos, permisos de historial e historial (RF-04, RF-05, RF-08, RF-18).
+  - name: Conversaciones
+    description: Apertura (bajo el perfil), edición del borrador, envío, redirección, cierre, bandeja y borrado (RF-09, RF-12, RF-16, RF-21).
+  - name: Contenido de conversación
+    description: Preguntas de contexto, respuestas, fotos, mensajes, solicitudes, indicaciones, eventos y accesos (RF-10, RF-11, RF-14, RF-15, RF-18, RNF-08).
+  - name: Resumen de contexto
+    description: Resumen con citas verificables para el médico (RF-17, RF-23).
+  - name: Notificaciones
+    description: Notificaciones dentro de la app (RF-19, RF-20).
+  - name: Reportes y administración
+    description: Reportes de abuso y técnicos, desactivación de cuentas (RF-22).
+  - name: Catálogos
+    description: Etiquetas, preguntas y avisos fijos (RF-01-AC-6, RF-13, RNF-11).
+  - name: Operación
+    description: Estado del servicio para el monitor de disponibilidad (RNF-10).
+
+paths:
+  # ───────────────────────── Autenticación y cuenta ─────────────────────────
+  /auth/login:
+    post:
+      tags: [Autenticación y cuenta]
+      operationId: iniciarSesion
+      summary: Iniciar sesión
+      description: |
+        Ruta fijada por la actividad S05-S06-A2 (antes `POST /sesiones` con 201; ver
+        diferencias_diseno.md, C11). Devuelve 200 con un JWT y la pantalla de inicio del rol. Las credenciales incorrectas
+        responden siempre igual, exista o no el correo. Tras `MAX_INTENTOS_LOGIN` fallos
+        consecutivos para un correo desde una IP, esa IP queda bloqueada `MINUTOS_BLOQUEO`
+        minutos y, si la cuenta existe, su titular recibe un correo.
+      security: []
+      x-acceptance-criteria: [RF-02-AC-1, RF-02-AC-2, RF-02-AC-3, RF-22-AC-3]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credenciales' }
+      responses:
+        '200':
+          description: Sesión abierta; el cuerpo trae el JWT.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SesionCreada' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401':
+          description: Credenciales incorrectas («Los datos no coinciden»).
+          headers:
+            X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                codigo: NO_AUTENTICADO
+                mensaje: Los datos no coinciden
+                correlacionId: 7f1c2e9a-5b0d-4c1e-9a33-2d6f0f6b8e11
+        '403':
+          description: Cuenta desactivada por el administrador (`CUENTA_DESACTIVADA`).
+          headers:
+            X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /sesiones/actual:
+    delete:
+      tags: [Autenticación y cuenta]
+      operationId: cerrarSesion
+      summary: Cerrar la sesión actual
+      description: |
+        Revoca el `jti` del token. Es idempotente: sin token, con un token ya revocado o
+        expirado responde igual 204, no crea sesión y no devuelve error interno.
+      security:
+        - bearerAuth: []
+        - {}
+      x-acceptance-criteria: [RF-02-AC-4, RF-02-AC-5]
+      responses:
+        '204': { description: Sesión cerrada o inexistente. }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /auth/register:
+    post:
+      tags: [Autenticación y cuenta]
+      operationId: registrarCuenta
+      summary: Crear una cuenta (cuidador principal o por invitación)
+      description: |
+        Ruta fijada por la actividad S05-S06-A2 (antes `POST /registros`; ver
+        diferencias_diseno.md, C11). Un solo punto de registro con dos formas de cuerpo:
+
+        - `RegistroFamilia` (sin `tokenInvitacion`): crea la familia y la cuenta del
+          cuidador principal en una transacción, guarda versión y fecha del aviso, envía el
+          enlace de verificación de correo y exige las tres declaraciones de RF-01.
+        - `RegistroPorInvitacion` (con `tokenInvitacion`): crea la cuenta de cocuidador o de
+          médico según la invitación. El cocuidador exige las tres declaraciones; el médico,
+          la aceptación de los términos de uso para médicos. El correo queda verificado
+          porque el enlace llegó a él.
+
+        Responde con la cuenta creada, sin la contraseña ni su hash. El cliente abre la
+        sesión con `POST /auth/login` (RF-01-AC-1).
+      security: []
+      x-acceptance-criteria: [RF-01-AC-1, RF-01-AC-2, RF-01-AC-3, RF-06-AC-2, RF-07-AC-2]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/RegistroFamilia'
+                - $ref: '#/components/schemas/RegistroPorInvitacion'
+      responses:
+        '201':
+          description: Cuenta creada (sin contraseña).
+          headers:
+            Location:
+              description: Siempre `/auth/me`.
+              schema: { type: string, example: /api/v1/auth/me }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cuenta' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '409':
+          description: Ya existe una cuenta con este correo (`CORREO_REGISTRADO`).
+          headers:
+            X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                codigo: CORREO_REGISTRADO
+                mensaje: Ya existe una cuenta con este correo.
+                correlacionId: 0b8e3d55-1f2a-4f0e-8c71-93a1d2e4c6f0
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422':
+          description: |
+            Falta una declaración o un campo es inválido (`DATOS_INVALIDOS`, `campos` lista
+            cuáles), o el enlace de invitación venció o ya se usó (`ENLACE_INVALIDO`).
+          headers:
+            X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                codigo: DATOS_INVALIDOS
+                mensaje: Necesitamos esta autorización para usar DAFI.
+                correlacionId: 4a6c1b2e-90d3-4b7f-8e15-6f2c0a9d3b44
+                campos:
+                  - campo: declaraciones.consentimientoDatosMenores
+                    mensaje: Necesitamos esta autorización para usar DAFI.
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /familias:
+    get:
+      tags: [Familias]
+      operationId: listarFamilias
+      summary: Listar las familias del usuario
+      description: |
+        Para cuidador y cocuidador devuelve su familia. Para el médico devuelve las familias
+        de cuyo círculo forma parte, con el nombre de la familia (sirve al filtro de bandeja).
+      x-acceptance-criteria: [RF-07-AC-3, RF-16-AC-4]
+      responses:
+        '200':
+          description: Familias visibles para el usuario.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/FamiliaResumen' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /verificaciones-correo:
+    post:
+      tags: [Autenticación y cuenta]
+      operationId: verificarCorreo
+      summary: Confirmar el correo con el enlace recibido
+      description: |
+        Marca el correo como verificado. Mientras no se verifique, enviar conversaciones o
+        invitaciones responde `CUENTA_NO_VERIFICADA`; crear perfiles y borradores sí se permite.
+        El token viaja en el cuerpo para que no quede en los registros de acceso (RNF-13).
+      security: []
+      x-acceptance-criteria: [RF-01-AC-4]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenEnlace' }
+      responses:
+        '204': { description: Correo verificado. }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /restablecimientos-contrasena:
+    post:
+      tags: [Autenticación y cuenta]
+      operationId: solicitarRestablecimiento
+      summary: Solicitar un enlace para restablecer la contraseña
+      description: |
+        Responde 202 exista o no la cuenta («Si el correo está registrado, recibirá un
+        enlace.»). Si existe, envía un enlace de un solo uso válido por
+        `MINUTOS_ENLACE_RESTABLECER` minutos.
+      security: []
+      x-acceptance-criteria: [RF-03-AC-1]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo]
+              properties:
+                correo: { type: string, format: email, example: ana@example.com }
+      responses:
+        '202': { description: Solicitud recibida. La respuesta no revela si la cuenta existe. }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /restablecimientos-contrasena/confirmaciones:
+    post:
+      tags: [Autenticación y cuenta]
+      operationId: confirmarRestablecimiento
+      summary: Fijar la contraseña nueva con el enlace de restablecimiento
+      description: |
+        Cambia la contraseña y revoca todas las sesiones de la cuenta. Un enlace vencido
+        o ya usado responde 422 `ENLACE_INVALIDO` con `motivo` (`vencido` o `usado`).
+      security: []
+      x-acceptance-criteria: [RF-03-AC-2, RF-03-AC-3, RF-03-AC-4]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, contrasenaNueva]
+              properties:
+                token: { type: string, minLength: 32 }
+                contrasenaNueva: { type: string, format: password, minLength: 8 }
+      responses:
+        '204': { description: Contraseña cambiada; sesiones revocadas. }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /auth/me:
+    get:
+      tags: [Autenticación y cuenta]
+      operationId: obtenerCuenta
+      summary: Consultar la cuenta del usuario autenticado
+      description: |
+        Ruta fijada por la actividad S05-S06-A2 (antes `GET /cuenta`). Devuelve rol, estado de verificación y si hay una versión del aviso de privacidad
+        pendiente de aceptar. El cliente la usa para decidir la pantalla de inicio.
+      x-acceptance-criteria: [RF-01-AC-5, RF-02-AC-1]
+      responses:
+        '200':
+          description: Cuenta del usuario autenticado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cuenta' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /cuenta:
+    patch:
+      tags: [Autenticación y cuenta]
+      operationId: actualizarCuenta
+      summary: Editar el nombre de la propia cuenta
+      description: El correo no se edita en la versión 1. El nombre nuevo se ve en conversaciones abiertas y anteriores.
+      x-acceptance-criteria: [RF-03-AC-6]
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                nombre: { type: string, minLength: 1, maxLength: 80 }
+                especialidad: { type: string, maxLength: 80, description: Solo para médicos. }
+      responses:
+        '200':
+          description: Cuenta actualizada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cuenta' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /cuenta/cambios-contrasena:
+    post:
+      tags: [Autenticación y cuenta]
+      operationId: cambiarContrasena
+      summary: Cambiar la contraseña con sesión abierta
+      description: |
+        Requiere la contraseña actual. Si es correcta, cambia la contraseña, revoca las demás
+        sesiones y envía un correo de aviso. Si es incorrecta responde `DATOS_INVALIDOS`
+        (422 y no 401, para que el cliente no lo interprete como sesión vencida). Es POST y
+        no PUT porque no es idempotente: repetir la petición falla, ya que la contraseña
+        «actual» cambió, y cada cambio revoca sesiones y envía correo.
+      x-acceptance-criteria: [RF-03-AC-5]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contrasenaActual, contrasenaNueva]
+              properties:
+                contrasenaActual: { type: string, format: password }
+                contrasenaNueva: { type: string, format: password, minLength: 8 }
+      responses:
+        '204': { description: Contraseña cambiada. }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /cuenta/aceptaciones-aviso:
+    post:
+      tags: [Autenticación y cuenta]
+      operationId: aceptarAvisoPrivacidad
+      summary: Aceptar una versión nueva del aviso de privacidad
+      description: |
+        Registra usuario, versión, fecha y hora. Mientras haya una versión pendiente, enviar
+        conversaciones o mensajes responde 403 `AVISO_PENDIENTE`.
+      x-acceptance-criteria: [RF-01-AC-5]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: { type: integer, minimum: 1, example: 2 }
+      responses:
+        '201':
+          description: Aceptación registrada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AceptacionAviso' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ───────────────────────────── Familias ─────────────────────────────
+  /familias/{familiaId}:
+    parameters:
+      - $ref: '#/components/parameters/familiaId'
+    get:
+      tags: [Familias]
+      operationId: obtenerFamilia
+      summary: Consultar una familia
+      x-acceptance-criteria: [RF-06-AC-2]
+      responses:
+        '200':
+          description: Datos de la familia.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FamiliaResumen' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    delete:
+      tags: [Familias]
+      operationId: eliminarFamilia
+      summary: Eliminar la cuenta familiar
+      description: |
+        Solo el cuidador principal. Borra físicamente familia, perfiles, conversaciones,
+        fotos y la cuenta del cocuidador, cierra sus sesiones y conserva las cuentas de los
+        médicos y el registro mínimo de conversaciones enviadas. La confirmación «ELIMINAR»
+        se captura en el cliente y la API la vuelve a exigir en `X-Delete-Confirmation`. Devuelve el resumen de lo borrado, que también se envía
+        por correo.
+      x-acceptance-criteria: [RF-21-AC-4, RF-21-AC-5]
+      parameters:
+        - name: X-Delete-Confirmation
+          in: header
+          required: true
+          description: |
+            Aporte de la especificación de Isaac González. La API vuelve a comprobar la
+            confirmación «ELIMINAR» que el cliente pide escribir (RF-21-AC-4); sin ella responde 400.
+          schema: { type: string, enum: [ELIMINAR] }
+      responses:
+        '200':
+          description: Familia eliminada; resumen de lo borrado y lo conservado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResumenBorrado' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /familias/{familiaId}/miembros:
+    parameters:
+      - $ref: '#/components/parameters/familiaId'
+    get:
+      tags: [Familias]
+      operationId: listarMiembros
+      summary: Listar cuidadores y círculo médico
+      description: |
+        Cada médico lleva la leyenda «Contacto agregado por usted». Con `rol=medico` y lista
+        vacía, el cliente muestra «Agregue primero a un médico de su confianza».
+      x-acceptance-criteria: [RF-07-AC-3, RF-09-AC-3]
+      parameters:
+        - name: rol
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Rol' }
+      responses:
+        '200':
+          description: Miembros de la familia.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Miembro' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /familias/{familiaId}/miembros/{usuarioId}:
+    parameters:
+      - $ref: '#/components/parameters/familiaId'
+      - $ref: '#/components/parameters/usuarioId'
+    delete:
+      tags: [Familias]
+      operationId: quitarMiembro
+      summary: Quitar a un miembro o salir de la familia
+      description: |
+        El cuidador principal quita al cocuidador o a un médico. El cocuidador y el médico
+        pueden quitarse a sí mismos. Al salir, el cocuidador pierde el acceso y su cuenta se
+        borra; las conversaciones que registró se conservan. Al salir un médico, sus
+        conversaciones `ENVIADA`, `EN_REVISION` o `INFO_SOLICITADA` pasan a `SIN_MEDICO`.
+      x-acceptance-criteria: [RF-06-AC-4, RF-06-AC-5, RF-08-AC-3]
+      responses:
+        '204': { description: Miembro quitado. }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /familias/{familiaId}/privacidad:
+    parameters:
+      - $ref: '#/components/parameters/familiaId'
+    get:
+      tags: [Familias]
+      operationId: obtenerPrivacidad
+      summary: Consultar la sección «Privacidad»
+      description: |
+        Datos que DAFI guarda de cada perfil, médicos que pueden verlo (con «Compartir
+        historial»), estado del resumen automático, retención de respaldos y enlace al aviso
+        vigente.
+      x-acceptance-criteria: [RF-21-AC-6]
+      responses:
+        '200':
+          description: Estado de privacidad de la familia.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Privacidad' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ──────────────────────────── Invitaciones ────────────────────────────
+  /familias/{familiaId}/invitaciones:
+    parameters:
+      - $ref: '#/components/parameters/familiaId'
+    get:
+      tags: [Invitaciones]
+      operationId: listarInvitacionesEnviadas
+      summary: Listar las invitaciones enviadas por la familia
+      description: Muestra «Esperando respuesta» (`pendiente`) o «El médico no aceptó la invitación» (`rechazada`).
+      x-acceptance-criteria: [RF-07-AC-1, RF-07-AC-4]
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/EstadoInvitacion' }
+      responses:
+        '200':
+          description: Invitaciones de la familia.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Invitacion' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    post:
+      tags: [Invitaciones]
+      operationId: invitar
+      summary: Invitar a un cocuidador o a un médico
+      description: |
+        Solo el cuidador principal con correo verificado. Envía un enlace válido por
+        `DIAS_INVITACION` días. Si la familia ya tiene cocuidador, una invitación de tipo
+        `cocuidador` responde `LIMITE_ALCANZADO`.
+      x-acceptance-criteria: [RF-01-AC-4, RF-06-AC-1, RF-06-AC-3, RF-07-AC-1]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InvitacionNueva' }
+      responses:
+        '201':
+          description: Invitación creada y enviada.
+          headers:
+            Location:
+              description: URL de la invitación.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Invitacion' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /invitaciones:
+    get:
+      tags: [Invitaciones]
+      operationId: listarInvitacionesRecibidas
+      summary: Listar las invitaciones recibidas por el médico autenticado
+      x-acceptance-criteria: [RF-07-AC-3]
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/EstadoInvitacion' }
+      responses:
+        '200':
+          description: Invitaciones dirigidas al usuario.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Invitacion' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /invitaciones/rechazos:
+    post:
+      tags: [Invitaciones]
+      operationId: rechazarInvitacionSinCuenta
+      summary: Rechazar una invitación desde el enlace, sin tener cuenta
+      description: |
+        Aporte de la especificación de Daniel Ruán (`DELETE /medical-invitations/{token}`).
+        La persona invitada como médico puede rechazar desde el correo sin registrarse; la
+        invitación queda `rechazada` y el cuidador ve «El médico no aceptó la invitación».
+        El token viaja en el cuerpo para no quedar en los registros de acceso (RNF-13).
+      security: []
+      x-acceptance-criteria: [RF-07-AC-4]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenEnlace' }
+      responses:
+        '204': { description: Invitación rechazada. }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /invitaciones/{invitacionId}:
+    parameters:
+      - $ref: '#/components/parameters/invitacionId'
+    get:
+      tags: [Invitaciones]
+      operationId: obtenerInvitacion
+      summary: Consultar una invitación
+      description: Visible para el cuidador principal que la envió y para el médico al que va dirigida.
+      x-acceptance-criteria: [RF-07-AC-1, RF-07-AC-4]
+      responses:
+        '200':
+          description: Invitación.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Invitacion' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    patch:
+      tags: [Invitaciones]
+      operationId: responderInvitacion
+      summary: Aceptar o rechazar una invitación (médico con cuenta)
+      description: |
+        Al aceptar, la familia aparece en la lista del médico y el médico en el círculo con la
+        leyenda «Contacto agregado por usted». Al rechazar, el médico no queda en el círculo.
+        Una invitación `vencida`, `cancelada` o ya respondida responde 409
+        `TRANSICION_INVALIDA`.
+      x-acceptance-criteria: [RF-07-AC-3, RF-07-AC-4]
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado:
+                  type: string
+                  enum: [aceptada, rechazada]
+      responses:
+        '200':
+          description: Invitación respondida.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Invitacion' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    delete:
+      tags: [Invitaciones]
+      operationId: cancelarInvitacion
+      summary: Cancelar una invitación pendiente (cuidador principal)
+      x-acceptance-criteria: []
+      responses:
+        '204': { description: Invitación cancelada. }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ───────────────────────────── Perfiles ─────────────────────────────
+  /familias/{familiaId}/perfiles:
+    parameters:
+      - $ref: '#/components/parameters/familiaId'
+    get:
+      tags: [Perfiles]
+      operationId: listarPerfiles
+      summary: Listar los perfiles de la familia
+      description: |
+        Incluye la edad calculada en años. El cocuidador ve los perfiles de menores y los de
+        adulto que tengan «Compartir con el cocuidador».
+      x-acceptance-criteria: [RF-04-AC-1, RF-06-AC-2]
+      responses:
+        '200':
+          description: Perfiles visibles para el usuario.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Perfil' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    post:
+      tags: [Perfiles]
+      operationId: crearPerfil
+      summary: Crear un perfil de paciente
+      description: |
+        Solo el cuidador principal. Un perfil de tipo `menor` con 18 años o más se rechaza con
+        `DATOS_INVALIDOS` y `sugerencia: agregar_adulto`. Un perfil `adulto_representado`
+        exige correo, queda `pendiente_consentimiento` y dispara el correo de consentimiento.
+      x-acceptance-criteria: [RF-04-AC-1, RF-04-AC-2, RF-04-AC-3, RF-04-AC-5, RF-05-AC-1, RF-07-AC-5]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PerfilNuevo' }
+      responses:
+        '201':
+          description: Perfil creado.
+          headers:
+            Location:
+              description: URL del perfil.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Perfil' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /perfiles/{perfilId}:
+    parameters:
+      - $ref: '#/components/parameters/perfilId'
+    get:
+      tags: [Perfiles]
+      operationId: obtenerPerfil
+      summary: Consultar un perfil
+      description: El administrador recibe `SIN_PERMISOS`.
+      x-acceptance-criteria: [RF-22-AC-2]
+      responses:
+        '200':
+          description: Perfil.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Perfil' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    patch:
+      tags: [Perfiles]
+      operationId: actualizarPerfil
+      summary: Editar un perfil
+      description: |
+        Solo el cuidador principal. Cambiar alergias o medicamentos se refleja en el grupo
+        «Alergias y medicamentos» del resumen con la fuente «Perfil». `resumenActivo: false`
+        desactiva el resumen automático para el perfil.
+      x-acceptance-criteria: [RF-04-AC-3, RF-04-AC-4, RF-17-AC-5]
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/PerfilActualizacion' }
+      responses:
+        '200':
+          description: Perfil actualizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Perfil' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    delete:
+      tags: [Perfiles]
+      operationId: eliminarPerfil
+      summary: Eliminar un perfil con sus conversaciones y fotos
+      description: Solo el cuidador principal. Borrado físico (RNF-07).
+      x-acceptance-criteria: [RF-04-AC-3]
+      responses:
+        '204': { description: Perfil eliminado. }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /perfiles/{perfilId}/conversaciones:
+    parameters:
+      - $ref: '#/components/parameters/perfilId'
+    get:
+      tags: [Perfiles]
+      operationId: obtenerHistorial
+      summary: Historial del paciente
+      description: |
+        Conversaciones del perfil, de la más reciente a la más antigua, con estado, etiquetas,
+        médico, fecha e indicaciones vigentes. La familia ve todo; el médico, las dirigidas a
+        él y, con «Compartir historial», las demás en solo lectura. Lista vacía con 200.
+
+        Se distingue de `GET /conversaciones` en el alcance: aquí el eje es el paciente e
+        incluye lo compartido; allá el eje es el usuario (bandeja del médico o lista de la
+        familia) y solo incluye lo dirigido al médico.
+      x-acceptance-criteria: [RF-08-AC-2, RF-18-AC-1, RF-18-AC-2, RF-18-AC-4]
+      parameters:
+        - $ref: '#/components/parameters/filtroEtiqueta'
+        - name: medicoId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Historial paginado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaConversaciones' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    post:
+      tags: [Conversaciones]
+      operationId: abrirConversacion
+      summary: Abrir una conversación en borrador para el perfil
+      description: |
+        Cuidador o cocuidador. Crea la conversación en `BORRADOR` con de una a tres
+        etiquetas, médico del círculo, título y prioridad opcional; el perfil sale del path,
+        igual que los perfiles se crean bajo su familia. La respuesta incluye las preguntas de
+        contexto de las etiquetas y el aviso de emergencias. Un médico recibe `SIN_PERMISOS`.
+        Acepta `Idempotency-Key` opcional para que un reintento no abra dos borradores.
+      x-acceptance-criteria: [RF-07-AC-5, RF-09-AC-1, RF-09-AC-2, RF-13-AC-1]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyOpcional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConversacionNueva' }
+      responses:
+        '201':
+          description: Conversación creada en `BORRADOR`.
+          headers:
+            Location:
+              description: URL de la conversación (`/conversaciones/{conversacionId}`).
+              schema: { type: string }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversacionDetalle' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /perfiles/{perfilId}/permisos-historial:
+    parameters:
+      - $ref: '#/components/parameters/perfilId'
+    get:
+      tags: [Perfiles]
+      operationId: listarPermisosHistorial
+      summary: Ver qué médicos tienen «Compartir historial» para el perfil
+      x-acceptance-criteria: [RF-08-AC-2]
+      responses:
+        '200':
+          description: Un permiso por médico del círculo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PermisoHistorial' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /perfiles/{perfilId}/permisos-historial/{medicoId}:
+    parameters:
+      - $ref: '#/components/parameters/perfilId'
+      - $ref: '#/components/parameters/medicoId'
+    put:
+      tags: [Perfiles]
+      operationId: fijarPermisoHistorial
+      summary: Activar o apagar «Compartir historial» para un médico
+      description: |
+        Idempotente: repetir la misma petición deja el mismo estado. Determina qué ve el
+        médico en el historial y qué eventos se envían al módulo de resumen.
+      x-acceptance-criteria: [RF-08-AC-1, RF-08-AC-2, RF-17-AC-3]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [compartirHistorial]
+              properties:
+                compartirHistorial: { type: boolean }
+      responses:
+        '200':
+          description: Permiso fijado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PermisoHistorial' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /consentimientos:
+    post:
+      tags: [Perfiles]
+      operationId: otorgarConsentimiento
+      summary: El adulto representado da su consentimiento
+      description: |
+        Pública: el adulto representado no tiene cuenta. Activa el perfil, guarda fecha y
+        versión del aviso, avisa al cuidador principal y envía un correo de confirmación con
+        el enlace permanente de revocación.
+      security: []
+      x-acceptance-criteria: [RF-05-AC-3]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, avisoVersion]
+              properties:
+                token: { type: string, minLength: 32 }
+                avisoVersion: { type: integer, minimum: 1 }
+      responses:
+        '201':
+          description: Consentimiento registrado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Consentimiento' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /consentimientos/revocaciones:
+    post:
+      tags: [Perfiles]
+      operationId: revocarConsentimiento
+      summary: El adulto representado revoca su consentimiento
+      description: |
+        Borra el perfil, sus conversaciones y sus fotos (RF-21) y avisa al cuidador y a los
+        médicos que atendían sus conversaciones.
+      security: []
+      x-acceptance-criteria: [RF-05-AC-4]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tokenRevocacion]
+              properties:
+                tokenRevocacion: { type: string, minLength: 32 }
+      responses:
+        '204': { description: Consentimiento revocado y datos borrados. }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '429': { $ref: '#/components/responses/Bloqueado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ─────────────────────────── Conversaciones ───────────────────────────
+  /conversaciones:
+    get:
+      tags: [Conversaciones]
+      operationId: listarConversaciones
+      summary: Bandeja del médico o lista de conversaciones de la familia
+      description: |
+        Para el médico devuelve solo las conversaciones dirigidas a él, cada una con su
+        `seccionBandeja` y ordenadas del evento sin atender más antiguo al más reciente
+        («Esperando a la familia» por fecha de la solicitud). Para cuidador y cocuidador
+        devuelve las conversaciones de su familia que pueden ver.
+      x-acceptance-criteria: [RF-16-AC-1, RF-16-AC-3, RF-16-AC-4]
+      parameters:
+        - name: familiaId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: seccion
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/SeccionBandeja' }
+        - name: estado
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/EstadoConversacion' }
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Conversaciones paginadas.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaConversaciones' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    get:
+      tags: [Conversaciones]
+      operationId: obtenerConversacion
+      summary: Detalle de una conversación
+      description: |
+        Operación segura: no cambia el estado. Incluye perfil, etiquetas, respuestas, fotos,
+        indicaciones vigentes, `puntosPendientes` de la revisión previa al envío y si el
+        cliente debe fijar el aviso de emergencias (`mostrarAvisoEmergencias`). Un médico
+        que no puede ver la conversación recibe `NO_ENCONTRADO`; el administrador,
+        `SIN_PERMISOS`.
+      x-acceptance-criteria: [RF-08-AC-1, RF-12-AC-1, RF-13-AC-2, RF-13-AC-3, RF-15-AC-1, RF-22-AC-2]
+      responses:
+        '200':
+          description: Conversación.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversacionDetalle' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    patch:
+      tags: [Conversaciones]
+      operationId: editarBorrador
+      summary: Editar un borrador
+      description: |
+        Cuidador o cocuidador, solo en `BORRADOR` (en otro estado responde
+        `TRANSICION_INVALIDA`). Cambia `titulo`, `etiquetas` (más de tres responde
+        `LIMITE_ALCANZADO`), `medicoId` y `prioridadIndicada`. No cambia el estado: el envío y
+        el cierre son recursos propios. Con `If-Match` evita pisar los cambios del otro
+        cuidador.
+      x-acceptance-criteria: [RF-09-AC-2, RF-09-AC-4]
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/ConversacionActualizacion' }
+      responses:
+        '200':
+          description: Borrador actualizado.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversacionDetalle' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '412': { $ref: '#/components/responses/PrecondicionFallida' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    delete:
+      tags: [Conversaciones]
+      operationId: eliminarConversacion
+      summary: Eliminar una conversación completa
+      description: |
+        Cuidador o cocuidador. Borra físicamente la conversación, sus fotos y sus eventos. Si
+        ya se había enviado, avisa al médico y conserva el registro mínimo (identificador,
+        fecha de envío y fecha de borrado).
+      x-acceptance-criteria: [RF-21-AC-2, RF-21-AC-3]
+      responses:
+        '204': { description: Conversación eliminada. }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/envios:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    post:
+      tags: [Conversaciones]
+      operationId: enviarConversacion
+      summary: Enviar un borrador o redirigir una conversación sin médico
+      description: |
+        Cuidador o cocuidador. Registra un envío según la tabla de transiciones del SRS (3.0):
+
+        - Desde `BORRADOR`, sin cuerpo: pasa a `ENVIADA`. Requiere los tres puntos de RF-12
+          (si faltan, `CONVERSACION_INCOMPLETA` con `puntosFaltantes`), correo verificado
+          (`CUENTA_NO_VERIFICADA`), aviso de privacidad vigente aceptado (`AVISO_PENDIENTE`)
+          y consentimiento del adulto representado (`CONSENTIMIENTO_PENDIENTE`; el borrador
+          se conserva). Notifica al médico; con prioridad, con el asunto de RF-19-AC-2.
+        - Desde `SIN_MEDICO`, con `medicoId`: la redirige a otro médico del círculo y pasa a
+          `ENVIADA` con todos sus eventos.
+
+        En cualquier otro estado responde `TRANSICION_INVALIDA`. La clave de idempotencia es
+        obligatoria: un reintento devuelve el mismo resultado sin duplicar el envío.
+      x-acceptance-criteria: [RF-01-AC-4, RF-01-AC-5, RF-05-AC-2, RF-08-AC-4, RF-09-AC-4, RF-12-AC-2, RF-12-AC-3, RF-19-AC-2, RF-23-AC-3]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EnvioNuevo' }
+      responses:
+        '200':
+          description: |
+            Envío aplicado; la conversación quedó en `ENVIADA`. Responde 200 y no 201 porque
+            no crea un recurso consultable: el envío queda como evento de cambio de estado.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Idempotency-Replayed: { $ref: '#/components/headers/Idempotency-Replayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversacionDetalle' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/cierre:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    put:
+      tags: [Conversaciones]
+      operationId: cerrarConversacion
+      summary: Cerrar una conversación
+      description: |
+        Cuidador o cocuidador, desde `ENVIADA`, `EN_REVISION`, `INFO_SOLICITADA` o
+        `CON_INDICACIONES`. Es idempotente: cerrar una conversación ya `CERRADA` responde 200
+        con el mismo cierre y no registra otro evento. Desde `BORRADOR` o `SIN_MEDICO`
+        responde `TRANSICION_INVALIDA`. Una conversación cerrada no se reabre.
+      x-acceptance-criteria: []
+      x-requerimientos: [RF-15]
+      responses:
+        '200':
+          description: Conversación cerrada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cierre' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ─────────────────────── Contenido de conversación ───────────────────────
+  /conversaciones/{conversacionId}/preguntas:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    get:
+      tags: [Contenido de conversación]
+      operationId: listarPreguntas
+      summary: Preguntas de contexto de la conversación
+      description: |
+        Generales más las de cada etiqueta, sin repetir. Incluye alergias y medicamentos del
+        perfil como referencia para G3 y la respuesta guardada de cada pregunta.
+      x-acceptance-criteria: [RF-10-AC-2, RF-10-AC-5]
+      responses:
+        '200':
+          description: Cuestionario de la conversación.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cuestionario' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/preguntas/{preguntaId}/respuesta:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+      - $ref: '#/components/parameters/preguntaId'
+    get:
+      tags: [Contenido de conversación]
+      operationId: obtenerRespuesta
+      summary: Consultar la respuesta a una pregunta de contexto
+      description: 404 si la pregunta aún no tiene respuesta o no pertenece a las etiquetas de la conversación.
+      x-acceptance-criteria: [RF-10-AC-1]
+      responses:
+        '200':
+          description: Respuesta guardada.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Respuesta' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    put:
+      tags: [Contenido de conversación]
+      operationId: responderPregunta
+      summary: Guardar la respuesta a una pregunta de contexto
+      description: |
+        Solo en `BORRADOR` (después de enviar, las respuestas son de solo lectura y responde
+        `TRANSICION_INVALIDA`). Es idempotente: registra un evento con fecha y autor solo
+        cuando el valor cambia, así que repetir el mismo PUT no altera el historial. La
+        primera respuesta responde 201 y las siguientes 200. El valor numérico de F1 se
+        guarda sin interpretación. G3 con «Sí» sin texto responde `DATOS_INVALIDOS` con
+        «Cuéntenos qué medicamento tomó.» Con `If-Match` evita pisar la respuesta del otro
+        cuidador.
+      x-acceptance-criteria: [RF-10-AC-1, RF-10-AC-3, RF-10-AC-4]
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RespuestaEntrada' }
+      responses:
+        '200':
+          description: Respuesta reemplazada (o sin cambios).
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Respuesta' }
+        '201':
+          description: Respuesta creada por primera vez.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Respuesta' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '412': { $ref: '#/components/responses/PrecondicionFallida' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/fotos:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    post:
+      tags: [Contenido de conversación]
+      operationId: subirFoto
+      summary: Agregar una foto
+      description: |
+        Cuidador o cocuidador, en `BORRADOR` o `INFO_SOLICITADA`. El cuerpo es el JPEG ya
+        convertido por el cliente. La API rechaza con `ARCHIVO_INVALIDO` un cuerpo de más de
+        1 048 576 bytes (413) y uno que no es JPEG, ya sea por `Content-Type` o porque sus
+        bytes iniciales no son los de un JPEG (415). Después vuelve a quitar el EXIF, valida
+        nitidez y brillo (`FOTO_RECHAZADA` con `motivo`) y el límite de `MAX_FOTOS`.
+      x-acceptance-criteria: [RF-11-AC-1, RF-11-AC-2, RF-11-AC-3, RF-11-AC-4, RF-11-AC-5, RF-23-AC-3]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Foto agregada.
+          headers:
+            Location:
+              description: URL de la foto.
+              schema: { type: string }
+            Idempotency-Replayed: { $ref: '#/components/headers/Idempotency-Replayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Foto' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '413': { $ref: '#/components/responses/ArchivoDemasiadoGrande' }
+        '415': { $ref: '#/components/responses/ArchivoInvalido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/fotos/{fotoId}:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+      - $ref: '#/components/parameters/fotoId'
+    get:
+      tags: [Contenido de conversación]
+      operationId: obtenerFoto
+      summary: Descargar una foto a través de la API
+      description: |
+        Solo para quien puede ver la conversación; no hay URL públicas. Registra el acceso
+        del médico (RNF-08). Las fotos de zona sensible se entregan con
+        `Content-Disposition: inline` y `Cache-Control: no-store` para el visor sin descarga.
+      x-acceptance-criteria: [RF-22-AC-2]
+      responses:
+        '200':
+          description: Imagen JPEG sin EXIF.
+          headers:
+            Cache-Control:
+              schema: { type: string, example: 'private, no-store' }
+            Content-Disposition:
+              description: Siempre `inline`; nunca `attachment`.
+              schema: { type: string, example: inline }
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    delete:
+      tags: [Contenido de conversación]
+      operationId: eliminarFoto
+      summary: Eliminar una foto de un borrador
+      description: |
+        Solo en `BORRADOR`: borra la foto de la conversación y del almacenamiento. Si la
+        conversación ya se envió responde `TRANSICION_INVALIDA` y el cliente ofrece borrar la
+        conversación completa.
+      x-acceptance-criteria: [RF-21-AC-1, RF-21-AC-2]
+      responses:
+        '204': { description: Foto eliminada. }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/mensajes:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    post:
+      tags: [Contenido de conversación]
+      operationId: enviarMensaje
+      summary: Enviar un mensaje o responder una solicitud de información
+      description: |
+        Familia o médico al que va dirigida. Un mensaje no cambia el estado, salvo cuando la
+        familia responde (`respondeASolicitud: true`) una conversación `INFO_SOLICITADA`,
+        que vuelve a `EN_REVISION`. En `CERRADA` responde `TRANSICION_INVALIDA`.
+      x-acceptance-criteria: [RF-14-AC-2, RF-14-AC-3, RF-14-AC-4, RF-23-AC-2, RF-23-AC-3]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MensajeNuevo' }
+      responses:
+        '201':
+          description: Mensaje registrado como evento.
+          headers:
+            Location:
+              description: URL del evento creado (`/conversaciones/{conversacionId}/eventos/{eventoId}`).
+              schema: { type: string }
+            Idempotency-Replayed: { $ref: '#/components/headers/Idempotency-Replayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Evento' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/solicitudes-informacion:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    post:
+      tags: [Contenido de conversación]
+      operationId: pedirInformacion
+      summary: El médico pide más fotos o información
+      description: |
+        Desde `EN_REVISION` o `CON_INDICACIONES`; la conversación pasa a `INFO_SOLICITADA` y
+        la familia recibe una notificación con el texto.
+      x-acceptance-criteria: [RF-14-AC-1]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SolicitudInformacionNueva' }
+      responses:
+        '201':
+          description: Solicitud registrada como evento.
+          headers:
+            Location:
+              description: URL del evento creado (`/conversaciones/{conversacionId}/eventos/{eventoId}`).
+              schema: { type: string }
+            Idempotency-Replayed: { $ref: '#/components/headers/Idempotency-Replayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Evento' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/indicaciones:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    post:
+      tags: [Contenido de conversación]
+      operationId: registrarIndicaciones
+      summary: El médico registra indicaciones
+      description: |
+        Desde `EN_REVISION`, `INFO_SOLICITADA` o `CON_INDICACIONES`; la conversación queda en
+        `CON_INDICACIONES`. Las nuevas sustituyen a las vigentes y las anteriores siguen en el
+        historial. `consulta_presencial` exige `plazoDias`. Notifica a la familia por la app y
+        por correo sin datos clínicos. En `CERRADA` responde `TRANSICION_INVALIDA`.
+      x-acceptance-criteria: [RF-15-AC-1, RF-15-AC-2, RF-15-AC-4, RF-15-AC-5, RF-19-AC-1]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IndicacionNueva' }
+      responses:
+        '201':
+          description: Indicaciones registradas.
+          headers:
+            Location:
+              description: URL del evento creado (`/conversaciones/{conversacionId}/eventos/{eventoId}`).
+              schema: { type: string }
+            Idempotency-Replayed: { $ref: '#/components/headers/Idempotency-Replayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Indicacion' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/eventos:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    get:
+      tags: [Contenido de conversación]
+      operationId: listarEventos
+      summary: Eventos de la conversación en orden cronológico
+      description: Respuestas, mensajes, fotos, solicitudes, indicaciones (también las sustituidas) y cambios de estado, cada uno con fecha, hora y autor.
+      x-acceptance-criteria: [RF-14-AC-4, RF-15-AC-4, RF-18-AC-3]
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Eventos paginados.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaEventos' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/eventos/{eventoId}:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+      - $ref: '#/components/parameters/eventoId'
+    get:
+      tags: [Contenido de conversación]
+      operationId: obtenerEvento
+      summary: Consultar un evento
+      description: |
+        Destino del `Location` de mensajes, solicitudes e indicaciones, y del enlace de cada
+        cita del resumen de contexto, que lleva al mensaje de origen.
+      x-acceptance-criteria: [RF-17-AC-1]
+      responses:
+        '200':
+          description: Evento.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Evento' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/accesos:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    get:
+      tags: [Contenido de conversación]
+      operationId: listarAccesos
+      summary: Registro de accesos del médico («Visto por»)
+      x-acceptance-criteria: []
+      x-requerimientos: [RNF-08]
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Accesos registrados, del más reciente al más antiguo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaAccesos' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    post:
+      tags: [Contenido de conversación]
+      operationId: registrarAcceso
+      summary: El médico registra que abrió la conversación
+      description: |
+        El cliente del médico lo llama al cargar el detalle. Registra quién y cuándo
+        (RNF-08). El primer acceso a una conversación `ENVIADA` la pasa a `EN_REVISION` y la
+        familia ve «Su médico está revisando la conversación.» Los accesos siguientes solo
+        se registran. Responde 201 sin `Location` porque un acceso no se consulta por
+        separado: se lee en la colección `GET /accesos`.
+      x-acceptance-criteria: [RF-16-AC-2]
+      x-requerimientos: [RNF-08]
+      responses:
+        '201':
+          description: Acceso registrado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Acceso' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ─────────────────────────── Resumen de contexto ───────────────────────────
+  /conversaciones/{conversacionId}/resumen:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+    get:
+      tags: [Resumen de contexto]
+      operationId: obtenerResumen
+      summary: Resumen de contexto para el médico
+      description: |
+        Solo el médico. Los datos del perfil van directo con la fuente «Perfil». El resto son
+        citas textuales que la API verifica (evento existente, visible para el médico y texto
+        idéntico) antes de devolverlas; las que no cumplen se descartan. Se genera al
+        consultarlo y se regenera si hay eventos nuevos. `estado` distingue `disponible`,
+        `desactivado_por_familia` y `no_disponible` (tiempo de espera de
+        `TIMEOUT_RESUMEN_S` agotado o error del módulo).
+      x-acceptance-criteria: [RF-04-AC-4, RF-17-AC-1, RF-17-AC-2, RF-17-AC-3, RF-17-AC-4, RF-17-AC-5, RF-23-AC-1]
+      responses:
+        '200':
+          description: Resumen (también cuando no está disponible o está desactivado).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResumenContexto' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /conversaciones/{conversacionId}/resumen/citas/{citaId}:
+    parameters:
+      - $ref: '#/components/parameters/conversacionId'
+      - $ref: '#/components/parameters/citaId'
+    patch:
+      tags: [Resumen de contexto]
+      operationId: marcarCita
+      summary: El médico marca una cita como «No es correcto»
+      description: |
+        La cita deja de mostrarse en esa conversación y se registra un evento para las
+        métricas de RNF-09. El `citaId` es estable entre regeneraciones del resumen (ver
+        `Cita.id`), así que la marca sobrevive aunque el resumen se regenere. Es idempotente:
+        marcar una cita ya marcada responde 200 sin registrar otro evento.
+      x-acceptance-criteria: [RF-17-AC-6]
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              required: [marcadaIncorrecta]
+              properties:
+                marcadaIncorrecta:
+                  type: boolean
+                  enum: [true]
+      responses:
+        '200':
+          description: Cita marcada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cita' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ─────────────────────────── Notificaciones ───────────────────────────
+  /notificaciones:
+    get:
+      tags: [Notificaciones]
+      operationId: listarNotificaciones
+      summary: Notificaciones dentro de la app
+      description: |
+        Incluye solicitudes de información, indicaciones, avisos de consentimiento, salida
+        del cocuidador y el aviso por falta de respuesta que genera el proceso programado de
+        RF-20.
+      x-acceptance-criteria: [RF-05-AC-3, RF-06-AC-5, RF-14-AC-1, RF-20-AC-1, RF-20-AC-2, RF-20-AC-3]
+      parameters:
+        - name: leida
+          in: query
+          required: false
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Notificaciones paginadas.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaNotificaciones' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /notificaciones/{notificacionId}:
+    parameters:
+      - $ref: '#/components/parameters/notificacionId'
+    patch:
+      tags: [Notificaciones]
+      operationId: marcarNotificacion
+      summary: Marcar una notificación como leída
+      x-acceptance-criteria: []
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              required: [leida]
+              properties:
+                leida: { type: boolean }
+      responses:
+        '200':
+          description: Notificación actualizada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Notificacion' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ─────────────────────── Reportes y administración ───────────────────────
+  /reportes:
+    get:
+      tags: [Reportes y administración]
+      operationId: listarReportes
+      summary: Listar reportes (administrador)
+      description: Motivo, fecha y cuentas involucradas; nunca mensajes, fotos ni datos de pacientes.
+      x-acceptance-criteria: [RF-22-AC-1, RF-22-AC-4]
+      parameters:
+        - name: tipo
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/TipoReporte' }
+        - name: atendido
+          in: query
+          required: false
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Reportes paginados.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaReportes' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    post:
+      tags: [Reportes y administración]
+      operationId: crearReporte
+      summary: Reportar abuso o un problema técnico
+      x-acceptance-criteria: [RF-22-AC-1, RF-22-AC-4]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyOpcional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReporteNuevo' }
+      responses:
+        '201':
+          description: Reporte recibido («Recibimos su reporte»).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reporte' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /reportes/{reporteId}:
+    parameters:
+      - $ref: '#/components/parameters/reporteId'
+    patch:
+      tags: [Reportes y administración]
+      operationId: atenderReporte
+      summary: Marcar un reporte como atendido (administrador)
+      x-acceptance-criteria: []
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              required: [atendido]
+              properties:
+                atendido: { type: boolean }
+      responses:
+        '200':
+          description: Reporte actualizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reporte' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /usuarios/{usuarioId}:
+    parameters:
+      - $ref: '#/components/parameters/usuarioId'
+    patch:
+      tags: [Reportes y administración]
+      operationId: cambiarEstadoCuenta
+      summary: Desactivar o reactivar una cuenta (administrador)
+      description: |
+        Al desactivar, revoca todas las sesiones de la cuenta. Si es un médico, sus
+        conversaciones `ENVIADA`, `EN_REVISION` o `INFO_SOLICITADA` pasan a `SIN_MEDICO`.
+      x-acceptance-criteria: [RF-22-AC-3]
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              required: [activo]
+              properties:
+                activo: { type: boolean }
+      responses:
+        '200':
+          description: Estado de la cuenta actualizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioAdmin' }
+        '400': { $ref: '#/components/responses/SolicitudMalformada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermisos' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '415': { $ref: '#/components/responses/TipoNoAdmitido' }
+        '422': { $ref: '#/components/responses/DatosInvalidos' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  # ───────────────────────────── Operación ─────────────────────────────
+  /salud:
+    get:
+      tags: [Operación]
+      operationId: obtenerSalud
+      summary: Estado del servicio
+      description: |
+        Pública. La consulta el monitor de disponibilidad cada 5 minutos, lo que además
+        evita que Render suspenda la API por inactividad (RNF-10). Comprueba la conexión a
+        PostgreSQL con `SELECT 1`; no revela datos de usuarios ni la configuración.
+      security: []
+      x-acceptance-criteria: []
+      x-requerimientos: [RNF-10]
+      responses:
+        '200':
+          description: La API y la base de datos responden.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Salud' }
+        '503':
+          description: "La API responde pero la base de datos no (`estado: degradado`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Salud' }
+
+  # ───────────────────────────── Catálogos ─────────────────────────────
+  /etiquetas:
+    get:
+      tags: [Catálogos]
+      operationId: listarEtiquetas
+      summary: Catálogo de etiquetas con sus preguntas de contexto
+      description: Se carga al desplegar; agregar una etiqueta no cambia los endpoints (RNF-11).
+      security: []
+      x-acceptance-criteria: [RF-10-AC-2]
+      x-requerimientos: [RNF-11]
+      responses:
+        '200':
+          description: Etiquetas vigentes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Etiqueta' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+  /avisos/{codigo}:
+    parameters:
+      - name: codigo
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [emergencias, que-es-dafi, sin-respuesta, privacidad]
+    get:
+      tags: [Catálogos]
+      operationId: obtenerAviso
+      summary: Texto fijo de un aviso del catálogo
+      description: |
+        Pública. `emergencias` es el aviso fijo de RF-13 (idéntico en toda conversación);
+        `que-es-dafi` es la pantalla pública de RF-01-AC-6; `privacidad` devuelve la versión
+        vigente del aviso de privacidad.
+      security: []
+      x-acceptance-criteria: [RF-01-AC-6, RF-13-AC-1, RF-13-AC-2]
+      responses:
+        '200':
+          description: Aviso.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Aviso' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT firmado con HS256. Claims: `sub`, `rol`, `familiaId` (nulo para médico y
+        administrador), `jti`, `iat`, `exp`. La API rechaza con `NO_AUTENTICADO` un `jti`
+        revocado o con más de `MINUTOS_SESION` minutos sin actividad.
+
+  headers:
+    X-Correlation-Id:
+      description: Identificador de correlación de la petición (también en el cuerpo del error).
+      schema: { type: string, format: uuid }
+    ETag:
+      description: Versión del recurso (columna `version` de la tabla); se reenvía en `If-Match`.
+      schema: { type: string, example: 'W/"7"' }
+    Idempotency-Replayed:
+      description: Presente y en `true` cuando la respuesta es la repetición de una petición ya procesada con la misma `Idempotency-Key`.
+      schema: { type: boolean }
+
+  parameters:
+    familiaId:
+      name: familiaId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    perfilId:
+      name: perfilId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    conversacionId:
+      name: conversacionId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    fotoId:
+      name: fotoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    usuarioId:
+      name: usuarioId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    medicoId:
+      name: medicoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    invitacionId:
+      name: invitacionId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    citaId:
+      name: citaId
+      in: path
+      required: true
+      description: Identificador estable de la cita (ver `Cita.id`).
+      schema: { $ref: '#/components/schemas/IdCita' }
+    eventoId:
+      name: eventoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    reporteId:
+      name: reporteId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    notificacionId:
+      name: notificacionId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    preguntaId:
+      name: preguntaId
+      in: path
+      required: true
+      description: Código de la pregunta del catálogo (G1, P2, F1…).
+      schema: { type: string, pattern: '^[A-Z][0-9]{1,2}$', example: G3 }
+    filtroEtiqueta:
+      name: etiqueta
+      in: query
+      required: false
+      schema: { $ref: '#/components/schemas/CodigoEtiqueta' }
+    pagina:
+      name: pagina
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    limite:
+      name: limite
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Clave generada por el cliente, única por usuario y válida `HORAS_IDEMPOTENCIA` horas.
+        Si falta responde 400. Una repetición con la misma clave y el mismo cuerpo devuelve
+        el código y el cuerpo originales con `Idempotency-Replayed: true`; la misma clave con
+        otro cuerpo responde 422 y una repetición mientras la original sigue en curso, 409.
+      schema: { type: string, format: uuid }
+    IdempotencyKeyOpcional:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Opcional; si viene, se aplican las mismas reglas que en `IdempotencyKey`.
+      schema: { type: string, format: uuid }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      description: Valor de `ETag` leído antes de editar. Si el recurso cambió desde entonces, responde 412.
+      schema: { type: string }
+
+  responses:
+    SolicitudMalformada:
+      description: |
+        El cuerpo no se puede leer como JSON, un parámetro de query viola su esquema o falta
+        una cabecera obligatoria como `Idempotency-Key` (`SOLICITUD_MALFORMADA`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            codigo: SOLICITUD_MALFORMADA
+            mensaje: La solicitud no tiene un formato válido.
+            correlacionId: 1d2c3b4a-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+    NoAutenticado:
+      description: Sesión inexistente, revocada o expirada (`NO_AUTENTICADO`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            codigo: NO_AUTENTICADO
+            mensaje: Su sesión terminó. Inicie sesión de nuevo.
+            correlacionId: 2e3d4c5b-6a7f-4b8c-9d0e-1f2a3b4c5d6e
+    SinPermisos:
+      description: |
+        El rol no tiene la operación (`SIN_PERMISOS`), el correo no está verificado
+        (`CUENTA_NO_VERIFICADA`) o hay un aviso de privacidad pendiente (`AVISO_PENDIENTE`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            codigo: SIN_PERMISOS
+            mensaje: No tiene permiso para esta acción.
+            correlacionId: 3f4e5d6c-7b8a-4c9d-8e0f-2a3b4c5d6e7f
+    NoEncontrado:
+      description: Recurso inexistente, de otra familia o que el médico no puede ver (`NO_ENCONTRADO`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            codigo: NO_ENCONTRADO
+            mensaje: No encontramos lo que busca.
+            correlacionId: 4a5f6e7d-8c9b-4d0e-9f1a-3b4c5d6e7f8a
+    Conflicto:
+      description: |
+        Conflicto con el estado actual: `TRANSICION_INVALIDA`, `LIMITE_ALCANZADO`,
+        `CONSENTIMIENTO_PENDIENTE`, `CORREO_REGISTRADO` o una petición con la misma
+        `Idempotency-Key` que sigue en curso (`SOLICITUD_EN_CURSO`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            codigo: TRANSICION_INVALIDA
+            mensaje: Esta conversación está cerrada. Abra una nueva si algo cambió.
+            correlacionId: 5b6a7f8e-9d0c-4e1f-8a2b-4c5d6e7f8a9b
+    PrecondicionFallida:
+      description: |
+        El `If-Match` no coincide con la versión actual: otra persona modificó el recurso
+        (`VERSION_DESACTUALIZADA`). El cliente debe volver a leerlo.
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            codigo: VERSION_DESACTUALIZADA
+            mensaje: Alguien más cambió esta conversación. Revise los cambios e intente de nuevo.
+            correlacionId: 6c7b8a9f-0e1d-4f2a-9b3c-5d6e7f8a9b0c
+    ArchivoDemasiadoGrande:
+      description: El cuerpo pesa más de 1 048 576 bytes (`ARCHIVO_INVALIDO`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ArchivoInvalido:
+      description: |
+        El archivo no es JPEG, por `Content-Type` o porque sus bytes iniciales no son los de un
+        JPEG (`ARCHIVO_INVALIDO`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TipoNoAdmitido:
+      description: |
+        El `Content-Type` no es el que acepta la operación: `application/json`, o
+        `application/merge-patch+json` en los PATCH (`TIPO_NO_ADMITIDO`).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    DatosInvalidos:
+      description: |
+        JSON legible que viola el esquema o una regla de negocio: `DATOS_INVALIDOS` (con
+        `campos`), `FOTO_RECHAZADA` (con `motivo`), `CONVERSACION_INCOMPLETA` (con
+        `puntosFaltantes`), `ENLACE_INVALIDO` (token de enlace vencido o ya usado, con
+        `motivo`) o `CLAVE_REUTILIZADA` (`Idempotency-Key` repetida con otro cuerpo).
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          examples:
+            datosInvalidos:
+              value:
+                codigo: DATOS_INVALIDOS
+                mensaje: Revise la fecha de nacimiento.
+                correlacionId: 7d8c9b0a-1f2e-4a3b-8c4d-6e7f8a9b0c1d
+                campos:
+                  - campo: fechaNacimiento
+                    mensaje: Revise la fecha de nacimiento.
+            fotoRechazada:
+              value:
+                codigo: FOTO_RECHAZADA
+                mensaje: La foto salió borrosa. Acérquese y mantenga el teléfono quieto.
+                correlacionId: 8e9d0c1b-2a3f-4b4c-9d5e-7f8a9b0c1d2e
+                motivo: borrosa
+            conversacionIncompleta:
+              value:
+                codigo: CONVERSACION_INCOMPLETA
+                mensaje: Faltan datos para enviar la conversación.
+                correlacionId: 9f0e1d2c-3b4a-4c5d-8e6f-8a9b0c1d2e3f
+                puntosFaltantes:
+                  - tipo: pregunta
+                    referencia: G1
+                    mensaje: 'Falta: ¿Desde cuándo?'
+            enlaceInvalido:
+              value:
+                codigo: ENLACE_INVALIDO
+                mensaje: El enlace venció. Solicite uno nuevo.
+                correlacionId: 0a1b2c3d-4e5f-4a6b-8c7d-8e9f0a1b2c3d
+                motivo: vencido
+    Bloqueado:
+      description: |
+        Demasiadas solicitudes (`BLOQUEADO`): en `/sesiones`, `MAX_INTENTOS_LOGIN` fallos por
+        correo e IP; en los endpoints públicos que envían correos o aceptan tokens, un límite
+        de frecuencia por IP.
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+        Retry-After:
+          description: Segundos que faltan para desbloquear.
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ErrorInterno:
+      description: Error no previsto. No incluye trazas internas y no deja datos a medias.
+      headers:
+        X-Correlation-Id: { $ref: '#/components/headers/X-Correlation-Id' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            codigo: ERROR_INTERNO
+            mensaje: Algo salió mal. Intente de nuevo.
+            correlacionId: a01b2c3d-4e5f-4a6b-9c7d-9b0c1d2e3f4a
+
+  schemas:
+    # ───── Tipos básicos ─────
+    Id:
+      type: string
+      format: uuid
+      description: Llave primaria UUID generada por PostgreSQL (`gen_random_uuid()`).
+      example: 3f2b8c1e-7a4d-4e9b-9c2a-1d5e6f7a8b90
+    FechaHora:
+      type: string
+      format: date-time
+      description: UTC; el cliente la muestra en America/Mexico_City.
+    Rol:
+      type: string
+      enum: [cuidador_principal, cocuidador, medico, administrador]
+    CodigoEtiqueta:
+      type: string
+      description: Código de una etiqueta del catálogo (se pueden agregar etiquetas sin cambiar la API).
+      pattern: '^[a-z_]{2,30}$'
+      example: fiebre
+    EstadoConversacion:
+      type: string
+      enum: [BORRADOR, ENVIADA, EN_REVISION, INFO_SOLICITADA, CON_INDICACIONES, CERRADA, SIN_MEDICO]
+    SeccionBandeja:
+      type: string
+      enum: [prioridad_familia, esperan_respuesta, esperando_familia]
+    EstadoInvitacion:
+      type: string
+      enum: [pendiente, aceptada, rechazada, vencida, cancelada]
+    TipoReporte:
+      type: string
+      enum: [abuso, tecnico]
+    Paginacion:
+      type: object
+      required: [pagina, limite, total]
+      properties:
+        pagina: { type: integer, minimum: 1 }
+        limite: { type: integer, minimum: 1 }
+        total: { type: integer, minimum: 0 }
+
+    # ───── Errores ─────
+    Error:
+      type: object
+      required: [codigo, mensaje, correlacionId]
+      properties:
+        codigo:
+          type: string
+          enum:
+            - SOLICITUD_MALFORMADA
+            - TIPO_NO_ADMITIDO
+            - NO_AUTENTICADO
+            - SIN_PERMISOS
+            - CUENTA_NO_VERIFICADA
+            - AVISO_PENDIENTE
+            - CUENTA_DESACTIVADA
+            - NO_ENCONTRADO
+            - TRANSICION_INVALIDA
+            - LIMITE_ALCANZADO
+            - CONSENTIMIENTO_PENDIENTE
+            - CORREO_REGISTRADO
+            - SOLICITUD_EN_CURSO
+            - VERSION_DESACTUALIZADA
+            - ENLACE_INVALIDO
+            - ARCHIVO_INVALIDO
+            - DATOS_INVALIDOS
+            - FOTO_RECHAZADA
+            - CONVERSACION_INCOMPLETA
+            - CLAVE_REUTILIZADA
+            - BLOQUEADO
+            - ERROR_INTERNO
+        mensaje:
+          type: string
+          description: Texto que muestra el cliente.
+        correlacionId: { type: string, format: uuid }
+        campos:
+          type: array
+          description: Solo con `DATOS_INVALIDOS`.
+          items:
+            type: object
+            required: [campo, mensaje]
+            properties:
+              campo: { type: string }
+              mensaje: { type: string }
+        puntosFaltantes:
+          type: array
+          description: Solo con `CONVERSACION_INCOMPLETA`.
+          items: { $ref: '#/components/schemas/PuntoPendiente' }
+        motivo:
+          type: string
+          description: Con `FOTO_RECHAZADA` (`borrosa`, `oscura`) o `ENLACE_INVALIDO` (`vencido`, `usado`).
+          enum: [borrosa, oscura, vencido, usado]
+        sugerencia:
+          type: string
+          description: Acción que el cliente puede ofrecer (por ejemplo, `agregar_adulto` en RF-04-AC-5).
+          enum: [agregar_adulto, borrar_conversacion]
+
+    # ───── Autenticación y cuenta ─────
+    Credenciales:
+      type: object
+      required: [correo, contrasena]
+      properties:
+        correo: { type: string, format: email, example: ana@example.com }
+        contrasena: { type: string, format: password }
+    Declaraciones:
+      type: object
+      required: [mayorDeEdad, consentimientoDatosPropios, consentimientoDatosMenores]
+      properties:
+        mayorDeEdad:
+          type: boolean
+          description: Declara ser mayor de 18 años. Debe ser `true`.
+        consentimientoDatosPropios:
+          type: boolean
+          description: Consiente el tratamiento de sus datos de salud. Debe ser `true`.
+        consentimientoDatosMenores:
+          type: boolean
+          description: Consiente, como madre, padre o tutor, el tratamiento de los datos de los menores. Debe ser `true`.
+    RegistroFamilia:
+      type: object
+      description: Registro del cuidador principal (crea la familia).
+      additionalProperties: false
+      required: [nombre, correo, contrasena, declaraciones, avisoVersion]
+      properties:
+        nombre: { type: string, minLength: 1, maxLength: 80, example: Ana López }
+        nombreFamilia:
+          type: string
+          minLength: 1
+          maxLength: 80
+          example: Familia López
+          description: Nombre con el que los médicos ven a la familia. Si no viene, la API usa «Familia de <nombre>» (revision_sql.md, R4).
+        correo: { type: string, format: email, example: ana@example.com }
+        contrasena: { type: string, format: password, minLength: 8 }
+        declaraciones: { $ref: '#/components/schemas/Declaraciones' }
+        avisoVersion: { type: integer, minimum: 1, example: 1 }
+    RegistroPorInvitacion:
+      type: object
+      additionalProperties: false
+      required: [tokenInvitacion, nombre, contrasena]
+      description: |
+        `declaraciones` es obligatoria si la invitación es de cocuidador;
+        `aceptaTerminosMedico` debe ser `true` si es de médico.
+      properties:
+        tokenInvitacion: { type: string, minLength: 32 }
+        nombre: { type: string, minLength: 1, maxLength: 80 }
+        contrasena: { type: string, format: password, minLength: 8 }
+        declaraciones: { $ref: '#/components/schemas/Declaraciones' }
+        aceptaTerminosMedico: { type: boolean }
+        especialidad: { type: string, maxLength: 80, example: Pediatría }
+        avisoVersion: { type: integer, minimum: 1 }
+    SesionCreada:
+      type: object
+      required: [accessToken, tipoToken, expiraEnSegundos, usuario, pantallaInicio]
+      properties:
+        accessToken: { type: string, description: "JWT para la cabecera `Authorization: Bearer <token>`." }
+        tipoToken: { type: string, enum: [Bearer] }
+        expiraEnSegundos:
+          type: integer
+          description: Segundos que el token sirve si no hay inactividad; el menor entre la expiración del JWT (`JWT_EXPIRATION`) y `MINUTOS_SESION` × 60.
+          example: 1800
+        usuario: { $ref: '#/components/schemas/Cuenta' }
+        pantallaInicio:
+          type: string
+          enum: [perfiles, bandeja, reportes]
+    Cuenta:
+      type: object
+      required: [id, nombre, correo, rol, correoVerificado, activo]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nombre: { type: string }
+        correo: { type: string, format: email }
+        rol: { $ref: '#/components/schemas/Rol' }
+        familiaId:
+          type: string
+          format: uuid
+          nullable: true
+        especialidad: { type: string, nullable: true }
+        correoVerificado: { type: boolean }
+        activo: { type: boolean }
+        avisoAceptadoVersion: { type: integer }
+        avisoPendienteVersion:
+          type: integer
+          nullable: true
+          description: Versión del aviso que el usuario debe aceptar antes de enviar conversaciones o mensajes.
+    AceptacionAviso:
+      type: object
+      required: [usuarioId, version, aceptadoEn]
+      properties:
+        usuarioId: { $ref: '#/components/schemas/Id' }
+        version: { type: integer }
+        aceptadoEn: { $ref: '#/components/schemas/FechaHora' }
+    TokenEnlace:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, minLength: 32 }
+    UsuarioAdmin:
+      type: object
+      description: Vista del administrador; sin datos de salud.
+      required: [id, rol, activo]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        rol: { $ref: '#/components/schemas/Rol' }
+        activo: { type: boolean }
+        desactivadoEn:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ───── Familias ─────
+    FamiliaResumen:
+      type: object
+      required: [id, nombre]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nombre: { type: string, example: Familia López }
+        tieneCocuidador: { type: boolean }
+        totalPerfiles: { type: integer, minimum: 0 }
+    Miembro:
+      type: object
+      required: [usuarioId, nombre, rol]
+      properties:
+        usuarioId: { $ref: '#/components/schemas/Id' }
+        nombre: { type: string }
+        rol: { $ref: '#/components/schemas/Rol' }
+        especialidad: { type: string, nullable: true }
+        leyenda:
+          type: string
+          nullable: true
+          description: «Contacto agregado por usted» para médicos (RD-03).
+          example: Contacto agregado por usted
+        desde: { $ref: '#/components/schemas/FechaHora' }
+    Privacidad:
+      type: object
+      required: [perfiles, diasRetencionRespaldo, avisoPrivacidad]
+      properties:
+        perfiles:
+          type: array
+          items:
+            type: object
+            required: [perfilId, nombre, datosGuardados, medicos, resumenActivo]
+            properties:
+              perfilId: { $ref: '#/components/schemas/Id' }
+              nombre: { type: string }
+              datosGuardados:
+                type: array
+                items: { type: string }
+                example: [nombre, fecha de nacimiento, alergias, medicamentos, conversaciones, fotos]
+              medicos:
+                type: array
+                items: { $ref: '#/components/schemas/PermisoHistorial' }
+              resumenActivo: { type: boolean }
+        diasRetencionRespaldo: { type: integer, example: 7 }
+        avisoPrivacidad: { $ref: '#/components/schemas/Aviso' }
+    ResumenBorrado:
+      type: object
+      required: [borrado, conservado, diasRetencionRespaldo]
+      properties:
+        borrado:
+          type: object
+          properties:
+            perfiles: { type: integer }
+            conversaciones: { type: integer }
+            fotos: { type: integer }
+            cuentaCocuidador: { type: boolean }
+        conservado:
+          type: object
+          properties:
+            registrosMinimos:
+              type: integer
+              description: Conversaciones enviadas de las que queda identificador, fecha de envío y de borrado.
+        diasRetencionRespaldo: { type: integer, example: 7 }
+
+    # ───── Invitaciones ─────
+    InvitacionNueva:
+      type: object
+      required: [tipo, correo]
+      properties:
+        tipo:
+          type: string
+          enum: [cocuidador, medico]
+        correo: { type: string, format: email }
+    Invitacion:
+      type: object
+      required: [id, familiaId, tipo, correo, estado, venceEn]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        familiaId: { $ref: '#/components/schemas/Id' }
+        familiaNombre: { type: string }
+        tipo:
+          type: string
+          enum: [cocuidador, medico]
+        correo: { type: string, format: email }
+        estado: { $ref: '#/components/schemas/EstadoInvitacion' }
+        creadaEn: { $ref: '#/components/schemas/FechaHora' }
+        venceEn: { $ref: '#/components/schemas/FechaHora' }
+
+    # ───── Perfiles ─────
+    PerfilNuevo:
+      type: object
+      required: [tipo, nombre, fechaNacimiento]
+      properties:
+        tipo:
+          type: string
+          enum: [menor, propio, adulto_representado]
+        nombre: { type: string, minLength: 1, maxLength: 80, example: Mateo }
+        fechaNacimiento: { type: string, format: date, example: '2021-03-12' }
+        alergias:
+          type: array
+          maxItems: 30
+          items: { type: string, maxLength: 100 }
+          example: [penicilina]
+        medicamentos:
+          type: array
+          maxItems: 30
+          items: { type: string, maxLength: 100 }
+          example: [Salbutamol inhalado]
+        correo:
+          type: string
+          format: email
+          description: Obligatorio para `adulto_representado`; recibe el enlace de consentimiento.
+        compartirConCocuidador:
+          type: boolean
+          default: false
+          description: Solo aplica a perfiles `propio` y `adulto_representado`.
+    PerfilActualizacion:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        nombre: { type: string, minLength: 1, maxLength: 80 }
+        fechaNacimiento: { type: string, format: date }
+        alergias:
+          type: array
+          maxItems: 30
+          items: { type: string, maxLength: 100 }
+        medicamentos:
+          type: array
+          maxItems: 30
+          items: { type: string, maxLength: 100 }
+        compartirConCocuidador: { type: boolean }
+        resumenActivo: { type: boolean }
+    Perfil:
+      type: object
+      required: [id, familiaId, tipo, nombre, fechaNacimiento, edadAnios, estado, resumenActivo]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        familiaId: { $ref: '#/components/schemas/Id' }
+        tipo:
+          type: string
+          enum: [menor, propio, adulto_representado]
+        nombre: { type: string }
+        fechaNacimiento: { type: string, format: date }
+        edadAnios: { type: integer, minimum: 0, example: 5 }
+        alergias:
+          type: array
+          items: { type: string }
+        medicamentos:
+          type: array
+          items: { type: string }
+        estado:
+          type: string
+          enum: [activo, pendiente_consentimiento]
+        compartirConCocuidador: { type: boolean }
+        resumenActivo: { type: boolean }
+    PermisoHistorial:
+      type: object
+      required: [perfilId, medicoId, compartirHistorial]
+      properties:
+        perfilId: { $ref: '#/components/schemas/Id' }
+        medicoId: { $ref: '#/components/schemas/Id' }
+        medicoNombre: { type: string }
+        compartirHistorial: { type: boolean }
+        actualizadoEn: { $ref: '#/components/schemas/FechaHora' }
+    Consentimiento:
+      type: object
+      required: [perfilId, avisoVersion, otorgadoEn]
+      properties:
+        perfilId: { $ref: '#/components/schemas/Id' }
+        avisoVersion: { type: integer }
+        otorgadoEn: { $ref: '#/components/schemas/FechaHora' }
+
+    # ───── Conversaciones ─────
+    ConversacionNueva:
+      type: object
+      description: El perfil sale del path (`/perfiles/{perfilId}/conversaciones`).
+      required: [etiquetas, medicoId, titulo]
+      properties:
+        etiquetas:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: De una a tres; una cuarta responde `LIMITE_ALCANZADO`.
+          items: { $ref: '#/components/schemas/CodigoEtiqueta' }
+          example: [fiebre]
+        medicoId: { $ref: '#/components/schemas/Id' }
+        titulo: { type: string, minLength: 1, maxLength: 80, example: Fiebre desde anoche }
+        prioridadIndicada:
+          type: boolean
+          default: false
+          description: «Necesito respuesta pronto». Es decisión de la familia; DAFI no la evalúa.
+    ConversacionActualizacion:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        titulo: { type: string, minLength: 1, maxLength: 80 }
+        etiquetas:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/CodigoEtiqueta' }
+        medicoId: { $ref: '#/components/schemas/Id' }
+        prioridadIndicada: { type: boolean }
+    EnvioNuevo:
+      type: object
+      additionalProperties: false
+      description: Vacío para enviar un borrador; con `medicoId` para redirigir una conversación `SIN_MEDICO`.
+      properties:
+        medicoId: { $ref: '#/components/schemas/Id' }
+    Cierre:
+      type: object
+      required: [conversacionId, estado, cerradaEn, cerradaPor]
+      properties:
+        conversacionId: { $ref: '#/components/schemas/Id' }
+        estado:
+          type: string
+          enum: [CERRADA]
+        cerradaEn: { $ref: '#/components/schemas/FechaHora' }
+        cerradaPor: { $ref: '#/components/schemas/PersonaRef' }
+    PuntoPendiente:
+      type: object
+      required: [tipo, mensaje]
+      properties:
+        tipo:
+          type: string
+          enum: [pregunta, medico, consentimiento]
+        referencia:
+          type: string
+          description: Código de la pregunta, si aplica.
+          example: G2
+        mensaje: { type: string, example: 'Falta: ¿Qué le preocupa?' }
+    PersonaRef:
+      type: object
+      required: [id, nombre, rol]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nombre: { type: string }
+        rol: { $ref: '#/components/schemas/Rol' }
+        leyenda:
+          type: string
+          nullable: true
+          example: Contacto agregado por usted
+    ConversacionResumen:
+      type: object
+      required: [id, familiaId, perfil, etiquetas, medico, titulo, estado, prioridadIndicada, creadaEn]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        familiaId: { $ref: '#/components/schemas/Id' }
+        familiaNombre: { type: string }
+        perfil:
+          type: object
+          required: [id, nombre]
+          properties:
+            id: { $ref: '#/components/schemas/Id' }
+            nombre: { type: string }
+        etiquetas:
+          type: array
+          items: { $ref: '#/components/schemas/CodigoEtiqueta' }
+        medico: { $ref: '#/components/schemas/PersonaRef' }
+        titulo: { type: string }
+        estado: { $ref: '#/components/schemas/EstadoConversacion' }
+        prioridadIndicada: { type: boolean }
+        seccionBandeja:
+          type: string
+          enum: [prioridad_familia, esperan_respuesta, esperando_familia, null]
+          nullable: true
+          description: Solo en la bandeja del médico.
+        soloLectura:
+          type: boolean
+          description: Verdadero cuando el médico la ve por «Compartir historial».
+        indicacionVigente:
+          allOf: [{ $ref: '#/components/schemas/Indicacion' }]
+          description: Se omite cuando no hay indicación.
+        creadaEn: { $ref: '#/components/schemas/FechaHora' }
+        enviadaEn:
+          type: string
+          format: date-time
+          nullable: true
+        ultimoEventoEn: { $ref: '#/components/schemas/FechaHora' }
+    ConversacionDetalle:
+      allOf:
+        - $ref: '#/components/schemas/ConversacionResumen'
+        - type: object
+          required: [preguntas, fotos, puntosPendientes, mostrarAvisoEmergencias]
+          properties:
+            perfilDetalle: { $ref: '#/components/schemas/Perfil' }
+            preguntas:
+              type: array
+              items: { $ref: '#/components/schemas/PreguntaConRespuesta' }
+            fotos:
+              type: array
+              items: { $ref: '#/components/schemas/Foto' }
+            puntosPendientes:
+              type: array
+              description: Vacío cuando el borrador se puede enviar (RF-12).
+              items: { $ref: '#/components/schemas/PuntoPendiente' }
+            mostrarAvisoEmergencias:
+              type: boolean
+              description: Verdadero para la familia en toda conversación que no esté `CERRADA`.
+            avisoEmergencias: { $ref: '#/components/schemas/Aviso' }
+    PaginaConversaciones:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items: { $ref: '#/components/schemas/ConversacionResumen' }
+        paginacion: { $ref: '#/components/schemas/Paginacion' }
+
+    # ───── Preguntas, respuestas, fotos, eventos ─────
+    Pregunta:
+      type: object
+      required: [id, texto, tipoRespuesta, obligatoria]
+      properties:
+        id: { type: string, example: F1 }
+        texto: { type: string, example: Temperatura más alta que midió }
+        tipoRespuesta:
+          type: string
+          enum: [opcion, texto, numero_u_opcion, opcion_con_texto, zona_cuerpo]
+        opciones:
+          type: array
+          items: { type: string }
+        obligatoria: { type: boolean }
+        etiqueta:
+          type: string
+          nullable: true
+          description: Nulo para las preguntas generales.
+    PreguntaConRespuesta:
+      allOf:
+        - $ref: '#/components/schemas/Pregunta'
+        - type: object
+          properties:
+            respuesta:
+              allOf: [{ $ref: '#/components/schemas/Respuesta' }]
+              description: Se omite cuando no hay respuesta.
+    Cuestionario:
+      type: object
+      required: [preguntas, referenciaPerfil]
+      properties:
+        preguntas:
+          type: array
+          items: { $ref: '#/components/schemas/PreguntaConRespuesta' }
+        referenciaPerfil:
+          type: object
+          description: Alergias y medicamentos del perfil, mostrados como referencia sobre G3.
+          properties:
+            alergias:
+              type: array
+              items: { type: string }
+            medicamentos:
+              type: array
+              items: { type: string }
+    RespuestaEntrada:
+      type: object
+      minProperties: 1
+      description: Se usa el campo que corresponda al `tipoRespuesta` de la pregunta.
+      properties:
+        opcion: { type: string, example: si }
+        texto: { type: string, maxLength: 2000, example: Paracetamol }
+        numero: { type: number, minimum: 30, maximum: 45, example: 39.5 }
+    Respuesta:
+      type: object
+      required: [preguntaId, autor, registradaEn]
+      properties:
+        preguntaId: { type: string, example: G3 }
+        opcion: { type: string, nullable: true }
+        texto: { type: string, nullable: true }
+        numero: { type: number, nullable: true }
+        autor: { $ref: '#/components/schemas/PersonaRef' }
+        registradaEn: { $ref: '#/components/schemas/FechaHora' }
+    Foto:
+      type: object
+      required: [id, conversacionId, url, bytes, zonaSensible, subidaEn]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        conversacionId: { $ref: '#/components/schemas/Id' }
+        url:
+          type: string
+          description: Ruta relativa de la API; exige token (no es pública).
+          example: /api/v1/conversaciones/3f2b8c1e-7a4d-4e9b-9c2a-1d5e6f7a8b90/fotos/8a1c2d3e-4f5a-4b6c-8d7e-9f0a1b2c3d4e
+        bytes: { type: integer, maximum: 1048576 }
+        anchoPx: { type: integer }
+        altoPx: { type: integer }
+        zonaSensible:
+          type: boolean
+          description: Verdadero si P1 es «zona del pañal o genital»; se ve sin descarga y no va al módulo de resumen.
+        autor: { $ref: '#/components/schemas/PersonaRef' }
+        subidaEn: { $ref: '#/components/schemas/FechaHora' }
+    MensajeNuevo:
+      type: object
+      description: Debe llevar `texto`, `fotoIds` o ambos.
+      minProperties: 1
+      properties:
+        texto: { type: string, minLength: 1, maxLength: 4000 }
+        fotoIds:
+          type: array
+          maxItems: 6
+          items: { $ref: '#/components/schemas/Id' }
+        respondeASolicitud:
+          type: boolean
+          default: false
+          description: La familia responde la solicitud de información vigente.
+    SolicitudInformacionNueva:
+      type: object
+      required: [texto, tipo]
+      properties:
+        texto: { type: string, minLength: 1, maxLength: 2000, example: Mándeme una foto con una moneda al lado }
+        tipo:
+          type: string
+          enum: [fotos, respuesta, ambas]
+    IndicacionNueva:
+      type: object
+      required: [texto]
+      properties:
+        texto:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          example: Paracetamol según su peso cada 6 horas; si sigue igual mañana, me escribe.
+        decision:
+          type: string
+          nullable: true
+          enum: [cuidado_en_casa, consulta_presencial, acudir_a_urgencias, null]
+        plazoDias:
+          type: integer
+          minimum: 1
+          maximum: 90
+          description: Obligatorio cuando `decision` es `consulta_presencial`.
+    Indicacion:
+      type: object
+      required: [id, texto, medico, registradaEn, vigente]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        texto: { type: string }
+        decision:
+          type: string
+          nullable: true
+          enum: [cuidado_en_casa, consulta_presencial, acudir_a_urgencias, null]
+        plazoDias: { type: integer, nullable: true }
+        medico: { $ref: '#/components/schemas/PersonaRef' }
+        registradaEn: { $ref: '#/components/schemas/FechaHora' }
+        vigente: { type: boolean }
+    Evento:
+      type: object
+      required: [id, conversacionId, tipo, autor, fecha]
+      description: Entrada fechada de la conversación. Los campos presentes dependen de `tipo`.
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        conversacionId: { $ref: '#/components/schemas/Id' }
+        tipo:
+          type: string
+          enum: [respuesta, mensaje, foto, solicitud_informacion, indicacion, cambio_estado, cita_marcada]
+        autor:
+          allOf: [{ $ref: '#/components/schemas/PersonaRef' }]
+          description: En eventos del sistema, `rol` es `administrador` y `nombre` es «DAFI».
+        fecha: { $ref: '#/components/schemas/FechaHora' }
+        texto: { type: string, nullable: true }
+        preguntaId: { type: string, nullable: true }
+        fotoIds:
+          type: array
+          items: { $ref: '#/components/schemas/Id' }
+        estadoAnterior:
+          type: string
+          enum: [BORRADOR, ENVIADA, EN_REVISION, INFO_SOLICITADA, CON_INDICACIONES, CERRADA, SIN_MEDICO, null]
+          nullable: true
+        estadoNuevo:
+          type: string
+          enum: [BORRADOR, ENVIADA, EN_REVISION, INFO_SOLICITADA, CON_INDICACIONES, CERRADA, SIN_MEDICO, null]
+          nullable: true
+        indicacion:
+          allOf: [{ $ref: '#/components/schemas/Indicacion' }]
+          description: Se omite cuando no hay indicación.
+    PaginaAccesos:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items: { $ref: '#/components/schemas/Acceso' }
+        paginacion: { $ref: '#/components/schemas/Paginacion' }
+    PaginaEventos:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items: { $ref: '#/components/schemas/Evento' }
+        paginacion: { $ref: '#/components/schemas/Paginacion' }
+    Acceso:
+      type: object
+      required: [medico, recurso, fecha]
+      properties:
+        medico: { $ref: '#/components/schemas/PersonaRef' }
+        recurso:
+          type: string
+          enum: [conversacion, foto]
+        fotoId:
+          type: string
+          format: uuid
+          nullable: true
+        fecha: { $ref: '#/components/schemas/FechaHora' }
+
+    # ───── Resumen de contexto ─────
+    IdCita:
+      type: string
+      description: SHA-256 en hexadecimal de `eventoId` + `inicio` + `fin` del fragmento (revision_sql.md, R5). Es estable entre regeneraciones del resumen.
+      pattern: '^[a-f0-9]{64}$'
+      example: 9c1185a5c5e9fc54612808977ee8f548b2258d31a1f0e2f6f2e7bb2d3c5a0f4e
+    Cita:
+      type: object
+      required: [id, texto, autor, fecha, eventoId, enlace]
+      properties:
+        id: { $ref: '#/components/schemas/IdCita' }
+        texto:
+          type: string
+          description: Fragmento copiado sin cambios del evento de origen.
+          example: Use crema de óxido de zinc dos veces al día
+        autor: { $ref: '#/components/schemas/PersonaRef' }
+        fecha: { $ref: '#/components/schemas/FechaHora' }
+        eventoId: { $ref: '#/components/schemas/Id' }
+        conversacionOrigenId: { $ref: '#/components/schemas/Id' }
+        enlace:
+          type: string
+          description: URL del evento de origen.
+          example: /api/v1/conversaciones/3f2b8c1e-7a4d-4e9b-9c2a-1d5e6f7a8b90/eventos/b7c8d9e0-1f2a-4b3c-9d4e-5f6a7b8c9d0e
+        marcadaIncorrecta: { type: boolean, default: false }
+    DatoPerfil:
+      type: object
+      required: [tipo, texto, fuente]
+      properties:
+        tipo:
+          type: string
+          enum: [alergia, medicamento]
+        texto: { type: string, example: penicilina }
+        fuente:
+          type: string
+          enum: [Perfil]
+    ResumenContexto:
+      type: object
+      required: [titulo, estado, alergiasYMedicamentos]
+      properties:
+        titulo:
+          type: string
+          example: Resumen automático del historial. Verifique en los mensajes originales.
+        estado:
+          type: string
+          enum: [disponible, desactivado_por_familia, no_disponible]
+        mensaje:
+          type: string
+          nullable: true
+          description: |
+            «La familia desactivó el resumen automático», «Resumen no disponible. Puede
+            consultar el historial completo.» o «No hay conversaciones anteriores que pueda ver.»
+        alergiasYMedicamentos:
+          type: array
+          items: { $ref: '#/components/schemas/DatoPerfil' }
+        episodiosAnteriores:
+          type: array
+          items: { $ref: '#/components/schemas/Cita' }
+        indicacionesPrevias:
+          type: array
+          items: { $ref: '#/components/schemas/Cita' }
+        modelo:
+          type: object
+          nullable: true
+          description: Proveedor y versión del modelo que generó el resumen.
+          properties:
+            proveedor: { type: string }
+            version: { type: string }
+        generadoEn:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ───── Notificaciones ─────
+    Notificacion:
+      type: object
+      required: [id, tipo, texto, leida, creadaEn]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        tipo:
+          type: string
+          enum:
+            - conversacion_enviada
+            - info_solicitada
+            - respuesta_familia
+            - mensaje_medico
+            - indicaciones
+            - sin_respuesta
+            - conversacion_borrada
+            - consentimiento
+            - cocuidador_salio
+            - medico_salio
+        texto: { type: string }
+        conversacionId:
+          type: string
+          format: uuid
+          nullable: true
+        leida: { type: boolean }
+        creadaEn: { $ref: '#/components/schemas/FechaHora' }
+    PaginaNotificaciones:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items: { $ref: '#/components/schemas/Notificacion' }
+        paginacion: { $ref: '#/components/schemas/Paginacion' }
+
+    # ───── Reportes ─────
+    ReporteNuevo:
+      type: object
+      required: [tipo, descripcion]
+      properties:
+        tipo: { $ref: '#/components/schemas/TipoReporte' }
+        descripcion: { type: string, minLength: 1, maxLength: 2000, example: No es médico }
+        cuentaReportadaId:
+          allOf: [{ $ref: '#/components/schemas/Id' }]
+          description: Obligatorio cuando `tipo` es `abuso`.
+        conversacionId:
+          allOf: [{ $ref: '#/components/schemas/Id' }]
+          description: Conversación desde la que se reporta; el administrador no ve su contenido.
+        pantalla:
+          type: string
+          description: Pantalla en la que estaba el usuario (reportes técnicos).
+        ultimoCorrelacionId:
+          type: string
+          format: uuid
+          description: Identificador de correlación del último error (reportes técnicos).
+    Reporte:
+      type: object
+      required: [id, tipo, descripcion, rolReportante, creadoEn, atendido]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        tipo: { $ref: '#/components/schemas/TipoReporte' }
+        descripcion: { type: string }
+        reportanteId: { $ref: '#/components/schemas/Id' }
+        rolReportante: { $ref: '#/components/schemas/Rol' }
+        cuentaReportadaId:
+          type: string
+          format: uuid
+          nullable: true
+        pantalla: { type: string, nullable: true }
+        ultimoCorrelacionId: { type: string, format: uuid, nullable: true }
+        creadoEn: { $ref: '#/components/schemas/FechaHora' }
+        atendido: { type: boolean }
+    PaginaReportes:
+      type: object
+      required: [datos, paginacion]
+      properties:
+        datos:
+          type: array
+          items: { $ref: '#/components/schemas/Reporte' }
+        paginacion: { $ref: '#/components/schemas/Paginacion' }
+
+    # ───── Catálogos ─────
+    Etiqueta:
+      type: object
+      required: [codigo, nombre, preguntas]
+      properties:
+        codigo: { $ref: '#/components/schemas/CodigoEtiqueta' }
+        nombre: { type: string, example: Fiebre }
+        preguntas:
+          type: array
+          items: { $ref: '#/components/schemas/Pregunta' }
+    Salud:
+      type: object
+      required: [estado, baseDatos, version, hora]
+      properties:
+        estado:
+          type: string
+          enum: [ok, degradado]
+        baseDatos:
+          type: string
+          enum: [ok, sin_conexion]
+        version: { type: string, example: 1.1.0 }
+        hora: { $ref: '#/components/schemas/FechaHora' }
+    Aviso:
+      type: object
+      required: [codigo, texto, version]
+      properties:
+        codigo:
+          type: string
+          enum: [emergencias, que-es-dafi, sin-respuesta, privacidad]
+        titulo: { type: string, nullable: true }
+        texto:
+          type: string
+          example: DAFI no atiende emergencias. Si la persona tiene dificultad para respirar, pierde el conocimiento o la situación le preocupa, llame al 911 o acuda a urgencias.
+        version: { type: integer, example: 1 }
+        accion:
+          type: object
+          nullable: true
+          description: Botón asociado, por ejemplo «Llamar al 911».
+          properties:
+            etiqueta: { type: string, example: Llamar al 911 }
+            enlace: { type: string, example: 'tel:911' }
+        revisadoPor:
+          type: string
+          nullable: true
+          description: Médico que revisó el texto (RD-05).
+        publicadoEn: { $ref: '#/components/schemas/FechaHora' }
