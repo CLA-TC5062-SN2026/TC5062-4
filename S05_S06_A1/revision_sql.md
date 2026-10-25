@@ -2,7 +2,7 @@
 
 **Curso:** (TC5062.10) Análisis, diseño y construcción de software
 **Equipo 4:** Armando Arredondo Valle (A01424709), Isaac González Trejo (A01274193), Francisco Martínez Álvarez (A01840483) y Daniel Ruán Aguilar (A01731921)
-**Actividad:** S05-S06-A1, Partes 1 y 2 (la Parte 1 está completa; la sección 5 la completa quien haga el backend)
+**Actividad:** S05-S06-A1, Partes 1 y 2.
 
 ## 1. Cómo se generó y cómo se revisó el esquema
 
@@ -85,6 +85,12 @@ Probamos el backend de forma local, conectado a la base `dafi` en PostgreSQL 18.
 
 La consulta GET después del POST permitió verificar que el perfil se guardó en la base de datos. Las respuestas y los códigos se revisaron desde Postman. La evidencia en video corresponde a la Parte 3 de la actividad y se incorpora por separado.
 
+Las pruebas originales de A1 se realizaron con PostgreSQL 18.3 en el entorno de otro integrante. Daniel Ruán verificó posteriormente la importación del mismo esquema en PostgreSQL 16.15 sobre Ubuntu 24.04 WSL, creando correctamente 31 tablas.
+
 ### Alcance de esta implementación
 
 Para A1 implementamos los CRUD de las entidades principales y algunas consultas complementarias. **No se implementaron todas las operaciones del OpenAPI ni las funciones completas del SRS.** En particular, la autenticación con JWT, el control de acceso por roles y la identidad real del usuario pertenecen a la siguiente actividad (A2). Mientras tanto, la API sin autenticación se utiliza únicamente en un entorno local con información ficticia y no debe desplegarse públicamente.
+
+## Validación local de importación (octubre de 2026)
+
+La evidencia [importacion_local_daniel.txt](evidencia/importacion_local_daniel.txt) conserva una salida de listado de relaciones de PostgreSQL con **31 tablas** del esquema `public` y sus propietarios. Esta comprobación acredita que esos objetos estaban visibles en la base local después de la preparación; no incluye datos de usuario ni secretos y no sustituye la revisión del SQL, la comprobación de restricciones ni las pruebas funcionales de CRUD. La importación no se repitió durante la inspección de A2.
