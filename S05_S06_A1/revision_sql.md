@@ -61,4 +61,30 @@ Además corrimos una prueba de humo con siete casos (`evidencia/prueba_esquema.s
 
 ## 5. Correcciones al código generado
 
-**[PENDIENTE]**: lo completa quien implemente los servicios CRUD (Parte 2), comparando el código que genere el agente con `openapi_equipo.yaml` (rutas, métodos y códigos de respuesta).
+Para implementar los servicios de la Parte 2, partimos de una versión inicial generada con Express que permitía iniciar el servidor y comprobar la conexión a PostgreSQL, pero todavía no implementaba los recursos de `openapi_equipo.yaml`. Revisamos esa base contra el contrato del equipo y `esquema_bd.sql`, y realizamos los siguientes ajustes.
+
+| # | Qué tenía la versión inicial | Qué se cambió | Por qué |
+|---|---|---|---|
+| C1 | Solo había rutas temporales para comprobar que Express y la base de datos funcionaban. | Agregamos las rutas de familias, perfiles, conversaciones y catálogos en `backend/src/routes/`, con métodos y respuestas para las operaciones principales de A1. | Un servidor que solo responde a pruebas de salud no cumple la Parte 2: necesitábamos consultar, crear, actualizar y eliminar información real en PostgreSQL. |
+| C2 | No se habían contemplado las relaciones entre varias tablas al guardar una operación. | Agregamos una función de transacciones con `BEGIN`, `COMMIT` y `ROLLBACK` en `backend/src/utils/http.js`. La usamos, por ejemplo, al crear una conversación y asociarle sus etiquetas en `backend/src/routes/conversaciones.js`. | El esquema exige entre una y tres etiquetas por conversación y también valida la relación del médico con la familia. La transacción evita dejar registros incompletos cuando una operación falla. |
+| C3 | La conexión inicial no devolvía recursos con los campos definidos por el contrato del API. | En las consultas usamos alias para transformar nombres de SQL como `familia_id` y `fecha_nacimiento` a `familiaId` y `fechaNacimiento`. También consultamos `v_perfil_paciente` para obtener atributos derivados. | Los nombres y tipos de respuesta deben ser coherentes con los schemas del `openapi_equipo.yaml`, sin modificar las columnas del esquema relacional. |
+| C4 | No existía un tratamiento general de errores para las peticiones del API. | Agregamos validaciones de UUID, fechas y campos permitidos, así como un manejador de errores en `backend/src/app.js` que responde en JSON con `codigo`, `mensaje` y `correlacionId`. Se contemplan, entre otros, 404 para recursos inexistentes y 422 para datos inválidos. | Para que las peticiones fallidas tengan respuestas HTTP claras y no se expongan mensajes internos de PostgreSQL al cliente. |
+| C5 | No se contemplaba el control de cambios sobre los borradores. | El `PATCH` de conversaciones valida que el registro siga en estado `BORRADOR`, incrementa su `version` y admite `If-Match`/`ETag` para detectar una versión desactualizada. | Esto evita aceptar cambios en estados no permitidos y permite detectar conflictos de edición, respetando el diseño establecido para las conversaciones. |
+
+### Pruebas realizadas
+
+Probamos el backend de forma local, conectado a la base `dafi` en PostgreSQL 18.3, utilizando la colección `backend/postman/DAFI_A1.postman_collection.json` y datos ficticios. Se ejecutaron cinco peticiones:
+
+| Prueba | Resultado esperado | Resultado observado |
+|---|---|---|
+| `POST /api/v1/familias/{familiaId}/perfiles` | 201 y perfil creado | Correcto |
+| `GET /api/v1/perfiles/{perfilId}` | 200 y datos previamente guardados | Correcto |
+| `PATCH /api/v1/perfiles/{perfilId}` | 200 y perfil actualizado | Correcto |
+| `POST /api/v1/perfiles/{perfilId}/conversaciones` | 201 y conversación creada | Correcto |
+| `DELETE /api/v1/conversaciones/{conversacionId}` | 204 y conversación eliminada | Correcto |
+
+La consulta GET después del POST permitió verificar que el perfil se guardó en la base de datos. Las respuestas y los códigos se revisaron desde Postman. La evidencia en video corresponde a la Parte 3 de la actividad y se incorpora por separado.
+
+### Alcance de esta implementación
+
+Para A1 implementamos los CRUD de las entidades principales y algunas consultas complementarias. **No se implementaron todas las operaciones del OpenAPI ni las funciones completas del SRS.** En particular, la autenticación con JWT, el control de acceso por roles y la identidad real del usuario pertenecen a la siguiente actividad (A2). Mientras tanto, la API sin autenticación se utiliza únicamente en un entorno local con información ficticia y no debe desplegarse públicamente.
