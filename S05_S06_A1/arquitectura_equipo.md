@@ -1,106 +1,96 @@
-# Arquitectura consolidada del equipo
+# Arquitectura del equipo: DAFI
 
-## 1. Propósito y alcance
+**Curso:** (TC5062.10) Análisis, diseño y construcción de software
+**Equipo 4:** Armando Arredondo Valle (A01424709), Isaac González Trejo (A01274193), Francisco Martínez Álvarez (A01840483) y Daniel Ruán Aguilar (A01731921)
+**Actividad:** S05-S06-A1, Parte 0
+**Estado:** acordada. Los ADR individuales de Francisco, Isaac y Daniel (S04-A1) eligieron por separado el mismo estilo; las diferencias y su resolución están en `diferencias_diseno.md`, sección 3.
 
-Este documento describe la arquitectura realmente implementada en el repositorio para las actividades S05-S06-A1 y A2. El backend es una API REST académica local de DAFI, construida con Express y PostgreSQL. A2 añade autenticación JWT, validación de sesiones y autorización por roles a los CRUD implementados en A1. La implementación no cubre todas las operaciones del OpenAPI ni debe usarse con datos reales o exponerse como servicio de producción.
+## Estilo
 
-## 2. Decisiones tecnológicas
+Cliente-servidor con la API como **monolito modular** (ADR-001 de S04-A1): el cliente Next.js reenvía `/api/*` a una sola API Express, organizada en módulos que siguen las épicas del SRS (identidad, familias, perfiles, conversaciones, contexto, notificaciones, administración y catálogos). El contrato de la API es `openapi_equipo.yaml`.
 
-- **Node.js y ES modules:** runtime del backend (`backend/package.json`, `type: module`).
-- **Express 5:** composición HTTP, rutas REST, parsing JSON y middleware.
-- **PostgreSQL:** persistencia relacional descrita en `S05_S06_A1/esquema_bd.sql`.
-- **`pg`:** pool y consultas parametrizadas desde `backend/src/config/database.js`.
-- **`dotenv`:** lectura local de configuración por el proceso del servidor.
-- **`bcryptjs`:** hash y comparación de contraseñas.
-- **`jsonwebtoken`:** emisión/verificación JWT HS256 con issuer, audience y expiración.
-- **Postman y curl:** clientes para ejecutar solicitudes y observar respuestas; colecciones en `backend/postman/`.
+El único cambio de fondo frente a los diseños individuales es la base de datos, que pasa de MongoDB a PostgreSQL (ADR-002, abajo).
 
-## 3. Componentes
+## Diagrama de contenedores
 
-- **Cliente/API consumer:** Postman o `curl` envían HTTP/JSON al prefijo `/api/v1`.
-- **Aplicación Express (`backend/src/app.js`):** habilita CORS, asigna `X-Correlation-Id`, limita el parser JSON a 1 MB, monta rutas y el manejador de errores.
-- **Rutas públicas:** health, catálogos y rutas `register`/`login`.
-- **Autenticación:** `backend/src/routes/auth.js` implementa `POST /auth/register`, `POST /auth/login` y `GET /auth/me`.
-- **`authenticate`:** valida Bearer JWT, claims, sesión activa, usuario y actividad en PostgreSQL; adjunta identidad verificada a `req.auth`.
-- **`authorize`:** verifica roles y pertenencia/visibilidad del recurso para las rutas CRUD.
-- **Routers CRUD:** familias, perfiles y conversaciones en `backend/src/routes/`.
-- **Pool PostgreSQL:** centraliza acceso mediante `pg`; las operaciones con varios pasos usan transacciones donde corresponde.
-- **Persistencia:** esquema SQL consolidado y scripts locales de datos ficticios en `backend/scripts/`.
-- **Errores:** middleware final devuelve JSON con `codigo`, `mensaje` y `correlacionId`; respuestas 5xx no revelan el detalle al cliente.
-- **Configuración:** `backend/.env.example` enumera `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION` y `MINUTOS_SESION`. No guardar `.env` en Git.
+Fuente: `arquitectura_equipo.puml` (C4, nivel 2). Imagen: `imagenes/arquitectura_equipo.png`.
 
-## 4. Diagrama Mermaid
+![Arquitectura del equipo](imagenes/arquitectura_equipo.png)
 
-```mermaid
-flowchart LR
-    C[Postman / curl] -->|HTTP JSON /api/v1| E[Express app]
-    E --> H[Health y correlación]
-    E --> P[Rutas públicas y catálogos]
-    E --> A[Auth register / login]
-    E -->|rutas CRUD| M[authenticate: Bearer JWT y sesión]
-    M --> Z[authorize: rol y pertenencia]
-    Z --> R[Routers CRUD: familias, perfiles, conversaciones]
-    A -->|consultas| DB[(Pool pg / PostgreSQL)]
-    M -->|sesión y usuario| DB
-    R -->|SQL parametrizado / transacciones| DB
-    DB --> S[esquema_bd.sql]
-    E -. errores de cualquier capa .-> X[Manejador JSON de errores]
-    X -->|codigo, mensaje, correlacionId| C
-    E -->|X-Correlation-Id| C
-```
+## ADR-002: PostgreSQL en lugar de MongoDB
 
-## 5. Flujo de autenticación
+**Fecha:** 2026-10-24
+**Estado:** Propuesto (pendiente de confirmar en el chat del equipo)
+**Sustituye:** la restricción tecnológica de base de datos del SRS 2.4 y la tarea T-06 del Sprint 1 (MongoDB Atlas y Mongoose).
 
-1. El cliente envía `POST /api/v1/auth/register` con cuenta, consentimiento y versión del aviso; el backend valida campos, comprueba unicidad y almacena hash bcryptjs en una transacción. La respuesta pública no incluye contraseña ni hash.
-2. El cliente usa `POST /api/v1/auth/login`. El backend consulta usuario, compara bcrypt, firma JWT HS256 con `sub`, `rol`, `familiaId`, `jti`, issuer, audience y expiración; también registra la sesión en PostgreSQL. Credenciales incorrectas responden 401.
-3. El cliente envía `Authorization: Bearer <token>` a `/api/v1/auth/me` o un CRUD. `authenticate` verifica firma y claims, vigencia, sesión, estado del usuario y tiempo de inactividad. No se documenta ni imprime el token.
-4. En CRUD, `authorize` comprueba el rol y la propiedad/visibilidad del recurso; rol insuficiente responde 403 y recurso ajeno/no encontrado puede responder 404.
+**Contexto.** Desde `S02_A1/proyecto_base.md` el equipo usaba MongoDB, y así quedó en el SRS y en las arquitecturas individuales de S04. La actividad S05-S06 pide diseñar e importar un esquema relacional (`CREATE TABLE`, llaves primarias y foráneas, restricciones) en MySQL, PostgreSQL o SQLite. Además, el dominio de DAFI es relacional por naturaleza: familia → perfiles → conversaciones → eventos es una cadena de composición con borrado en cascada (RF-21, RNF-07), y la regla de qué puede ver un médico (SRS 3.0) cruza familias, círculo médico, permisos de historial y conversaciones en cada lectura.
 
-## 6. Flujo CRUD protegido
+**Decisión.** PostgreSQL 16 como base de datos, con node-postgres (`pg`) y SQL parametrizado en los repositorios de cada módulo. Next.js, Express y el estilo de monolito modular no cambian.
 
-Las rutas públicas se montan antes de la cadena protegida. Para familias, perfiles y conversaciones, `app.use("/api/v1", authenticate, authorize, familias, perfiles, conversaciones)` exige autenticación y autorización antes del router. Las solicitudes usan UUID y validaciones de campos; lecturas devuelven JSON, los POST de creación observados devuelven 201, PATCH devuelve 200 y DELETE devuelve 204 cuando el recurso se elimina. La evidencia de A2 verifica CRUD de perfiles con token, persistencia POST→GET, actualización PATCH y borrado controlado.
+Descartamos un ORM como Prisma: el esquema usa triggers, vistas, índices parciales y llaves foráneas compuestas que Prisma no modela completos, y con `pg` el archivo `esquema_bd.sql` sigue siendo la única fuente de verdad del esquema.
 
-## 7. Persistencia
+**Alternativas consideradas.**
 
-PostgreSQL almacena usuarios, familias, perfiles, conversaciones, sesiones y relaciones definidas en el esquema de A1. `pg.Pool` se configura con host, puerto y base de datos por entorno y usa timeouts. El esquema y los seeds son scripts SQL/Node para una base local de prueba; deben aplicarse solo conforme a su estado y no repetirse sobre tablas existentes. Las pruebas funcionales registradas usan datos ficticios.
+| Alternativa | Por qué no |
+|---|---|
+| Mantener MongoDB | No cumple lo que pide la actividad (esquema relacional importado) y deja sin llaves foráneas la integridad que el SRS exige en la cascada de borrado y en la regla de visibilidad. |
+| MySQL | Viable, pero PostgreSQL trae de fábrica lo que el diseño ya usa: `gen_random_uuid()` para las llaves UUID que ya proponía la especificación de Daniel, `CHECK` y tipos `ENUM` para los estados del SRS, e índices parciales. |
+| SQLite | No tiene servidor; con el disco efímero del hosting gratuito de la API, los datos se perderían en cada despliegue. Sirve para pruebas, no para el ambiente del curso. |
 
-## 8. Seguridad
+**Consecuencias.**
+- Las llaves foráneas y las transacciones son nativas: el borrado de una familia (RF-21-AC-4) se resuelve con `ON DELETE CASCADE` y el envío de una conversación con una transacción, sin depender de un *replica set*.
+- La regla de visibilidad se expresa como consultas con `JOIN` sobre tablas con índices, en lugar de varias lecturas de documentos.
+- Hay que actualizar la restricción 2.4 del SRS y rehacer la tarea T-06 (Atlas y Mongoose) con PostgreSQL y `pg`. Las pruebas de API usarán una base de PostgreSQL de prueba en lugar de MongoDB en memoria.
+- Para la entrega de S05-S06 la base corre local (PostgreSQL 16 o Docker). El servicio de Postgres en la nube para el ambiente del curso queda por decidir.
+- El contrato cambia poco: los identificadores pasan a UUID (`components/schemas/Id`) y la versión para `ETag` sale de una columna `version`.
 
-- Hash de contraseña con bcryptjs; comparación mediante `bcrypt.compare`.
-- JWT con secret por entorno, HS256, `issuer`, `audience`, expiración y `jti` relacionado con una sesión de base de datos.
-- `authenticate` distingue ausencia/token inválido/expirado como 401; `authorize` deniega rol con 403 y limita recursos por familia/visibilidad.
-- Respuestas públicas de cuenta no incluyen contraseña ni hash; el manejador evita devolver detalles internos 5xx.
-- `cors()` está abierto en la configuración observada; es aceptable únicamente para el uso local académico documentado, no para producción.
-- No se observó rate limiting de login en la ruta actual. No exponer el backend públicamente ni usar información real.
+## Implementación en S05-S06
 
-## 9. Trazabilidad
+La especificación y el esquema cubren todo el SRS; el código de `backend/` implementa por ahora las entidades principales. La API sigue el estilo acordado con una granularidad más sencilla que la del diseño: un *router* de Express por recurso, en lugar de un módulo con capas por épica, con la autenticación y la autorización centralizadas en dos middlewares.
 
-- `S05_S06_A1/openapi_equipo.yaml`: contrato REST y esquema Bearer global con excepciones públicas declaradas.
-- `S05_S06_A1/diagrama_clases_equipo.puml`: diseño de clases/dominio consolidado.
-- `S05_S06_A1/esquema_bd.sql`: definición de PostgreSQL.
-- `backend/src/app.js`: montaje de middleware y routers.
-- `backend/src/routes/`: operaciones HTTP implementadas.
-- `backend/src/middleware/`: autenticación y autorización A2.
-- `backend/src/config/database.js` y `backend/src/utils/http.js`: acceso a datos, errores y transacciones.
-- `S05_S06_A2/evidencia/pruebas_terminal_daniel.md`: resultados sanitizados de las pruebas funcionales locales realizadas con curl.
+| Pieza | Archivo | Qué cubre |
+|---|---|---|
+| Arranque y montaje | `backend/src/server.js`, `backend/src/app.js` | Valida `JWT_SECRET` al arrancar, identificador de correlación, rutas públicas y protegidas bajo `/api/v1`, contrato de errores. |
+| Acceso a datos | `backend/src/config/database.js` | Pool de PostgreSQL (`pg`) con SQL parametrizado. |
+| Catálogos y salud (públicas) | `backend/src/routes/catalogos.js` | `GET /salud`, `/etiquetas`, `/avisos/{codigo}`. |
+| Autenticación | `backend/src/routes/auth.js`, `backend/src/middleware/authenticate.js` | `POST /auth/register`, `POST /auth/login`, `GET /auth/me`; JWT HS256 con `jti` guardado en `sesion` e inactividad (RNF-05). |
+| Autorización | `backend/src/middleware/authorize.js` | Rol primero (403) y pertenencia después (404), según la matriz 3.0 del SRS; el médico no ve borradores ni conserva acceso al salir del círculo. |
+| Recursos | `backend/src/routes/familias.js`, `perfiles.js`, `conversaciones.js` | Familias, CRUD de perfiles, conversaciones (historial, apertura, edición del borrador, borrado, eventos, envío y mensajes). |
 
-El OpenAPI contiene operaciones que no están implementadas en el backend actual. La presencia de una operación en el contrato no implica que su endpoint esté disponible.
+Quedan fuera por ahora la máquina de estados completa, las fotos, el resumen con IA, las notificaciones y los procesos programados (cierre automático y aviso por falta de respuesta), que el diseño ubica dentro del mismo proceso de la API.
 
-## 10. Despliegue local
+La imagen PNG incluida arriba también está disponible como [SVG](imagenes/arquitectura_equipo.svg).
 
-- API: `http://localhost:4000/api/v1` por defecto; health en `/api/v1/health`.
-- Requiere Node.js/npm y PostgreSQL local con base de prueba `dafi`.
-- Configurar `.env` desde `.env.example`, sin versionarlo. Los puertos de PostgreSQL documentados deben alinearse con la instalación local.
-- Docker no es obligatorio; no se encontró definición Docker/Compose en el repositorio.
-- Usar solo datos ficticios. No repetir esquema ni seeds si la base ya está poblada.
+## Flujo de autenticación y autorización en A2
 
-## 11. Limitaciones
+1. El cliente envía `POST /api/v1/auth/register` con los datos de cuenta y consentimientos. Express valida los campos, comprueba unicidad y guarda el hash con `bcryptjs`; la respuesta de registro es pública y no incluye password ni hash.
+2. `POST /api/v1/auth/login` compara el password con bcryptjs y, si es válido, firma un JWT HS256 con `sub`, `rol`, `familiaId`, `jti`, `issuer`, `audience` y expiración. La sesión se registra en PostgreSQL. El secret y la expiración se configuran por entorno.
+3. El cliente envía `Authorization: Bearer <token>` a `/api/v1/auth/me` o a una ruta protegida. `authenticate` verifica firma, algoritmo, issuer, audience, claims y expiración, además de consultar sesión y usuario activos.
+4. `authorize` evalúa rol, familia y visibilidad. Token ausente/inválido responde 401; rol sin permiso, 403; recurso ajeno o no visible puede responder 404.
+5. Para médicos, el código final oculta conversaciones en borrador y comprueba que el médico siga en el círculo familiar; salir del círculo corta el acceso en solicitudes posteriores.
 
-- Cobertura parcial del OpenAPI/SRS; no se implementan todas sus operaciones ni flujos de cuenta.
-- Sin TLS; el modo descrito es local.
-- CORS abierto en la configuración actual.
-- Rate limiting y bloqueo de intentos de login del contrato no se encontraron implementados en la ruta inspeccionada.
-- No hay suite automatizada de pruebas declarada en `package.json`; la evidencia A2 actual es terminal/manual y no sustituye pruebas de regresión automatizadas.
-- La expiración estática del JWT se configuró y `jsonwebtoken.verify` rechaza tokens expirados, pero la prueba funcional de token expirado sigue pendiente.
-- Uso exclusivamente académico/local; no está listo para producción ni para datos personales o médicos reales.
+## Flujo CRUD protegido
 
+`backend/src/app.js` monta health, catálogos y autenticación pública antes de la cadena de CRUD. Familias, perfiles y conversaciones pasan por `authenticate` y `authorize` antes de sus routers. La autorización aplica los permisos de la matriz de roles y la pertenencia al recurso; después, las rutas ejecutan SQL parametrizado por `pg`. Los errores se serializan mediante el manejador común de Express como JSON con `codigo`, `mensaje` y `correlacionId`; la aplicación también propaga `X-Correlation-Id` en la respuesta.
+
+## Persistencia y configuración local
+
+PostgreSQL conserva cuentas, familias, perfiles, conversaciones, sesiones y relaciones descritas en `esquema_bd.sql`. `backend/src/config/database.js` configura un pool `pg`; `dotenv` carga la configuración local. `backend/.env.example` enumera `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION` y `MINUTOS_SESION`. El archivo `.env` local no debe versionarse. El backend usa por defecto el puerto HTTP 4000 y requiere PostgreSQL local preparado con el esquema y datos ficticios.
+
+## Trazabilidad de los artefactos
+
+- `openapi_equipo.yaml`: contrato de recursos, requests, respuestas y seguridad Bearer; funciona como especificación, no como prueba de que todas las operaciones estén implementadas.
+- `diagrama_clases_equipo.puml`: modelo de dominio y clases.
+- `arquitectura_equipo.puml` y `imagenes/arquitectura_equipo.png` / `imagenes/arquitectura_equipo.svg`: vista C4 de contenedores del estilo acordado.
+- `esquema_bd.sql`: estructura PostgreSQL y restricciones.
+- `backend/src/app.js`, `backend/src/routes/`, `backend/src/middleware/`, `backend/src/config/` y `backend/src/utils/`: montaje HTTP, endpoints implementados, controles y acceso a datos.
+- `backend/postman/`: colecciones de solicitudes manuales.
+- `S05_S06_A2/evidencia/pruebas_terminal_daniel.md`: evidencia sanitizada de las 15 solicitudes terminales ejecutadas independientemente antes de integrar el último arreglo de `origin/main`.
+- `S05_S06_A2/evidencia/pruebas_terminal.sh` y `pruebas_terminal_salida.txt`: evidencia adicional incorporada por el PR #53; no se atribuye a las pruebas independientes anteriores.
+
+## Limitaciones de la implementación actual
+
+- El backend implementa solo una parte de las operaciones descritas por OpenAPI/SRS; no se declara cobertura completa.
+- No se observó rate limiting/bloqueo de intentos de login ni el endpoint de cierre de sesión descrito por el contrato.
+- La evidencia de las 15 pruebas de Daniel no ejercita específicamente lectura médica de borradores ni la salida del círculo; el comportamiento corregido está en el código integrado desde `origin/main`, con evidencia terminal separada del PR #53.
+- CORS está abierto y no se configura TLS en el modo local. El backend es exclusivamente académico, con datos ficticios, y no está listo para producción.

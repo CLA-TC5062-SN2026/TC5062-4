@@ -1,0 +1,39 @@
+@startuml arquitectura_equipo
+' DAFI: diagrama de contenedores del equipo (C4, nivel 2). S05-S06-A1, Parte 0.
+' Equipo 4. Arquitectura acordada (ADR de Francisco, Isaac y Daniel en S04-A1) con la base de datos
+' cambiada a PostgreSQL (ADR-002, en arquitectura_equipo.md).
+
+!include <C4/C4_Container>
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+SHOW_PERSON_OUTLINE()
+
+title DAFI · Arquitectura del equipo (C4 nivel 2)
+
+Person(familia, "Cuidador o cocuidador", "Abre y envía conversaciones sobre sus hijos desde el celular.")
+Person(medico, "Médico", "Atiende conversaciones desde el celular o la computadora.")
+Person(admin, "Administrador", "Atiende reportes y desactiva cuentas.")
+
+System_Boundary(dafi, "DAFI") {
+  Container(spa, "Aplicación web", "Next.js / React en el navegador", "Pantallas a 360 px. Convierte fotos HEIC a JPEG, las reduce y quita el EXIF antes de subirlas.")
+  Container(web, "Servidor web", "Next.js", "Sirve las páginas y reenvía /api/* a la API con un rewrite.")
+  Container(api, "API de DAFI", "Node.js + Express + pg, monolito modular", "Implementa openapi_equipo.yaml con un router por recurso, autenticación JWT y autorización por rol. Acceso a datos con SQL parametrizado (pg). Procesos programados previstos en el mismo proceso.")
+  ContainerDb(db, "Base de datos", "PostgreSQL 16", "Esquema esquema_bd.sql: familias, perfiles, conversaciones, eventos, permisos e idempotencia, con llaves foráneas y transacciones.")
+  ContainerDb(fotos, "Almacén de fotos", "Almacenamiento de objetos privado (S3)", "JPEG sin EXIF. Sin URL públicas: solo la API los lee y escribe (RNF-06).")
+}
+
+System_Ext(llm, "Proveedor del modelo de lenguaje", "Por definir (RD-06).")
+System_Ext(correo, "Servicio de correo", "Correo transaccional por API HTTPS.")
+
+Rel(familia, spa, "Usa", "HTTPS")
+Rel(medico, spa, "Usa", "HTTPS")
+Rel(admin, spa, "Usa", "HTTPS")
+Rel(spa, web, "Carga páginas y llama a /api/v1/*", "HTTPS, JSON")
+Rel(web, api, "Reenvía /api/v1/*", "HTTPS (rewrite)")
+Rel(api, db, "Lee y escribe; transacciones", "SQL sobre TLS (node-postgres)")
+Rel(api, fotos, "Guarda, entrega y borra fotos", "API S3 sobre HTTPS")
+Rel(api, llm, "Envía eventos seudonimizados y recibe citas", "HTTPS, JSON, timeout 20 s")
+Rel(api, correo, "Envía avisos sin datos clínicos", "HTTPS, JSON")
+
+@enduml

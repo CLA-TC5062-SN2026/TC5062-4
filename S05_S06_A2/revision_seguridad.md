@@ -1,6 +1,6 @@
 # S05-S06-A2 — Revisión de seguridad del backend
 
-**Estado de esta revisión:** código revisado estáticamente y 15 solicitudes funcionales locales ejecutadas con `curl`; las 15 coincidieron con el status esperado. Los resultados sanitizados están en [evidencia/pruebas_terminal_daniel.md](evidencia/pruebas_terminal_daniel.md). El rechazo de token expirado permanece pendiente de prueba funcional. No se ejecutó Postman durante esta revisión.
+**Estado de esta revisión:** Daniel ejecutó independientemente 15 solicitudes funcionales con `curl` antes de integrar el último arreglo de `origin/main`; las 15 coincidieron con el status esperado. Sus resultados sanitizados están en [evidencia/pruebas_terminal_daniel.md](evidencia/pruebas_terminal_daniel.md). La prueba de token expirado quedó pendiente dentro de esas 15 pruebas. La evidencia separada de `origin/main`/PR #53 sí registra un token expirado con 401 (sección 7); no se atribuye esa prueba a Daniel. Daniel no ejecutó Postman durante esta revisión.
 
 ## 1. Autenticación y exposición de datos
 
@@ -16,7 +16,7 @@
 | Firma, algoritmo, issuer/audience y expiración | `authenticate.js:12-22` usa `jwt.verify`, fija `HS256`, `issuer`, `audience` y mapea fallos de verificación a 401. | **Verificado localmente:** firma adulterada 401 (T09). **Pendiente de prueba:** token expirado; solo estático. |
 | Sesión/usuario activo | `authenticate.js:24-62` consulta sesión, usuario, revocación y actividad; valida rol/familia y establece `req.auth`. | **Verificado estáticamente**; flujo protegido real exitoso en T04-T07. |
 | Bearer ausente | `authenticate.js:7-10` exige el formato Bearer. | **Verificado localmente:** CRUD sin token 401 (T08). |
-| Roles y 403 | `backend/src/middleware/authorize.js:4-13, 65-120`. Roles derivan del usuario/tipo de cuidador de la base. | **Verificado localmente:** cuidador principal autorizado 201 (T05); médico en operación restringida 403 (T11). |
+| Roles y 403 | `backend/src/middleware/authorize.js:4-13, 75-132`. Roles derivan del usuario/tipo de cuidador de la base. | **Verificado localmente:** cuidador principal autorizado 201 (T05); médico en operación restringida 403 (T11). |
 | Contraseña/hash en `/me` | `auth.js:31-55` selecciona solo campos públicos. | **Verificado localmente:** T04 no devolvió password/hash. |
 
 ## 2. Rutas y controles observados
@@ -41,7 +41,7 @@ La colección `backend/postman/DAFI_A2.postman_collection.json` contiene registe
 ## 3. Corrección propia A1→A2
 
 - **Estado original:** en `main`/A1, `backend/src/routes/conversaciones.js:225,297` obtenía el autor desde `process.env.DEV_USER_ID`; una identidad fija de desarrollo no representa al usuario autenticado.
-- **Cambio observado en A2:** en `backend/src/routes/conversaciones.js:362,480` los autores pasan a ser `req.auth.id`; la ruta protegida recibe esa identidad después de `authenticate` y `authorize` (`app.js:35`).
+- **Cambio observado en A2:** en `backend/src/routes/conversaciones.js:366,484` los autores pasan a ser `req.auth.id`; la ruta protegida recibe esa identidad después de `authenticate` y `authorize` (`app.js:35`).
 - **Riesgo resuelto:** evitar atribuir mensajes/envíos a un usuario fijo de configuración y asociar la acción al usuario autenticado.
 - **Resultado:** comparación estática de `main` con A2 confirma el cambio. Las pruebas T04-T07 verifican autenticación y CRUD de perfil, pero **no ejercitan** el autor de mensajes/envíos; esa corrección específica queda con evidencia estática, no funcional.
 
@@ -77,3 +77,28 @@ Independientemente, se ejecutaron con `curl` local los casos equivalentes T02-T1
 - Probar un JWT genuinamente expirado en un entorno controlado sin exponer/modificar secrets.
 - Probar rutas de conversación y otros casos de autorización no cubiertos por esta matriz.
 - No afirmar que el resto del OpenAPI está implementado; acordar su alcance y documentar divergencias antes de una integración final.
+
+## 7. Integración posterior del PR #53
+
+Las 15 pruebas independientes descritas en las secciones anteriores fueron ejecutadas por Daniel en `feature/a2-evidence` antes de integrar el último arreglo de `origin/main`. No cubren la lectura médica de conversaciones en borrador ni la revocación de acceso al salir del círculo familiar.
+
+Después se integró a `origin/main` el PR #53, incluido el commit `e679610`. El código final contiene correcciones en `backend/src/routes/conversaciones.js` y `backend/src/middleware/authorize.js`:
+
+- El listado para médico excluye conversaciones `BORRADOR` y requiere que el médico siga en `miembro_circulo` (`conversaciones.js:141-150`).
+- La comprobación de perfil médico requiere pertenencia actual al círculo y al menos una conversación enviada o permiso explícito de historial (`authorize.js:15-43`).
+- El acceso al detalle de conversación rechaza borradores y vuelve a comprobar pertenencia al círculo en cada solicitud (`authorize.js:46-72`).
+
+`S05_S06_A2/evidencia/pruebas_terminal.sh` y `S05_S06_A2/evidencia/pruebas_terminal_salida.txt` provienen del trabajo integrado mediante PR #53. La salida registrada contiene estos resultados:
+
+| Caso del script del PR #53 | HTTP observado |
+|---|---:|
+| `/auth/me` sin token | 401 |
+| `/auth/me` con token modificado | 401 |
+| `/auth/me` con token expirado | 401 |
+| Login con contraseña incorrecta | 401 |
+| POST de perfil sin token | 401 |
+| POST de perfil con token médico | 403 |
+| POST de perfil con token de cuidadora principal | 201 |
+| `/auth/me` con token válido | 200 |
+
+La tabla anterior se atribuye a la evidencia de terminal integrada por PR #53, **no a Daniel**. Daniel no ejecutó ni reclama esos ocho casos adicionales. En particular, el script/salida no ejercitan específicamente la lectura de borradores por médico ni la retirada del médico del círculo; esos comportamientos quedan verificados estáticamente en el código final, pero no por esas dos salidas. La evidencia de PR #53 sí cubre funcionalmente el rechazo de token expirado (401), separado de las 15 pruebas previas de Daniel, donde ese caso permaneció pendiente.

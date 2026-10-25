@@ -23,12 +23,16 @@ async function profile(req, id, write = false) {
   }
   roles(req, [...caregiverRoles, 'medico']);
   if (req.auth.rol === 'medico') {
+    // Solo si sigue en el círculo de la familia (RF-08-AC-3) y le enviaron al menos una
+    // conversación del perfil o tiene «Compartir historial»; un borrador no cuenta (RF-12).
     const ok = await pool.query(`
-      SELECT 1 FROM conversacion c WHERE c.perfil_id = $1 AND c.medico_id = $2
-      UNION SELECT 1 FROM permiso_historial h WHERE h.perfil_id = $1
-        AND h.medico_id = $2 AND h.compartir_historial = true
-      LIMIT 1
-    `, [p.id, req.auth.id]);
+      SELECT 1 FROM miembro_circulo m
+      WHERE m.familia_id = $3 AND m.medico_id = $2
+        AND (EXISTS (SELECT 1 FROM conversacion c WHERE c.perfil_id = $1 AND c.medico_id = $2
+                       AND c.estado <> 'BORRADOR')
+          OR EXISTS (SELECT 1 FROM permiso_historial h WHERE h.perfil_id = $1
+                       AND h.medico_id = $2 AND h.compartir_historial = true))
+    `, [p.id, req.auth.id, p.familia_id]);
     if (!ok.rowCount) throw missing();
   } else {
     sameFamily(req, p.familia_id);
@@ -41,7 +45,7 @@ async function profile(req, id, write = false) {
 
 async function conversation(req, id, opts = {}) {
   const r = await pool.query(`
-    SELECT c.id, c.medico_id, p.id AS perfil_id, p.familia_id, p.tipo, p.compartir_con_cocuidador
+    SELECT c.id, c.medico_id, c.estado, p.id AS perfil_id, p.familia_id, p.tipo, p.compartir_con_cocuidador
     FROM conversacion c JOIN perfil_paciente p ON p.id = c.perfil_id WHERE c.id = $1
   `, [uuidOr404(id)]);
   if (!r.rowCount) throw missing();
@@ -49,6 +53,14 @@ async function conversation(req, id, opts = {}) {
   if (opts.write) roles(req, caregiverRoles);
   else roles(req, [...caregiverRoles, 'medico']);
   if (req.auth.rol === 'medico') {
+    // Un borrador es privado de la familia hasta que lo envía (RF-12), y un médico fuera
+    // del círculo deja de ver todas las conversaciones de esa familia (RF-08-AC-3).
+    if (c.estado === 'BORRADOR') throw missing();
+    const inCircle = await pool.query(
+      'SELECT 1 FROM miembro_circulo WHERE familia_id = $1 AND medico_id = $2',
+      [c.familia_id, req.auth.id],
+    );
+    if (!inCircle.rowCount) throw missing();
     const canReadShared = !opts.messages && await pool.query(`
       SELECT 1 FROM permiso_historial WHERE perfil_id = $1 AND medico_id = $2 AND compartir_historial = true
     `, [c.perfil_id, req.auth.id]);
