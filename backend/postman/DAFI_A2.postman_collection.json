@@ -1,0 +1,363 @@
+{
+  "info": {
+    "name": "DAFI A2 — Autenticación y roles",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Sólo datos ficticios. Ejecutar PREPARACIÓN antes de grabar el video. Las peticiones 1–6 se graban en orden."
+  },
+  "item": [
+    {
+      "name": "1. Registrar cuidador (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Cuidador A2\",\n  \"nombreFamilia\": \"Familia A2\",\n  \"correo\": \"{{correoDemo}}\",\n  \"contrasena\": \"{{contrasenaDemo}}\",\n  \"avisoVersion\": 1,\n  \"declaraciones\": {\n    \"mayorDeEdad\": true,\n    \"consentimientoDatosPropios\": true,\n    \"consentimientoDatosMenores\": true\n  }\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('correoDemo', `cuidador-a2-${Date.now()}@example.test`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "const a = pm.response.json();",
+              "pm.collectionVariables.set('familiaId', a.familiaId);",
+              "pm.test('sin contraseña', () => pm.expect(JSON.stringify(a)).not.to.include('hash_contrasena'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Login cuidador (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"{{correoDemo}}\",\n  \"contrasena\": \"{{contrasenaDemo}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('accessToken', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. /auth/me token válido (200)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. POST perfil token cuidador (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/familias/{{familiaId}}/perfiles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "familias",
+            "{{familiaId}}",
+            "perfiles"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"menor\",\n  \"nombre\": \"Perfil A2\",\n  \"fechaNacimiento\": \"2020-01-15\",\n  \"alergias\": [],\n  \"medicamentos\": []\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('perfilId', pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. POST perfil SIN token (401)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/familias/{{familiaId}}/perfiles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "familias",
+            "{{familiaId}}",
+            "perfiles"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"menor\",\n  \"nombre\": \"No autorizado\",\n  \"fechaNacimiento\": \"2020-01-15\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. POST perfil token médico (403)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/familias/{{familiaId}}/perfiles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "familias",
+            "{{familiaId}}",
+            "perfiles"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"menor\",\n  \"nombre\": \"No permitido\",\n  \"fechaNacimiento\": \"2020-01-15\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "EXTRA. Token adulterado (401)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessTokenAdulterado}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const t = pm.collectionVariables.get('accessToken') || '';",
+              "pm.collectionVariables.set('accessTokenAdulterado', t ? t.slice(0, -8) + (t[t.length - 8] === 'a' ? 'b' : 'a') + t.slice(-7) : 'invalid');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PREPARACIÓN antes de grabar: login médico demo (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"medico.demo@dafi.invalid\",\n  \"contrasena\": \"MedicoDemo123!\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('doctorToken', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/v1"
+    },
+    {
+      "key": "correoDemo",
+      "value": ""
+    },
+    {
+      "key": "contrasenaDemo",
+      "value": "DemoSeguro123!"
+    },
+    {
+      "key": "familiaId",
+      "value": ""
+    },
+    {
+      "key": "perfilId",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "doctorToken",
+      "value": ""
+    }
+  ]
+}

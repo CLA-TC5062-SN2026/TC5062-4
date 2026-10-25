@@ -6,6 +6,9 @@ import familias from "./routes/familias.js";
 import perfiles from "./routes/perfiles.js";
 import conversaciones from "./routes/conversaciones.js";
 import catalogos from "./routes/catalogos.js";
+import auth from "./routes/auth.js";
+import { authenticate } from "./middleware/authenticate.js";
+import { authorize } from "./middleware/authorize.js";
 import { ApiError } from "./utils/http.js";
 
 const app = express();
@@ -26,7 +29,10 @@ app.get("/api/v1/health", (req, res) => {
   res.json({ status: "ok", message: "DAFI API funcionando" });
 });
 
-app.use("/api/v1", familias, perfiles, conversaciones, catalogos);
+// Catálogos públicos y autenticación: no requieren token.
+app.use("/api/v1", catalogos, auth);
+// Los CRUD requieren JWT y autorización por rol + pertenencia al recurso.
+app.use("/api/v1", authenticate, authorize, familias, perfiles, conversaciones);
 app.use((req, res, next) =>
   next(new ApiError(404, "NO_ENCONTRADO", "Ruta no encontrada")),
 );
