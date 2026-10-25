@@ -142,8 +142,12 @@ async function list(req, res, where, params) {
   const { pagina, limite, offset } = pageParams(req.query);
   if (req.auth.rol === "medico") {
     params.push(req.auth.id);
+    // El médico no ve borradores (la familia decide cuándo enviar, RF-12) y deja de ver
+    // todo en cuanto sale del círculo de la familia (RF-08-AC-3).
     where.push(
       `(c.medico_id = $${params.length} OR EXISTS (SELECT 1 FROM permiso_historial ph WHERE ph.perfil_id = p.id AND ph.medico_id = $${params.length} AND ph.compartir_historial = true))`,
+      `c.estado <> 'BORRADOR'`,
+      `EXISTS (SELECT 1 FROM miembro_circulo mc WHERE mc.familia_id = p.familia_id AND mc.medico_id = $${params.length})`,
     );
   } else {
     params.push(req.auth.familiaId);

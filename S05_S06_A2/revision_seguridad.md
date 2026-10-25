@@ -1,6 +1,6 @@
 # S05-S06-A2 — Revisión de seguridad del backend
 
-**Estado:** siete pruebas verificadas en Postman y confirmadas por el integrante. Faltan pruebas complementarias y resultados desde terminal; completar `[PENDIENTE]` solo después de ejecutarlas.
+**Estado:** pruebas verificadas en Postman y desde terminal, con resultados reales en la sección 4. La sección 2b documenta dos correcciones de visibilidad hechas en la revisión del pull request.
 
 ## 1. Módulo de autenticación
 
@@ -23,6 +23,25 @@
 
 **Por qué:** el autor ya no puede elegirse mediante una variable de desarrollo. La identidad viene del JWT validado y una sesión activa, lo que permite rechazar accesos sin credenciales (401), por rol incorrecto (403) y a recursos ajenos (404).
 
+## 2b. Correcciones de la revisión del pull request (visibilidad del médico)
+
+En la revisión del PR reproducimos dos casos en los que el médico veía información que, según el SRS, no le corresponde. Los dos pasaban las pruebas de rol porque el rol era correcto; el problema estaba en la regla de visibilidad («Qué puede ver un médico», sección 3.0).
+
+| Problema | Evidencia antes de corregir | Qué se cambió | Por qué |
+|---|---|---|---|
+| El médico veía los **borradores** de la familia. | La médica listaba y abría (200) una conversación en `BORRADOR` que la familia todavía no enviaba. | `c.estado <> 'BORRADOR'` en el listado del médico (`backend/src/routes/conversaciones.js`, función `list`) y en el detalle (`backend/src/middleware/authorize.js`, función `conversation`); un perfil solo cuenta como visible por conversaciones ya enviadas (función `profile`). | La familia decide cuándo enviar (RF-12); hasta entonces la conversación no está «dirigida» al médico. |
+| Un médico **fuera del círculo** seguía viendo todo. | Después de quitarla de `miembro_circulo`, la médica abría la conversación (200) y el perfil (200). | Las mismas tres funciones exigen que el médico siga en `miembro_circulo` de la familia del perfil. | RF-08-AC-3: el médico «deja de ver todas las conversaciones de la familia en su siguiente petición». |
+
+Verificación después de corregir:
+
+| Escenario | Listado del médico | Detalle | Perfil | Eventos |
+|---|---|---|---|---|
+| Conversación en `BORRADOR` | 0 conversaciones | 404 | 404 | — |
+| La misma conversación ya `ENVIADA` | 1 conversación | 200 | 200 | 200 |
+| Médico quitado del círculo | 0 conversaciones | 404 | 404 | 404 |
+
+La cuidadora principal sigue viendo su borrador (200).
+
 ## 3. Tabla de protección de rutas implementadas en A1
 
 | Método y ruta | ¿Bearer? | Rol permitido | Validación del recurso |
@@ -42,7 +61,7 @@
 | POST `/conversaciones/:conversacionId/envios` | Sí | Cuidador principal, cocuidador | Familia propia |
 | POST `/conversaciones/:conversacionId/mensajes` | Sí | Cuidador principal, cocuidador, médico destinatario | Familia o médico asignado |
 
-**Código:** montaje y orden de rutas en `backend/src/app.js:26–30`; roles y pertenencia en `backend/src/middleware/authorize.js:7–131`.
+**Código:** montaje y orden de rutas en `backend/src/app.js:33–35`; roles y pertenencia en `backend/src/middleware/authorize.js` (todo el archivo).
 
 ## 4. Pruebas manuales (capturar resultados REALES)
 
@@ -57,23 +76,23 @@ Estas pruebas deben realizarse con la colección `backend/postman/DAFI_A2.postma
 | Mismo POST sin `Authorization` | 401 | 401 | Postman (confirmado) |
 | GET `/auth/me` con token modificado | 401 | 401 | Postman (confirmado) |
 | POST perfil con token del médico | 403 | 403 | Postman (confirmado) |
-| Contraseña incorrecta en `/auth/login` | 401 | [PENDIENTE] | Postman/captura |
-| Token expirado | 401 | [PENDIENTE] | Prueba con expiración corta |
+| Contraseña incorrecta en `/auth/login` | 401 | 401 | Terminal (`evidencia/pruebas_terminal_salida.txt`) |
+| Token expirado (firma válida, `exp` en el pasado) | 401 | 401 | Terminal (`evidencia/pruebas_terminal_salida.txt`) |
 
-### Pruebas desde terminal (copiar códigos y resultados obtenidos)
+### Pruebas desde terminal
 
-```bash
-# Sin token → 401
-curl -i http://localhost:4000/api/v1/auth/me
+Script: `evidencia/pruebas_terminal.sh` (curl), corrido contra la API con los datos ficticios de `backend/scripts`. Salida completa en `evidencia/pruebas_terminal_salida.txt`.
 
-# Tokens de demo obtenidos por login en Postman; NO copiarlos a documentación pública.
-# 403 por rol: enviar petición POST /familias/{familiaId}/perfiles con token médico.
-```
-
-- **Sin token, resultado real:** [PENDIENTE]
-- **Token modificado, resultado real:** [PENDIENTE]
-- **Token válido / rol principal, resultado real:** [PENDIENTE]
-- **Token médico / rol incorrecto, resultado real:** [PENDIENTE]
+| Caso | Petición | Esperado | Resultado real |
+|---|---|---:|---:|
+| Sin token | `GET /auth/me` | 401 | 401 |
+| Token modificado (un carácter) | `GET /auth/me` | 401 | 401 |
+| Token vencido | `GET /auth/me` | 401 | 401 |
+| Contraseña incorrecta | `POST /auth/login` | 401 | 401 |
+| Ruta CRUD sin token | `POST /familias/{id}/perfiles` | 401 | 401 |
+| Token de médico, rol incorrecto | `POST /familias/{id}/perfiles` | 403 | 403 |
+| Token de cuidadora principal, rol correcto | `POST /familias/{id}/perfiles` | 201 | 201 |
+| Token válido | `GET /auth/me` | 200 | 200 |
 
 ## 5. Limitaciones y trabajo fuera de A2
 

@@ -1,0 +1,8 @@
+GET /auth/me sin token                                     -> 401
+GET /auth/me con token modificado (1 carácter)            -> 401
+GET /auth/me con token vencido                             -> 401
+POST /auth/login con contraseña incorrecta                -> 401
+POST perfil sin token                                      -> 401
+POST perfil con token de médico (rol incorrecto)          -> 403
+POST perfil con token de cuidadora principal               -> 201
+GET /auth/me con token válido                             -> 200
