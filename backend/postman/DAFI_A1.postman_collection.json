@@ -1,0 +1,201 @@
+{
+  "info": {
+    "name": "DAFI S05-S06 A1 - 5 endpoints Postman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. POST perfil",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/familias/{{familiaId}}/perfiles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "familias",
+            "{{familiaId}}",
+            "perfiles"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"menor\",\n  \"nombre\": \"Paciente Demo\",\n  \"fechaNacimiento\": \"2020-01-15\",\n  \"alergias\": [],\n  \"medicamentos\": []\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('perfilId', pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. GET perfil - persistencia",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/perfiles/{{perfilId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "perfiles",
+            "{{perfilId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. PATCH perfil",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/merge-patch+json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/perfiles/{{perfilId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "perfiles",
+            "{{perfilId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Paciente Actualizado\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. POST conversación",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/perfiles/{{perfilId}}/conversaciones",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "perfiles",
+            "{{perfilId}}",
+            "conversaciones"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Consulta de prueba\",\n  \"medicoId\": \"{{medicoId}}\",\n  \"etiquetas\": [\n    \"fiebre\"\n  ],\n  \"prioridadIndicada\": false\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('conversacionId', pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. DELETE conversación",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/conversaciones/{{conversacionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "conversaciones",
+            "{{conversacionId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/v1"
+    },
+    {
+      "key": "familiaId",
+      "value": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "key": "medicoId",
+      "value": "33333333-3333-4333-8333-333333333333"
+    },
+    {
+      "key": "perfilId",
+      "value": ""
+    },
+    {
+      "key": "conversacionId",
+      "value": ""
+    }
+  ]
+}
