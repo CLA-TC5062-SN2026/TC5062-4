@@ -1,6 +1,6 @@
 # S05-S06-A2 — Revisión de seguridad del backend
 
-**Estado:** implementación preparada; validar ejecutando pruebas y sustituir todas las marcas `[PENDIENTE]` antes de entregar.
+**Estado:** siete pruebas verificadas en Postman y confirmadas por el integrante. Faltan pruebas complementarias y resultados desde terminal; completar `[PENDIENTE]` solo después de ejecutarlas.
 
 ## 1. Módulo de autenticación
 
@@ -50,13 +50,13 @@ Estas pruebas deben realizarse con la colección `backend/postman/DAFI_A2.postma
 
 | Prueba | HTTP esperado | HTTP observado | Evidencia |
 |---|---:|---|---|
-| Registro de cuidador principal | 201 | [PENDIENTE] | Postman/captura |
-| Login correcto, JWT visible | 200 | [PENDIENTE] | Postman/captura |
-| `/auth/me` con Bearer | 200 | [PENDIENTE] | Postman/captura |
-| POST perfil protegido con cuidador principal | 201 | [PENDIENTE] | Postman/captura |
-| Mismo POST sin `Authorization` | 401 | [PENDIENTE] | Postman/captura |
-| GET `/auth/me` con token modificado | 401 | [PENDIENTE] | Postman/captura |
-| POST perfil con token del médico | 403 | [PENDIENTE] | Postman/captura |
+| Registro de cuidador principal | 201 | 201 | Postman (confirmado) |
+| Login correcto, JWT visible | 200 | 200 | Postman (confirmado) |
+| `/auth/me` con Bearer | 200 | 200 | Postman (confirmado) |
+| POST perfil protegido con cuidador principal | 201 | 201 | Postman (confirmado) |
+| Mismo POST sin `Authorization` | 401 | 401 | Postman (confirmado) |
+| GET `/auth/me` con token modificado | 401 | 401 | Postman (confirmado) |
+| POST perfil con token del médico | 403 | 403 | Postman (confirmado) |
 | Contraseña incorrecta en `/auth/login` | 401 | [PENDIENTE] | Postman/captura |
 | Token expirado | 401 | [PENDIENTE] | Prueba con expiración corta |
 
