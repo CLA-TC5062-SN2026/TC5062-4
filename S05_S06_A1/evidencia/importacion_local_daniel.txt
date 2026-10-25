@@ -1,5 +1,5 @@
                  List of relations
- Schema |         Name          | Type  |  Owner   
+ Schema |         Name          | Type  |  Owner
 --------+-----------------------+-------+----------
  public | aceptacion_aviso      | table | dafi_app
  public | administrador         | table | dafi_app
@@ -33,4 +33,3 @@
  public | sesion                | table | dafi_app
  public | usuario               | table | dafi_app
 (31 rows)
-
