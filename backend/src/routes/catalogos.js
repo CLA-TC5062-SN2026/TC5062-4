@@ -1,19 +1,31 @@
-import { Router } from 'express';
-import pool from '../config/database.js';
-import { missing } from '../utils/http.js';
+import { Router } from "express";
+import pool from "../config/database.js";
+import { missing } from "../utils/http.js";
 
 const router = Router();
 
-router.get('/salud', async (req, res) => {
+router.get("/salud", async (req, res) => {
   try {
-    await pool.query('SELECT 1');
-    res.json({ estado: 'ok', baseDatos: 'ok', version: '2.0.0', hora: new Date().toISOString() });
+    await pool.query("SELECT 1");
+    res.json({
+      estado: "ok",
+      baseDatos: "ok",
+      version: "2.0.0",
+      hora: new Date().toISOString(),
+    });
   } catch {
-    res.status(503).json({ estado: 'degradado', baseDatos: 'sin_conexion', version: '2.0.0', hora: new Date().toISOString() });
+    res
+      .status(503)
+      .json({
+        estado: "degradado",
+        baseDatos: "sin_conexion",
+        version: "2.0.0",
+        hora: new Date().toISOString(),
+      });
   }
 });
 
-router.get('/etiquetas', async (req, res) => {
+router.get("/etiquetas", async (req, res) => {
   const result = await pool.query(`
     SELECT e.codigo, e.nombre,
       COALESCE((
@@ -30,12 +42,15 @@ router.get('/etiquetas', async (req, res) => {
   res.json(result.rows);
 });
 
-router.get('/avisos/:codigo', async (req, res) => {
-  const result = await pool.query(`
+router.get("/avisos/:codigo", async (req, res) => {
+  const result = await pool.query(
+    `
     SELECT codigo, version, texto, requiere_aceptacion AS "requiereAceptacion"
     FROM aviso WHERE codigo::text = $1 ORDER BY version DESC LIMIT 1
-  `, [req.params.codigo]);
-  if (!result.rowCount) throw missing('Aviso no encontrado');
+  `,
+    [req.params.codigo],
+  );
+  if (!result.rowCount) throw missing("Aviso no encontrado");
   res.json(result.rows[0]);
 });
 
