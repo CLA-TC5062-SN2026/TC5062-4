@@ -1,0 +1,35 @@
+                 List of relations
+ Schema |         Name          | Type  |  Owner
+--------+-----------------------+-------+----------
+ public | aceptacion_aviso      | table | dafi_app
+ public | administrador         | table | dafi_app
+ public | aviso                 | table | dafi_app
+ public | cita_textual          | table | dafi_app
+ public | clave_idempotencia    | table | dafi_app
+ public | consentimiento_adulto | table | dafi_app
+ public | conversacion          | table | dafi_app
+ public | conversacion_etiqueta | table | dafi_app
+ public | cuidador              | table | dafi_app
+ public | enlace_un_uso         | table | dafi_app
+ public | etiqueta              | table | dafi_app
+ public | etiqueta_pregunta     | table | dafi_app
+ public | evento                | table | dafi_app
+ public | familia               | table | dafi_app
+ public | foto                  | table | dafi_app
+ public | intento_login         | table | dafi_app
+ public | invitacion            | table | dafi_app
+ public | medico                | table | dafi_app
+ public | mensaje_foto          | table | dafi_app
+ public | miembro_circulo       | table | dafi_app
+ public | notificacion          | table | dafi_app
+ public | perfil_paciente       | table | dafi_app
+ public | permiso_historial     | table | dafi_app
+ public | pregunta_contexto     | table | dafi_app
+ public | registro_acceso       | table | dafi_app
+ public | registro_borrado      | table | dafi_app
+ public | reporte               | table | dafi_app
+ public | respuesta             | table | dafi_app
+ public | resumen_contexto      | table | dafi_app
+ public | sesion                | table | dafi_app
+ public | usuario               | table | dafi_app
+(31 rows)

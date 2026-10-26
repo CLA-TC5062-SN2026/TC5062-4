@@ -58,3 +58,39 @@ La especificación y el esquema cubren todo el SRS; el código de `backend/` imp
 | Recursos | `backend/src/routes/familias.js`, `perfiles.js`, `conversaciones.js` | Familias, CRUD de perfiles, conversaciones (historial, apertura, edición del borrador, borrado, eventos, envío y mensajes). |
 
 Quedan fuera por ahora la máquina de estados completa, las fotos, el resumen con IA, las notificaciones y los procesos programados (cierre automático y aviso por falta de respuesta), que el diseño ubica dentro del mismo proceso de la API.
+
+La imagen PNG incluida arriba también está disponible como [SVG](imagenes/arquitectura_equipo.svg).
+
+## Flujo de autenticación y autorización en A2
+
+1. El cliente envía `POST /api/v1/auth/register` con los datos de cuenta y consentimientos. Express valida los campos, comprueba unicidad y guarda el hash con `bcryptjs`; la respuesta de registro es pública y no incluye password ni hash.
+2. `POST /api/v1/auth/login` compara el password con bcryptjs y, si es válido, firma un JWT HS256 con `sub`, `rol`, `familiaId`, `jti`, `issuer`, `audience` y expiración. La sesión se registra en PostgreSQL. El secret y la expiración se configuran por entorno.
+3. El cliente envía `Authorization: Bearer <token>` a `/api/v1/auth/me` o a una ruta protegida. `authenticate` verifica firma, algoritmo, issuer, audience, claims y expiración, además de consultar sesión y usuario activos.
+4. `authorize` evalúa rol, familia y visibilidad. Token ausente/inválido responde 401; rol sin permiso, 403; recurso ajeno o no visible puede responder 404.
+5. Para médicos, el código final oculta conversaciones en borrador y comprueba que el médico siga en el círculo familiar; salir del círculo corta el acceso en solicitudes posteriores.
+
+## Flujo CRUD protegido
+
+`backend/src/app.js` monta health, catálogos y autenticación pública antes de la cadena de CRUD. Familias, perfiles y conversaciones pasan por `authenticate` y `authorize` antes de sus routers. La autorización aplica los permisos de la matriz de roles y la pertenencia al recurso; después, las rutas ejecutan SQL parametrizado por `pg`. Los errores se serializan mediante el manejador común de Express como JSON con `codigo`, `mensaje` y `correlacionId`; la aplicación también propaga `X-Correlation-Id` en la respuesta.
+
+## Persistencia y configuración local
+
+PostgreSQL conserva cuentas, familias, perfiles, conversaciones, sesiones y relaciones descritas en `esquema_bd.sql`. `backend/src/config/database.js` configura un pool `pg`; `dotenv` carga la configuración local. `backend/.env.example` enumera `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION` y `MINUTOS_SESION`. El archivo `.env` local no debe versionarse. El backend usa por defecto el puerto HTTP 4000 y requiere PostgreSQL local preparado con el esquema y datos ficticios.
+
+## Trazabilidad de los artefactos
+
+- `openapi_equipo.yaml`: contrato de recursos, requests, respuestas y seguridad Bearer; funciona como especificación, no como prueba de que todas las operaciones estén implementadas.
+- `diagrama_clases_equipo.puml`: modelo de dominio y clases.
+- `arquitectura_equipo.puml` y `imagenes/arquitectura_equipo.png` / `imagenes/arquitectura_equipo.svg`: vista C4 de contenedores del estilo acordado.
+- `esquema_bd.sql`: estructura PostgreSQL y restricciones.
+- `backend/src/app.js`, `backend/src/routes/`, `backend/src/middleware/`, `backend/src/config/` y `backend/src/utils/`: montaje HTTP, endpoints implementados, controles y acceso a datos.
+- `backend/postman/`: colecciones de solicitudes manuales.
+- `S05_S06_A2/evidencia/pruebas_terminal_daniel.md`: evidencia sanitizada de las 15 solicitudes terminales ejecutadas independientemente antes de integrar el último arreglo de `origin/main`.
+- `S05_S06_A2/evidencia/pruebas_terminal.sh` y `pruebas_terminal_salida.txt`: evidencia adicional incorporada por el PR #53; no se atribuye a las pruebas independientes anteriores.
+
+## Limitaciones de la implementación actual
+
+- El backend implementa solo una parte de las operaciones descritas por OpenAPI/SRS; no se declara cobertura completa.
+- No se observó rate limiting/bloqueo de intentos de login ni el endpoint de cierre de sesión descrito por el contrato.
+- La evidencia de las 15 pruebas de Daniel no ejercita específicamente lectura médica de borradores ni la salida del círculo; el comportamiento corregido está en el código integrado desde `origin/main`, con evidencia terminal separada del PR #53.
+- CORS está abierto y no se configura TLS en el modo local. El backend es exclusivamente académico, con datos ficticios, y no está listo para producción.
