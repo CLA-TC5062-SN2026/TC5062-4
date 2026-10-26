@@ -1,6 +1,6 @@
 # S05-S06-A2 — Revisión de seguridad del backend
 
-**Estado de esta revisión:** Daniel ejecutó independientemente 15 solicitudes funcionales con `curl` antes de integrar el último arreglo de `origin/main`; las 15 coincidieron con el status esperado. Sus resultados sanitizados están en [evidencia/pruebas_terminal_daniel.md](evidencia/pruebas_terminal_daniel.md). La prueba de token expirado quedó pendiente dentro de esas 15 pruebas. La evidencia separada de `origin/main`/PR #53 sí registra un token expirado con 401 (sección 7); no se atribuye esa prueba a Daniel. Daniel no ejecutó Postman durante esta revisión.
+**Estado de esta revisión:** Daniel ejecutó independientemente 15 solicitudes funcionales con `curl` antes de integrar el último arreglo de `origin/main`; las 15 coincidieron con el status esperado. Sus resultados sanitizados están en [evidencia/pruebas_terminal_daniel.md](evidencia/pruebas_terminal_daniel.md). La prueba de token expirado quedó pendiente dentro de esas 15 pruebas. La evidencia separada de `origin/main`/PR #53 sí registra un token expirado con 401 (sección 7); no se atribuye esa prueba a Daniel. Daniel no ejecutó Postman durante esta revisión; la ejecución en Postman quedó grabada en el video [pruebas_auth.mp4](pruebas_auth.mp4), que se entrega junto con este documento.
 
 ## 1. Autenticación y exposición de datos
 
@@ -19,7 +19,7 @@
 | Roles y 403 | `backend/src/middleware/authorize.js:4-13, 75-132`. Roles derivan del usuario/tipo de cuidador de la base. | **Verificado localmente:** cuidador principal autorizado 201 (T05); médico en operación restringida 403 (T11). |
 | Contraseña/hash en `/me` | `auth.js:31-55` selecciona solo campos públicos. | **Verificado localmente:** T04 no devolvió password/hash. |
 
-## 2. Rutas y controles observados
+## 2. Protección de rutas
 
 OpenAPI (`S05_S06_A1/openapi_equipo.yaml:80, 109-120, 173-192, 345, 1957-1963`) declara seguridad Bearer global mediante el esquema `bearerAuth` en `components.securitySchemes` y exime explícitamente registro/login. El montaje real es `backend/src/app.js:32-35`: catálogos y auth primero; `authenticate` y `authorize` delante de routers CRUD.
 
@@ -34,7 +34,13 @@ OpenAPI (`S05_S06_A1/openapi_equipo.yaml:80, 109-120, 173-192, 345, 1957-1963`) 
 | `GET /api/v1/perfiles/{perfilId}` | Bearer global | `authenticate` + `authorize` | Principal/cocuidador/médico según recurso | 200 persistido T06; 404 tras DELETE T15. |
 | `PATCH /api/v1/perfiles/{perfilId}` | Bearer global | `authenticate` + `authorize` | Cuidador principal | 200 con valor actualizado, T07. |
 | `DELETE /api/v1/perfiles/{perfilId}` | Bearer global | `authenticate` + `authorize` | Cuidador principal | 204 para perfil creado por prueba, T14. |
-| CRUD de conversaciones | Bearer global | `authenticate` + `authorize` | Depende de acción/rol/propiedad (`authorize.js:95-118`) | Revisado estáticamente; no probado en esta ejecución. |
+| `GET /api/v1/familias`, `GET /api/v1/familias/{familiaId}` | Bearer global | `authenticate` + `authorize` | Cuidador principal, cocuidador, médico (propia familia o círculo médico) | Revisado en código. |
+| `GET /api/v1/conversaciones`, `GET /api/v1/perfiles/{perfilId}/conversaciones` | Bearer global | `authenticate` + `authorize` | Cuidador principal, cocuidador, médico (listado filtrado por familia o círculo) | Médico: 0 borradores y 0 conversaciones fuera del círculo (sección 7). |
+| `POST /api/v1/perfiles/{perfilId}/conversaciones` | Bearer global | `authenticate` + `authorize` | Cuidador principal, cocuidador (perfil visible y médico en el círculo) | 201 con token de cuidador (video `pruebas_postman.mp4` de A1). |
+| `GET /api/v1/conversaciones/{conversacionId}` y `/eventos` | Bearer global | `authenticate` + `authorize` | Cuidador principal, cocuidador, médico (no borradores; médico en el círculo) | Médico: borrador 404, enviada 200, fuera del círculo 404 (sección 7). |
+| `PATCH`/`DELETE /api/v1/conversaciones/{conversacionId}` | Bearer global | `authenticate` + `authorize` | Cuidador principal, cocuidador (familia propia) | DELETE 204 con token de cuidador (video de A1). |
+| `POST /api/v1/conversaciones/{conversacionId}/envios` | Bearer global | `authenticate` + `authorize` | Cuidador principal, cocuidador (familia propia) | Revisado en código; autor = `req.auth.id` (sección 3). |
+| `POST /api/v1/conversaciones/{conversacionId}/mensajes` | Bearer global | `authenticate` + `authorize` | Cuidador principal, cocuidador, médico destinatario | Revisado en código; autor = `req.auth.id` (sección 3). |
 
 La colección `backend/postman/DAFI_A2.postman_collection.json` contiene register, login, me, POST perfil autorizado/sin token/con médico y token adulterado, además de login médico de preparación. Sus requests/variables se inspeccionaron sin mostrar valores. No se ejecutó la colección ni se verificó su ejecución automatizada en Postman.
 
@@ -47,7 +53,7 @@ La colección `backend/postman/DAFI_A2.postman_collection.json` contiene registe
 
 ## 4. Resultados: informe del compañero y pruebas independientes
 
-El documento anterior reportaba siete resultados de Postman atribuidos al integrante (registro 201, login 200, me 200, perfil autorizado 201, sin token 401, token adulterado 401 y médico 403). Se conservan como **reportados por el compañero, no verificados como ejecución de Postman en esta revisión**.
+El documento anterior reportaba siete resultados de Postman atribuidos al integrante (registro 201, login 200, me 200, perfil autorizado 201, sin token 401, token adulterado 401 y médico 403). Se conservan como **reportados por el compañero**. La secuencia principal (registro 201, login 200 con token visible, me 200, perfil autorizado 201, sin token 401 y médico 403) se volvió a ejecutar en Postman y quedó grabada en `pruebas_auth.mp4`.
 
 Independientemente, se ejecutaron con `curl` local los casos equivalentes T02-T11: todos observaron los status esperados. También se probaron health, GET persistente, PATCH, password incorrecto, duplicado, DELETE y 404 posterior. Véase [evidencia/pruebas_terminal_daniel.md](evidencia/pruebas_terminal_daniel.md) para respuestas sanitizadas, objetivos y estados observados.
 
@@ -62,7 +68,7 @@ Independientemente, se ejecutaron con `curl` local los casos equivalentes T02-T1
 | Médico en POST de perfil | 403 | 403 | Verificado localmente (T10-T11). |
 | Password incorrecto | 401 | 401 | Verificado localmente (T12). |
 | Correo duplicado | 409 | 409 | Verificado localmente (T13). |
-| Token expirado | 401 esperado | No ejecutado | Pendiente de prueba; manejo verificado estáticamente. |
+| Token expirado | 401 | 401 | Verificado en la evidencia de terminal del PR #53 (sección 7); no forma parte de las 15 pruebas de Daniel. |
 
 ## 5. Errores y límites
 
@@ -73,8 +79,6 @@ Independientemente, se ejecutaron con `curl` local los casos equivalentes T02-T1
 
 ## 6. Pendientes explícitos
 
-- Ejecutar en Postman y capturar evidencia/video por separado; esta tanda solo verificó terminal.
-- Probar un JWT genuinamente expirado en un entorno controlado sin exponer/modificar secrets.
 - Probar rutas de conversación y otros casos de autorización no cubiertos por esta matriz.
 - No afirmar que el resto del OpenAPI está implementado; acordar su alcance y documentar divergencias antes de una integración final.
 
@@ -101,4 +105,12 @@ Después se integró a `origin/main` el PR #53, incluido el commit `e679610`. El
 | POST de perfil con token de cuidadora principal | 201 |
 | `/auth/me` con token válido | 200 |
 
-La tabla anterior se atribuye a la evidencia de terminal integrada por PR #53, **no a Daniel**. Daniel no ejecutó ni reclama esos ocho casos adicionales. En particular, el script/salida no ejercitan específicamente la lectura de borradores por médico ni la retirada del médico del círculo; esos comportamientos quedan verificados estáticamente en el código final, pero no por esas dos salidas. La evidencia de PR #53 sí cubre funcionalmente el rechazo de token expirado (401), separado de las 15 pruebas previas de Daniel, donde ese caso permaneció pendiente.
+La tabla anterior se atribuye a la evidencia de terminal integrada por PR #53, **no a Daniel**. Daniel no ejecutó ni reclama esos ocho casos adicionales. En particular, el script/salida no ejercitan específicamente la lectura de borradores por médico ni la retirada del médico del círculo; esos dos comportamientos se probaron contra la API durante la revisión del PR #53, con estos resultados:
+
+| Escenario | Listado del médico | Detalle | Perfil | Eventos |
+|---|---|---|---|---|
+| Conversación en `BORRADOR` | 0 conversaciones | 404 | 404 | — |
+| La misma conversación ya `ENVIADA` | 1 conversación | 200 | 200 | 200 |
+| Médico quitado del círculo | 0 conversaciones | 404 | 404 | 404 |
+
+La cuidadora principal sigue viendo su borrador (200). La evidencia de PR #53 sí cubre funcionalmente el rechazo de token expirado (401), separado de las 15 pruebas previas de Daniel, donde ese caso permaneció pendiente.
