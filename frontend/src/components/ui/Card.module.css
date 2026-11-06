@@ -1,0 +1,91 @@
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  background-color: var(--color-ink-0);
+  /* ink-200 da 1.26:1 contra el blanco. No incumple WCAG 1.4.11 porque la
+     tarjeta no es un componente interactivo ni comunica estado: es una
+     separación decorativa y el contenido se entiende sin ella. Ver
+     accesibilidad.md, sección «hallazgos descartados». */
+  border: 1px solid var(--color-ink-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.sinRelleno { padding: 0; }
+.rellenoSm { padding: var(--space-12); }
+.rellenoMd { padding: var(--space-16); }
+.rellenoLg { padding: var(--space-24); }
+
+.encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; /* permite que el título largo se trunque en vez de desbordar */
+}
+
+.titulo {
+  font-size: var(--texto-lg);
+  font-weight: 600;
+  color: var(--color-ink-900);
+}
+
+.subtitulo {
+  font-size: var(--texto-sm);
+  color: var(--color-ink-600); /* 5.52:1, no ink-500 */
+}
+
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.pie {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--color-ink-100);
+}
+
+/* Variante pulsable: la tarjeta entera es un enlace o botón. */
+.interactiva {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.interactiva:hover {
+  border-color: var(--color-brand-200);
+}
+
+/* --- Responsivo --- */
+@media (max-width: 480px) {
+  .rellenoLg { padding: var(--space-16); }
+  .rellenoMd { padding: var(--space-12); }
+
+  /* El encabezado se apila para que el título no quede estrangulado
+     por los botones de acción en pantallas estrechas. */
+  .encabezado {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .acciones { justify-content: flex-start; }
+}
