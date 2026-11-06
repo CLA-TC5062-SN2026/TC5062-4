@@ -1,0 +1,128 @@
+/* El diseño de Figma tiene dos composiciones: móvil 390 y escritorio 1440.
+   El corte está en 1024 px: por debajo manda la barra inferior, por encima
+   la navegación lateral fija. */
+
+.shell { display: flex; flex-direction: column; min-height: 100dvh; background: var(--color-ink-50); }
+
+/* ===================== Encabezado móvil ===================== */
+.encabezado {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 60px;
+  padding: var(--space-8) var(--space-16);
+  background: var(--color-ink-0);
+  border-bottom: 1px solid var(--color-ink-200);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.encabezadoTitulo { flex: 1; min-width: 0; color: var(--color-ink-900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.encabezadoAccion {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin: -8px;
+  border: none; background: none; color: var(--color-ink-700);
+  cursor: pointer; flex-shrink: 0;
+}
+.volver {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 40px; margin-left: -8px;
+  border: none; background: none; color: var(--color-ink-900);
+  cursor: pointer; flex-shrink: 0;
+}
+
+/* ===================== Contenido ===================== */
+.contenido { flex: 1; display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
+.contenidoSinRelleno { padding: 0; }
+
+/* ===================== Barra inferior (móvil) ===================== */
+.barra {
+  display: flex;
+  align-items: stretch;
+  padding: var(--space-8);
+  background: var(--color-ink-0);
+  border-top: 1px solid var(--color-ink-200);
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+.barraItem {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-4); flex: 1; min-height: 56px;
+  color: var(--color-ink-600); text-decoration: none;
+}
+.barraItemActivo { color: var(--color-brand-600); }
+.barraItemActivo .barraEtiqueta { font-weight: 700; }
+
+/* ===================== Navegación lateral (escritorio) ===================== */
+.lateral { display: none; }
+.escritorio { display: none; }
+
+@media (min-width: 1024px) {
+  .shell { flex-direction: row; }
+
+  .encabezado, .barra { display: none; }
+
+  .lateral {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    width: 240px;
+    flex-shrink: 0;
+    padding: var(--space-20);
+    background: var(--color-ink-0);
+    border-right: 1px solid var(--color-ink-200);
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+  }
+  .marca { display: flex; align-items: center; gap: 10px; color: var(--color-brand-900); text-decoration: none; }
+  .marcaLogo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: var(--radius-md);
+    background: var(--color-brand-500); color: var(--color-ink-0); flex-shrink: 0;
+  }
+  .lateralLista { display: flex; flex-direction: column; gap: var(--space-4); }
+  .lateralItem {
+    display: flex; align-items: center; gap: var(--space-12);
+    padding: var(--space-12); border-radius: var(--radius-md);
+    color: var(--color-ink-600); text-decoration: none;
+  }
+  .lateralItem:hover { background: var(--color-ink-50); }
+  .lateralItemActivo { background: var(--color-brand-50); color: var(--color-brand-700); }
+  .lateralEspaciador { flex: 1; }
+  .lateralUsuario {
+    display: flex; align-items: center; gap: 10px;
+    padding: var(--space-12); border-radius: var(--radius-md);
+    background: var(--color-ink-50);
+  }
+  .lateralUsuarioTextos { display: flex; flex-direction: column; min-width: 0; }
+  .lateralUsuarioNombre { color: var(--color-ink-900); }
+  .lateralUsuarioRol { color: var(--color-ink-600); }
+
+  .principal { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+
+  .escritorio {
+    display: flex;
+    align-items: center;
+    gap: var(--space-16);
+    min-height: 72px;
+    padding: var(--space-16) var(--space-40);
+    background: var(--color-ink-0);
+    border-bottom: 1px solid var(--color-ink-200);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .escritorioTitulo { flex: 1; min-width: 0; color: var(--color-ink-900); }
+  .buscador {
+    display: flex; align-items: center; gap: var(--space-8);
+    width: 280px; height: 40px; padding: 0 var(--space-12);
+    border-radius: var(--radius-md);
+    background: var(--color-ink-50); border: 1px solid var(--color-ink-500);
+    color: var(--color-ink-600);
+  }
+  .buscadorCampo { border: none; background: none; flex: 1; min-width: 0; color: var(--color-ink-900); }
+  .buscadorCampo::placeholder { color: var(--color-ink-600); opacity: 1; }
+
+  .contenido { padding: var(--space-40); gap: var(--space-24); }
+  .contenidoSinRelleno { padding: 0; }
+}

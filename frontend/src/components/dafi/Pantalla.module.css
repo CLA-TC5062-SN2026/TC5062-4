@@ -1,0 +1,93 @@
+/* Piezas de composición que comparten las pantallas. */
+.pila { display: flex; flex-direction: column; gap: var(--space-12); }
+.pilaAmplia { display: flex; flex-direction: column; gap: var(--space-16); }
+
+.cabeceraSeccion { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); }
+
+/* En el diseño móvil (pantalla 4) la acción va al pie, a todo lo ancho; en
+   escritorio (D2) sube a la cabecera, junto al nombre de la familia. */
+.accionCabecera { display: none; }
+.accionPie { display: block; }
+.rotulo { color: var(--color-ink-600); }
+.apoyo { color: var(--color-ink-600); }
+
+.listaChips { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+
+.notaInfo {
+  display: flex; gap: var(--space-12); align-items: flex-start;
+  padding: var(--space-12); border-radius: var(--radius-md);
+  background: var(--color-brand-50); color: var(--color-brand-900);
+}
+.notaAviso {
+  display: flex; gap: var(--space-12); align-items: flex-start;
+  padding: var(--space-12); border-radius: var(--radius-md);
+  background: var(--color-prioridad-bg); border: 1px solid var(--color-prioridad-fg);
+  color: var(--color-prioridad-fg);
+}
+.notaCuerpo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* Sin esto, flexbox encoge el SVG hasta deformarlo. */
+.notaInfo > svg,
+.notaAviso > svg,
+.pastillaContexto > svg,
+.enlaceFilaIzq > svg { flex-shrink: 0; }
+.notaDetalle { color: var(--color-ink-700); }
+
+.tarjeta {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  padding: var(--space-16); border-radius: var(--radius-lg);
+  background: var(--color-ink-0); border: 1px solid var(--color-ink-200);
+}
+.identidad { display: flex; align-items: center; gap: var(--space-12); }
+.identidadTextos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.identidadNombre { color: var(--color-ink-900); }
+.identidadMeta { color: var(--color-ink-600); }
+
+.pastillaContexto {
+  display: inline-flex; align-items: center; align-self: flex-start; gap: 6px;
+  padding: var(--space-8) var(--space-12); border-radius: var(--radius-full);
+  background: var(--color-brand-50); color: var(--color-brand-700);
+}
+
+.barraAcciones {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  padding: var(--space-12);
+  background: var(--color-ink-0); border-top: 1px solid var(--color-ink-200);
+  position: sticky; bottom: 0;
+}
+
+.enlaceFila {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-12);
+  width: 100%; padding: var(--space-12); border-radius: var(--radius-md);
+  background: var(--color-ink-0); border: 1px solid var(--color-ink-500);
+  color: var(--color-ink-900); cursor: pointer; font-family: inherit; text-align: left;
+}
+.enlaceFilaIzq { display: flex; align-items: center; gap: var(--space-8); }
+
+.galeria { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+.foto {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 72px; height: 72px; border-radius: var(--radius-md);
+  background: var(--color-ink-100); border: 1px solid var(--color-ink-200);
+  color: var(--color-ink-600);
+}
+.fotoAgregar {
+  background: var(--color-brand-50); border: 1px solid var(--color-brand-200);
+  color: var(--color-brand-600); cursor: pointer;
+}
+
+/* --- Dos columnas en escritorio (Figma D3, D4, D5, D6) --- */
+.columnas { display: flex; flex-direction: column; gap: var(--space-16); }
+.principal { display: flex; flex-direction: column; gap: var(--space-16); min-width: 0; flex: 1; }
+.lateral { display: flex; flex-direction: column; gap: var(--space-16); min-width: 0; }
+
+@media (min-width: 1024px) {
+  .columnas { flex-direction: row; align-items: flex-start; gap: var(--space-24); }
+  .lateral { width: 360px; flex-shrink: 0; position: sticky; top: calc(72px + var(--space-24)); }
+  .barraAcciones { position: static; border: none; background: none; padding: 0; flex-direction: row; }
+  .barraAcciones > * { flex: 1; }
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-24); align-items: start; }
+  .listaMedicos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-24); }
+  .accionCabecera { display: block; }
+  .accionPie { display: none; }
+}
