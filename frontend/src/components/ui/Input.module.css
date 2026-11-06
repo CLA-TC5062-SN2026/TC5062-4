@@ -1,0 +1,104 @@
+.campo {
+  display: block;
+}
+
+.anchoCompleto { width: 100%; }
+
+.etiqueta {
+  display: block;
+  margin-bottom: var(--space-4);
+  font-size: var(--texto-xs);
+  font-weight: 500;
+  /* ink-600 (5.52:1) y no ink-500 (3.57:1): WCAG 1.4.3. */
+  color: var(--color-ink-600);
+}
+
+.marcaObligatorio {
+  margin-left: 2px;
+  color: var(--color-peligro-500);
+}
+
+.contenedor {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-12);
+  background-color: var(--color-ink-0);
+  color: var(--color-ink-900); /* 15.58:1 */
+  /* Borde ink-500 (3.57:1) y no ink-300 (1.59:1): el borde es lo único que
+     delimita el control, así que cae bajo WCAG 1.4.11 (mínimo 3:1). */
+  border: 1px solid var(--color-ink-500);
+  border-radius: var(--radius-md);
+  /* 16px evita que Safari en iOS haga zoom al enfocar el campo. */
+  font-size: var(--texto-base);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.input::placeholder {
+  /* ink-600 y no ink-500: el marcador de posición también es texto (WCAG 1.4.3). */
+  color: var(--color-ink-600);
+  opacity: 1; /* Firefox le baja la opacidad por defecto y arruina el contraste. */
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--color-ink-600);
+}
+
+.input:focus {
+  border-color: var(--color-brand-500);
+}
+
+.input:disabled {
+  background-color: var(--color-ink-50);
+  color: var(--color-ink-600);
+  cursor: not-allowed;
+}
+
+.conIcono {
+  padding-left: 40px;
+}
+
+.invalido {
+  border-color: var(--color-peligro-500);
+  border-width: 2px;
+}
+
+.icono {
+  position: absolute;
+  left: var(--space-12);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--color-ink-500);
+  pointer-events: none;
+}
+
+.ayuda {
+  margin-top: var(--space-4);
+  font-size: var(--texto-xs);
+  color: var(--color-ink-600);
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  font-size: var(--texto-xs);
+  color: var(--color-peligro-500); /* 4.83:1 */
+}
+
+.iconoError {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* --- Responsivo ---
+   En móvil el campo ocupa todo el ancho disponible y el alto mínimo sube un
+   poco para que sea cómodo de tocar con el pulgar. */
+@media (max-width: 480px) {
+  .input { min-height: 48px; }
+}

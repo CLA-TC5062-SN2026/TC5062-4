@@ -1,0 +1,13 @@
+{
+  "msCarga": 141,
+  "mensajes": [
+    {
+      "tipo": "info",
+      "texto": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "tipo": "log",
+      "texto": "[HMR] connected"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+/* --- Chip de estado de conversación (enum EstadoConversacion) --- */
+.estado {
+  padding: var(--space-4) var(--space-8);
+  gap: var(--space-4);
+}
+.BORRADOR         { background: var(--color-estado-borrador-bg);      color: var(--color-estado-borrador-fg); }
+.ENVIADA          { background: var(--color-estado-enviada-bg);       color: var(--color-estado-enviada-fg); }
+.EN_REVISION      { background: var(--color-estado-revision-bg);      color: var(--color-estado-revision-fg); }
+.INFO_SOLICITADA  { background: var(--color-estado-info-bg);          color: var(--color-estado-info-fg); }
+.CON_INDICACIONES { background: var(--color-estado-indicaciones-bg);  color: var(--color-estado-indicaciones-fg); }
+.CERRADA          { background: var(--color-estado-cerrada-bg);       color: var(--color-estado-cerrada-fg); }
+.SIN_MEDICO       { background: var(--color-estado-sinmedico-bg);     color: var(--color-estado-sinmedico-fg); }
+
+/* --- Chip de etiqueta --- */
+.etiqueta {
+  padding: var(--space-4) var(--space-8);
+  gap: var(--space-4);
+  background: var(--color-ink-100);
+  color: var(--color-ink-700);
+}
+.punto {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.piel         { background: #d97706; }
+.fiebre       { background: #dc2626; }
+.estomago     { background: #7c3aed; }
+.respiratorio { background: #0891b2; }
+.otro         { background: #64748b; }
+
+/* --- Marca de prioridad (RF-09-AC-4) --- */
+.prioridad {
+  padding: var(--space-4) var(--space-8);
+  gap: var(--space-4);
+  background: var(--color-prioridad-bg);
+  color: var(--color-prioridad-fg);
+}
+
+/* --- Chip seleccionable (etiquetas, tipo de perfil, secciones de bandeja) --- */
+.filtro {
+  padding: var(--space-8) var(--space-12);
+  gap: var(--space-4);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.filtroActivo {
+  background: var(--color-brand-500);
+  color: var(--color-ink-0);
+  border-color: var(--color-brand-500);
+}
+.filtroInactivo {
+  background: var(--color-ink-0);
+  color: var(--color-ink-700);
+  /* ink-500 y no ink-300: es el límite de un control (WCAG 1.4.11). */
+  border-color: var(--color-ink-500);
+}
+.filtroInactivo:hover { background: var(--color-brand-50); }

@@ -1,0 +1,128 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.principal {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-32) var(--space-16) var(--space-40);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 70ch;
+}
+
+.titulo {
+  font-size: var(--texto-2xl);
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.entradilla {
+  color: var(--color-ink-600);
+}
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.tituloSeccion {
+  font-size: var(--texto-xl);
+  font-weight: 600;
+}
+
+.notaSeccion {
+  font-size: var(--texto-sm);
+  color: var(--color-ink-600);
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  max-width: 420px;
+}
+
+.etiquetaChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px var(--space-8);
+  border-radius: var(--radius-full);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.chipEnviada {
+  background-color: var(--color-estado-enviada-bg);
+  color: var(--color-estado-enviada-fg);
+}
+
+.chipIndicaciones {
+  background-color: var(--color-estado-indicaciones-bg);
+  color: var(--color-estado-indicaciones-fg);
+}
+
+.aviso {
+  display: flex;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  background-color: var(--color-alerta-bg);
+  border: 1px solid var(--color-alerta-borde);
+  border-radius: var(--radius-md);
+  color: var(--color-alerta-fg);
+  font-size: var(--texto-sm);
+}
+
+.pie {
+  border-top: 1px solid var(--color-ink-200);
+  padding: var(--space-24) var(--space-16);
+  text-align: center;
+  font-size: var(--texto-xs);
+  color: var(--color-ink-600);
+}
+
+@media (max-width: 480px) {
+  .principal {
+    padding: var(--space-24) var(--space-12) var(--space-32);
+    gap: var(--space-24);
+  }
+  .titulo { font-size: var(--texto-xl); }
+}
+
+/* Tope de medida de lectura: ver --medida-texto en globals.css. */
+.entradilla,
+.notaSeccion {
+  max-width: var(--medida-texto);
+}
+
+.pie p {
+  max-width: var(--medida-texto);
+  margin-inline: auto;
+}
