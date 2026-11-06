@@ -15,18 +15,26 @@ import shell from '@/components/dafi/Shell.module.css';
  * obligatorias y la versión del aviso de privacidad aceptada.
  */
 const DECLARACIONES = [
-  { campo: 'mayorDeEdad', titulo: 'Soy mayor de edad', apoyo: 'declaraciones.mayorDeEdad' },
+  {
+    campo: 'mayorDeEdad',
+    titulo: 'Soy mayor de edad',
+    apoyo: 'DAFI sólo admite cuentas de personas adultas.',
+  },
   {
     campo: 'consentimientoDatosPropios',
     titulo: 'Consiento el tratamiento de mis datos de salud',
-    apoyo: 'declaraciones.consentimientoDatosPropios',
+    apoyo: 'Puede retirar el consentimiento y borrar su cuenta cuando quiera.',
   },
   {
     campo: 'consentimientoDatosMenores',
     titulo: 'Consiento el tratamiento de los datos de los menores a mi cargo',
-    apoyo: 'declaraciones.consentimientoDatosMenores',
+    apoyo: 'Como su madre, padre o tutor legal.',
   },
-  { campo: 'aviso', titulo: 'He leído el aviso de privacidad', apoyo: 'avisoVersion = 3 · del catálogo de avisos' },
+  {
+    campo: 'aviso',
+    titulo: 'He leído el aviso de privacidad',
+    apoyo: 'Versión 3, del 24 de octubre de 2026.',
+  },
 ];
 
 export default function PaginaCrearCuenta() {

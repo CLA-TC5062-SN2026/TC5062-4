@@ -228,3 +228,11 @@
   background: var(--color-brand-500); color: var(--color-ink-0);
   border: none; cursor: pointer; flex-shrink: 0;
 }
+
+/* Tope de medida de lectura: ver --medida-texto en globals.css. */
+.burbuja > p,
+.eventoAvisoCuerpo > p,
+.vacioTexto,
+.resumenTextos {
+  max-width: var(--medida-texto);
+}

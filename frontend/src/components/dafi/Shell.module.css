@@ -4,6 +4,10 @@
 
 .shell { display: flex; flex-direction: column; min-height: 100dvh; background: var(--color-ink-50); }
 
+/* Debe crecer en todos los anchos: es lo que empuja la barra inferior hasta
+   el borde de la ventana cuando la pagina tiene poco contenido. */
+.principal { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+
 /* ===================== Encabezado móvil ===================== */
 .encabezado {
   display: flex;
@@ -32,7 +36,20 @@
 }
 
 /* ===================== Contenido ===================== */
-.contenido { flex: 1; display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
+/* El contenido se centra y tiene una medida maxima de lectura.
+   Sin esto, entre 600 y 1023 px la composicion movil se estiraba a todo el
+   ancho y las lineas llegaban a 120 caracteres, muy por encima de los 65-75
+   que resultan comodos de leer. */
+.contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  width: 100%;
+  max-width: 680px;
+  margin-inline: auto;
+}
 .contenidoSinRelleno { padding: 0; }
 
 /* ===================== Barra inferior (móvil) ===================== */
@@ -100,7 +117,6 @@
   .lateralUsuarioNombre { color: var(--color-ink-900); }
   .lateralUsuarioRol { color: var(--color-ink-600); }
 
-  .principal { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 
   .escritorio {
     display: flex;
@@ -123,6 +139,12 @@
   .buscadorCampo { border: none; background: none; flex: 1; min-width: 0; color: var(--color-ink-900); }
   .buscadorCampo::placeholder { color: var(--color-ink-600); opacity: 1; }
 
-  .contenido { padding: var(--space-40); gap: var(--space-24); }
+  .contenido {
+    padding: var(--space-40);
+    gap: var(--space-24);
+    /* En escritorio el limite lo marca el ancho util menos la navegacion. */
+    max-width: 1160px;
+    margin-inline: 0;
+  }
   .contenidoSinRelleno { padding: 0; }
 }

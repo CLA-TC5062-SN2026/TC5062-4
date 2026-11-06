@@ -13,6 +13,20 @@
 
 .listaChips { display: flex; flex-wrap: wrap; gap: var(--space-8); }
 
+/* Rejillas: una columna en movil, dos en cuanto hay sitio. */
+.rejilla { display: flex; flex-direction: column; gap: var(--space-12); }
+.listaMedicos { display: flex; flex-direction: column; gap: var(--space-12); }
+
+@media (min-width: 620px) {
+  .rejilla,
+  .listaMedicos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-16);
+    align-items: start;
+  }
+}
+
 .notaInfo {
   display: flex; gap: var(--space-12); align-items: flex-start;
   padding: var(--space-12); border-radius: var(--radius-md);
@@ -86,8 +100,22 @@
   .lateral { width: 360px; flex-shrink: 0; position: sticky; top: calc(72px + var(--space-24)); }
   .barraAcciones { position: static; border: none; background: none; padding: 0; flex-direction: row; }
   .barraAcciones > * { flex: 1; }
-  .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-24); align-items: start; }
-  .listaMedicos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-24); }
+  .rejilla { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-24); }
+  .listaMedicos { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-24); }
   .accionCabecera { display: block; }
   .accionPie { display: none; }
+}
+
+/* Tope de medida de lectura: ver --medida-texto en globals.css. */
+.apoyo,
+.notaCuerpo {
+  max-width: var(--medida-texto);
+}
+
+/* `max-width` no tiene efecto sobre un elemento en linea, asi que estos span
+   necesitan ser bloque para que el tope de medida les aplique. */
+.notaInfo > span,
+.notaAviso > span {
+  display: block;
+  max-width: var(--medida-texto);
 }

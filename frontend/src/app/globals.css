@@ -96,6 +96,7 @@
   --mono-tam: 11px;         --mono-alto: 16px;
 
   /* --- Elevación --- */
+  --medida-texto: 68ch;
   --sombra-tarjeta: 0 1px 3px rgba(22, 38, 44, 0.06), 0 6px 16px -4px rgba(22, 38, 44, 0.04);
 }
 
@@ -128,6 +129,17 @@ ol[class] {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* Una cadena larga sin espacios (una URL, un identificador) no debe poder
+   empujar el ancho de la pagina y provocar desplazamiento horizontal.
+   WCAG 1.4.10 exige que a 320 px no haya scroll en el eje contrario. */
+body,
+p,
+li,
+h1, h2, h3, h4, h5, h6,
+span, a, button, label {
+  overflow-wrap: break-word;
 }
 
 body {

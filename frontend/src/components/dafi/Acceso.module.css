@@ -95,3 +95,12 @@
   .panelFormulario { align-items: center; justify-content: center; padding: var(--space-40); }
   .cajaJusta { justify-content: center; flex: 0; }
 }
+
+/* Tope de medida de lectura: ver --medida-texto en globals.css. */
+.entradilla,
+.lema,
+.aclaracion,
+.panelMarcaItem,
+.panelMarcaPie {
+  max-width: var(--medida-texto);
+}

@@ -125,3 +125,9 @@
   flex-shrink: 0;
 }
 .radioActivo { border: 6px solid var(--color-brand-500); }
+
+/* Tope de medida de lectura: ver --medida-texto en globals.css. */
+.avisoCuerpo > p,
+.casillaTextos {
+  max-width: var(--medida-texto);
+}
