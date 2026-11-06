@@ -1,0 +1,82 @@
+Auditoria de contraste WCAG 2.1 AA - sistema de diseno de DAFI
+Umbrales: 4.5:1 texto normal (1.4.3) | 3.0:1 texto grande y UI no textual (1.4.11)
+
+PASADA 1 - ANTES de las correcciones
+====================================
+
+Uso                               Primer plano           Fondo                  Ratio     Min    Resultado
+----------------------------------------------------------------------------------------------------
+Boton primario / etiqueta         ink/0                  brand/500              5.00:1    4.5    PASA
+Boton secundario / etiqueta       brand/700              ink/0                  9.29:1    4.5    PASA
+Boton secundario / borde          ink/300                ink/0                  1.59:1    3.0    FALLA
+Boton fantasma / etiqueta         brand/600              ink/50                 6.49:1    4.5    PASA
+Boton peligro / etiqueta          ink/0                  peligro/500            4.83:1    4.5    PASA
+Campo / texto capturado           ink/900                ink/0                  15.58:1   4.5    PASA
+Campo / marcador de posicion      ink/500                ink/0                  3.57:1    4.5    FALLA
+Campo / etiqueta                  ink/600                ink/0                  5.52:1    4.5    PASA
+Campo / mensaje de error          peligro/500            ink/0                  4.83:1    4.5    PASA
+Campo / borde en reposo           ink/300                ink/0                  1.59:1    3.0    FALLA
+Tarjeta / titulo                  ink/900                ink/0                  15.58:1   4.5    PASA
+Tarjeta / texto secundario        ink/500                ink/0                  3.57:1    4.5    FALLA
+Navbar / enlace inactivo          ink/600                ink/0                  5.52:1    4.5    PASA
+Navbar / enlace activo            brand/700              brand/50               8.30:1    4.5    PASA
+Navbar / borde del boton de menu  ink/300                ink/0                  1.59:1    3.0    FALLA
+Chip BORRADOR                     estado/borrador-fg     estado/borrador-bg     6.13:1    4.5    PASA
+Chip ENVIADA                      estado/enviada-fg      estado/enviada-bg      5.73:1    4.5    PASA
+Chip EN_REVISION                  estado/revision-fg     estado/revision-bg     5.99:1    4.5    PASA
+Chip INFO_SOLICITADA              estado/info-fg         estado/info-bg         4.47:1    4.5    FALLA
+Chip CON_INDICACIONES             estado/indicaciones-fg estado/indicaciones-bg 4.41:1    4.5    FALLA
+Chip CERRADA                      estado/cerrada-fg      estado/cerrada-bg      6.43:1    4.5    PASA
+Chip SIN_MEDICO                   estado/sinmedico-fg    estado/sinmedico-bg    5.34:1    4.5    PASA
+Aviso de emergencias / texto      alerta/fg              alerta/bg              7.16:1    4.5    PASA
+Anillo de foco                    brand/500              ink/0                  5.00:1    3.0    PASA
+----------------------------------------------------------------------------------------------------
+24 pares | 17 pasan | 7 fallan
+
+PASADA 2 - DESPUES de las correcciones
+======================================
+
+Uso                               Primer plano           Fondo                  Ratio     Min    Resultado
+----------------------------------------------------------------------------------------------------
+Boton primario / etiqueta         ink/0                  brand/500              5.00:1    4.5    PASA
+Boton secundario / etiqueta       brand/700              ink/0                  9.29:1    4.5    PASA
+Boton secundario / borde          ink/500                ink/0                  3.57:1    3.0    PASA
+Boton fantasma / etiqueta         brand/600              ink/50                 6.49:1    4.5    PASA
+Boton peligro / etiqueta          ink/0                  peligro/500            4.83:1    4.5    PASA
+Campo / texto capturado           ink/900                ink/0                  15.58:1   4.5    PASA
+Campo / marcador de posicion      ink/600                ink/0                  5.52:1    4.5    PASA
+Campo / etiqueta                  ink/600                ink/0                  5.52:1    4.5    PASA
+Campo / mensaje de error          peligro/500            ink/0                  4.83:1    4.5    PASA
+Campo / borde en reposo           ink/500                ink/0                  3.57:1    3.0    PASA
+Tarjeta / titulo                  ink/900                ink/0                  15.58:1   4.5    PASA
+Tarjeta / texto secundario        ink/600                ink/0                  5.52:1    4.5    PASA
+Navbar / enlace inactivo          ink/600                ink/0                  5.52:1    4.5    PASA
+Navbar / enlace activo            brand/700              brand/50               8.30:1    4.5    PASA
+Navbar / borde del boton de menu  ink/500                ink/0                  3.57:1    3.0    PASA
+Chip BORRADOR                     estado/borrador-fg     estado/borrador-bg     6.13:1    4.5    PASA
+Chip ENVIADA                      estado/enviada-fg      estado/enviada-bg      5.73:1    4.5    PASA
+Chip EN_REVISION                  estado/revision-fg     estado/revision-bg     5.99:1    4.5    PASA
+Chip INFO_SOLICITADA              estado/info-fg         estado/info-bg         6.30:1    4.5    PASA
+Chip CON_INDICACIONES             estado/indicaciones-fg estado/indicaciones-bg 6.27:1    4.5    PASA
+Chip CERRADA                      estado/cerrada-fg      estado/cerrada-bg      6.43:1    4.5    PASA
+Chip SIN_MEDICO                   estado/sinmedico-fg    estado/sinmedico-bg    5.34:1    4.5    PASA
+Aviso de emergencias / texto      alerta/fg              alerta/bg              7.16:1    4.5    PASA
+Anillo de foco                    brand/500              ink/0                  5.00:1    3.0    PASA
+----------------------------------------------------------------------------------------------------
+24 pares | 24 pasan | 0 fallan
+
+CORRECCIONES APLICADAS
+======================
+
+A. Cambio de valor del token (globals.css):
+   estado/info-fg           #B45309 -> #92400E   4.47:1 -> 6.30:1
+   estado/indicaciones-fg   #15803D -> #166534   4.41:1 -> 6.27:1
+
+B. Cambio del token que usa el componente:
+   Campo / marcador de posicion       ink/500    -> ink/600    3.57:1 -> 5.52:1
+   Tarjeta / texto secundario         ink/500    -> ink/600    3.57:1 -> 5.52:1
+   Campo / borde en reposo            ink/300    -> ink/500    1.59:1 -> 3.57:1
+   Boton secundario / borde           ink/300    -> ink/500    1.59:1 -> 3.57:1
+   Navbar / borde del boton de menu   ink/300    -> ink/500    1.59:1 -> 3.57:1
+
+RESULTADO: 7 incumplimientos antes -> 0 despues.
