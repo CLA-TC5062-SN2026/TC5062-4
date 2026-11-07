@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
+import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell from '@/components/dafi/Shell';
 import Button from '@/components/ui/Button';
 import { Avatar, FilaDato } from '@/components/dafi/Piezas';
@@ -10,7 +11,7 @@ import { HISTORIAL_MATEO, PERFILES } from '@/lib/datos-demo';
 import estilos from '@/components/dafi/Pantalla.module.css';
 
 /** Pantalla 6 y D3: GET /perfiles/{id} + /perfiles/{id}/conversaciones */
-export default function PaginaPerfil({ params }: { params: Promise<{ perfilId: string }> }) {
+function Contenido({ params }: { params: Promise<{ perfilId: string }> }) {
   const { perfilId } = use(params);
   const router = useRouter();
   const perfil = PERFILES.find((p) => p.id === perfilId) ?? PERFILES[0];
@@ -59,5 +60,14 @@ export default function PaginaPerfil({ params }: { params: Promise<{ perfilId: s
         </aside>
       </div>
     </AppShell>
+  );
+}
+
+/** Requiere sesión; el control real lo hace el backend en cada petición. */
+export default function PaginaPerfil(props: { params: Promise<{ perfilId: string }> }) {
+  return (
+    <RutaProtegida roles={['cuidador_principal', 'cocuidador']}>
+      <Contenido params={props.params} />
+    </RutaProtegida>
   );
 }

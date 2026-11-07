@@ -1,5 +1,6 @@
 'use client';
 
+import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell from '@/components/dafi/Shell';
 import { ChipEstado, ChipEtiqueta, MarcaPrioridad } from '@/components/dafi/Chips';
 import { AvisoEmergencias } from '@/components/dafi/Piezas';
@@ -15,7 +16,7 @@ import estilos from '@/components/dafi/Pantalla.module.css';
  * Pantalla 9: conversación enviada, con la bitácora de eventos.
  * GET /api/v1/conversaciones/{id}/eventos y POST .../mensajes.
  */
-export default function PaginaConversacion() {
+function Contenido() {
   return (
     <AppShell
       titulo="Ronchas en el brazo"
@@ -58,5 +59,14 @@ export default function PaginaConversacion() {
         />
       </div>
     </AppShell>
+  );
+}
+
+/** Requiere sesión; el control real lo hace el backend en cada petición. */
+export default function PaginaConversacion() {
+  return (
+    <RutaProtegida roles={['cuidador_principal', 'cocuidador']}>
+      <Contenido  />
+    </RutaProtegida>
   );
 }

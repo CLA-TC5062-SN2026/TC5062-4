@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell from '@/components/dafi/Shell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,7 +18,7 @@ const TIPOS = [
 ];
 
 /** Pantalla 5: POST /api/v1/familias/{familiaId}/perfiles */
-export default function PaginaNuevoPerfil() {
+function Contenido() {
   const router = useRouter();
   const [tipo, setTipo] = useState('menor');
 
@@ -71,5 +72,14 @@ export default function PaginaNuevoPerfil() {
         </span>
       </p>
     </AppShell>
+  );
+}
+
+/** Requiere sesión; el control real lo hace el backend en cada petición. */
+export default function PaginaNuevoPerfil() {
+  return (
+    <RutaProtegida roles={['cuidador_principal']}>
+      <Contenido  />
+    </RutaProtegida>
   );
 }

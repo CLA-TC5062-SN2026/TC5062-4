@@ -1,5 +1,6 @@
 'use client';
 
+import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell, { NAV_MEDICO } from '@/components/dafi/Shell';
 import Button from '@/components/ui/Button';
 import Icono from '@/components/ui/Icono';
@@ -18,7 +19,7 @@ import estilos from '@/components/dafi/Pantalla.module.css';
 const MEDICO = { nombre: 'Dra. Lucía Torres', rol: 'Pediatría' };
 
 /** Pantalla 11 y D6: GET /api/v1/conversaciones/{conversacionId} */
-export default function PaginaConversacionMedico() {
+function Contenido() {
   const respondidas = PREGUNTAS_BORRADOR.filter((p) => p.respuesta);
 
   return (
@@ -95,5 +96,14 @@ export default function PaginaConversacionMedico() {
         </aside>
       </div>
     </AppShell>
+  );
+}
+
+/** Requiere sesión; el control real lo hace el backend en cada petición. */
+export default function PaginaConversacionMedico() {
+  return (
+    <RutaProtegida roles={['medico']}>
+      <Contenido  />
+    </RutaProtegida>
   );
 }

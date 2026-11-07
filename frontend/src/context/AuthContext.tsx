@@ -1,98 +1,90 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ApiError } from '@/services/api';
-import { login as loginApi, obtenerCuenta } from '@/services/auth';
-import type { Usuario } from '@/services/auth';
-
-/**
- * Estado de sesión de la aplicación.
- *
- * Decisión y su límite conocido: el JWT se guarda en `sessionStorage`, no en
- * una cookie httpOnly. Eso lo deja expuesto a un XSS, pero el backend de
- * S05-S06-A2 entrega el token en el cuerpo de la respuesta y no emite cookies,
- * así que ésta es la integración que el API permite hoy. `sessionStorage` (y no
- * `localStorage`) acota el daño: el token muere al cerrar la pestaña y no se
- * comparte entre pestañas.
- *
- * El paso correcto es un Route Handler de Next que haga de BFF, reciba el token
- * y lo reemita como cookie httpOnly + SameSite=Strict. Queda documentado como
- * deuda en S07_S08_A1/revision_componentes.md.
- */
-
-const CLAVE_TOKEN = 'dafi.accessToken';
+import { ApiError } from '@/services/errores';
+import { instalarInterceptores } from '@/services/interceptores';
+import { alCambiarToken, leerToken } from '@/services/almacenToken';
+import { cerrarSesion, login as loginApi, obtenerCuenta, RUTA_INICIO } from '@/services/authService';
+import type { Usuario } from '@/services/authService';
 
 interface EstadoAuth {
   usuario: Usuario | null;
-  token: string | null;
-  cargando: boolean;
+  /** true mientras se comprueba si hay una sesión válida al cargar la página. */
+  comprobando: boolean;
   entrar: (correo: string, contrasena: string) => Promise<Usuario>;
   salir: () => void;
+  /** Ruta de inicio según el rol, tal como la indica el backend. */
+  rutaInicio: string;
 }
 
 const AuthContext = createContext<EstadoAuth | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const [comprobando, setComprobando] = useState(true);
+  const [rutaInicio, setRutaInicio] = useState('/perfiles');
+  const expirada = useRef(false);
 
-  // Al montar, intenta rehidratar la sesión. `obtenerCuenta` vuelve a consultar
-  // la BD, así que un token revocado o caducado por inactividad se detecta aquí
-  // y no cuando el usuario intenta hacer algo.
+  // Los interceptores se instalan una sola vez. El de respuesta necesita saber
+  // qué hacer cuando el servidor devuelve 401, y eso depende de la navegación,
+  // que sólo conoce este componente.
+  useEffect(() => {
+    instalarInterceptores(() => {
+      if (expirada.current) return;
+      expirada.current = true;
+      setUsuario(null);
+      router.replace('/sesion-expirada');
+    });
+  }, [router]);
+
+  // Si otro punto de la aplicación borra el token, la sesión se cae aquí también.
+  useEffect(() => alCambiarToken((t) => { if (!t) setUsuario(null); }), []);
+
+  // Rehidratación: /auth/me vuelve a consultar la base, así que un token
+  // revocado o caducado por inactividad se detecta al cargar, no más tarde.
   useEffect(() => {
     const control = new AbortController();
 
-    // Toda la rehidratación vive en una función async: así ninguna actualización
-    // de estado ocurre de forma síncrona en el cuerpo del efecto, que es lo que
-    // provoca renders en cascada (regla react-hooks/set-state-in-effect).
     async function rehidratar() {
-      const guardado = window.sessionStorage.getItem(CLAVE_TOKEN);
-
-      if (guardado) {
+      if (leerToken()) {
         try {
-          const cuenta = await obtenerCuenta(guardado, control.signal);
-          setUsuario(cuenta);
-          setToken(guardado);
+          setUsuario(await obtenerCuenta(control.signal));
         } catch (error: unknown) {
           if (error instanceof DOMException && error.name === 'AbortError') return;
-          // Sólo se descarta el token si el servidor dice que no vale. Ante un
-          // fallo de red se conserva para no expulsar al usuario por un bache.
-          if (error instanceof ApiError && error.esSesionInvalida) {
-            window.sessionStorage.removeItem(CLAVE_TOKEN);
+          // Un fallo de red no debe expulsar al usuario: sólo lo hace el
+          // servidor, y de eso ya se encarga el interceptor de 401.
+          if (!(error instanceof ApiError) || !error.esSesionInvalida) {
+            // se conserva el token para reintentar más tarde
           }
         }
       }
-
-      setCargando(false);
+      setComprobando(false);
     }
 
     void rehidratar();
-
     return () => control.abort();
   }, []);
 
   const entrar = useCallback(async (correo: string, contrasena: string) => {
-    const respuesta = await loginApi(correo, contrasena);
-    window.sessionStorage.setItem(CLAVE_TOKEN, respuesta.accessToken);
-    setToken(respuesta.accessToken);
-    setUsuario(respuesta.usuario);
-    return respuesta.usuario;
+    const sesion = await loginApi(correo, contrasena);
+    expirada.current = false;
+    setUsuario(sesion.usuario);
+    setRutaInicio(RUTA_INICIO[sesion.pantallaInicio] ?? '/perfiles');
+    return sesion.usuario;
   }, []);
 
   const salir = useCallback(() => {
-    // El contrato define DELETE /sesiones/actual para revocar el jti en el
-    // servidor, pero ese endpoint aún no está implementado en backend/: por
-    // ahora el cierre es sólo local y la sesión caduca sola por inactividad.
-    window.sessionStorage.removeItem(CLAVE_TOKEN);
-    setToken(null);
+    cerrarSesion();
     setUsuario(null);
-  }, []);
+    router.replace('/entrar');
+  }, [router]);
 
   const valor = useMemo<EstadoAuth>(
-    () => ({ usuario, token, cargando, entrar, salir }),
-    [usuario, token, cargando, entrar, salir]
+    () => ({ usuario, comprobando, entrar, salir, rutaInicio }),
+    [usuario, comprobando, entrar, salir, rutaInicio]
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
@@ -100,8 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const contexto = useContext(AuthContext);
-  if (!contexto) {
-    throw new Error('useAuth debe usarse dentro de <AuthProvider>.');
-  }
+  if (!contexto) throw new Error('useAuth debe usarse dentro de <AuthProvider>.');
   return contexto;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Icono from '@/components/ui/Icono';
 import { useAuth } from '@/context/AuthContext';
-import { mensajeParaUsuario } from '@/services/api';
+import { alertarError } from '@/services/alertas';
+import { ApiError, mensajeParaUsuario } from '@/services/errores';
 import estilos from '@/components/dafi/Acceso.module.css';
 
 const RE_CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -21,12 +22,19 @@ const PROMESAS = [
 
 export default function PaginaEntrar() {
   const router = useRouter();
-  const { entrar } = useAuth();
+  const { entrar, usuario, comprobando, rutaInicio } = useAuth();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [errores, setErrores] = useState<{ correo?: string; contrasena?: string }>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+
+  // Si ya hay sesión válida no tiene sentido pedir credenciales otra vez.
+  useEffect(() => {
+    if (!comprobando && usuario) {
+      router.replace(usuario.rol === 'medico' ? '/medico/bandeja' : '/perfiles');
+    }
+  }, [usuario, comprobando, router]);
 
   async function alEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -39,12 +47,20 @@ export default function PaginaEntrar() {
 
     setEnviando(true);
     try {
-      const usuario = await entrar(correo.trim(), contrasena);
-      // pantallaInicio del backend: el médico entra a la bandeja.
-      router.push(usuario.rol === 'medico' ? '/medico/bandeja' : '/perfiles');
+      await entrar(correo.trim(), contrasena);
+      // El backend indica en `pantallaInicio` dónde empieza cada rol: la
+      // familia en sus perfiles, el médico en su bandeja.
+      router.replace(rutaInicio);
     } catch (error) {
+      // Credenciales incorrectas es un fallo esperable del formulario: se
+      // muestra en la propia pantalla, sin diálogo que interrumpa.
+      const credencialesMal = error instanceof ApiError && error.status === 401;
       setErrorGeneral(mensajeParaUsuario(error));
-    } finally {
+      if (!credencialesMal) {
+        // Lo demás (red caída, servidor apagado, cuenta desactivada) sí merece
+        // un diálogo: ocurre lejos del campo que la persona estaba rellenando.
+        await alertarError(error);
+      }
       setEnviando(false);
     }
   }

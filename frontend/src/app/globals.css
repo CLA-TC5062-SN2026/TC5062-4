@@ -261,3 +261,64 @@ a {
   font-family: var(--fuente-mono);
   font-size: var(--mono-tam); line-height: var(--mono-alto); font-weight: 500;
 }
+
+/* ============================================================================
+   SweetAlert2 con los tokens de DAFI.
+   La librería trae su propia estética; estas reglas la alinean con el resto
+   de la interfaz para que un error no parezca venir de otra aplicación.
+   ========================================================================== */
+.dafi-swal {
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  font-family: var(--fuente-base);
+  border: 1px solid var(--color-ink-200);
+}
+
+.dafi-swal-titulo {
+  font-size: var(--heading-m-tam);
+  line-height: var(--heading-m-alto);
+  font-weight: 600;
+  color: var(--color-ink-900);
+}
+
+.dafi-swal-texto {
+  font-size: var(--body-m-tam);
+  line-height: var(--body-m-alto);
+  color: var(--color-ink-700);
+}
+
+.dafi-swal-correlacion {
+  font-family: var(--fuente-mono);
+  font-size: var(--mono-tam);
+  color: var(--color-ink-600);
+}
+
+.dafi-swal-acciones {
+  gap: var(--space-8);
+  margin-top: var(--space-20);
+}
+
+.dafi-swal-boton,
+.dafi-swal-boton-secundario {
+  min-height: 44px;
+  padding: 0 var(--space-20);
+  border-radius: var(--radius-md);
+  font-size: var(--heading-s-tam);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.dafi-swal-boton {
+  background: var(--color-brand-500);
+  color: var(--color-ink-0);
+}
+.dafi-swal-boton:hover { background: var(--color-brand-600); }
+
+.dafi-swal-boton-secundario {
+  background: var(--color-ink-0);
+  color: var(--color-brand-700);
+  border-color: var(--color-ink-500);
+}
+.dafi-swal-boton-secundario:hover { background: var(--color-brand-50); }

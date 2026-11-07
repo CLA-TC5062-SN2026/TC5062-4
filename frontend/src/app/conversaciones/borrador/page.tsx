@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell from '@/components/dafi/Shell';
 import Button from '@/components/ui/Button';
 import Icono from '@/components/ui/Icono';
@@ -15,7 +16,7 @@ import estilos from '@/components/dafi/Pantalla.module.css';
  * El envío es POST /api/v1/conversaciones/{id}/envios y lo rechaza la API con
  * 422 CONVERSACION_INCOMPLETA mientras queden obligatorias sin responder.
  */
-export default function PaginaBorrador() {
+function Contenido() {
   const router = useRouter();
   const pendientes = PREGUNTAS_BORRADOR.filter((p) => p.obligatoria && !p.respuesta);
   const puedeEnviar = pendientes.length === 0;
@@ -84,5 +85,14 @@ export default function PaginaBorrador() {
         </aside>
       </div>
     </AppShell>
+  );
+}
+
+/** Requiere sesión; el control real lo hace el backend en cada petición. */
+export default function PaginaBorrador() {
+  return (
+    <RutaProtegida roles={['cuidador_principal', 'cocuidador']}>
+      <Contenido  />
+    </RutaProtegida>
   );
 }

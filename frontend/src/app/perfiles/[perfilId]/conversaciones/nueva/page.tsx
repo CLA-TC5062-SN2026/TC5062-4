@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
+import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell from '@/components/dafi/Shell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -15,7 +16,7 @@ import { CATALOGO_ETIQUETAS, CIRCULO_MEDICO, PERFILES } from '@/lib/datos-demo';
 import estilos from '@/components/dafi/Pantalla.module.css';
 
 /** Pantalla 7: POST /api/v1/perfiles/{perfilId}/conversaciones */
-export default function PaginaNuevaConversacion({
+function Contenido({
   params,
 }: {
   params: Promise<{ perfilId: string }>;
@@ -110,5 +111,14 @@ export default function PaginaNuevaConversacion({
         apoyo="Marca «Prioridad indicada por la familia». DAFI no evalúa la urgencia."
       />
     </AppShell>
+  );
+}
+
+/** Requiere sesión; el control real lo hace el backend en cada petición. */
+export default function PaginaNuevaConversacion(props: { params: Promise<{ perfilId: string }> }) {
+  return (
+    <RutaProtegida roles={['cuidador_principal', 'cocuidador']}>
+      <Contenido params={props.params} />
+    </RutaProtegida>
   );
 }

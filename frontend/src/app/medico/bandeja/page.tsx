@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell, { NAV_MEDICO } from '@/components/dafi/Shell';
 import Icono from '@/components/ui/Icono';
 import Button from '@/components/ui/Button';
@@ -13,7 +14,7 @@ import estilos from '@/components/dafi/Pantalla.module.css';
 const MEDICO = { nombre: 'Dra. Lucía Torres', rol: 'Pediatría' };
 
 /** Pantalla 10 y D5: GET /api/v1/conversaciones?seccion=… */
-export default function PaginaBandeja() {
+function Contenido() {
   const router = useRouter();
   const [seccion, setSeccion] = useState(SECCIONES_BANDEJA[0].id);
   const [seleccionada, setSeleccionada] = useState(BANDEJA_MEDICO[0].id);
@@ -80,5 +81,14 @@ export default function PaginaBandeja() {
         </aside>
       </div>
     </AppShell>
+  );
+}
+
+/** Requiere sesión; el control real lo hace el backend en cada petición. */
+export default function PaginaBandeja() {
+  return (
+    <RutaProtegida roles={['medico']}>
+      <Contenido  />
+    </RutaProtegida>
   );
 }
