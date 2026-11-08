@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ApiError } from '@/services/errores';
 import { instalarInterceptores } from '@/services/interceptores';
 import { alCambiarToken, leerToken } from '@/services/almacenToken';
 import { cerrarSesion, login as loginApi, obtenerCuenta, RUTA_INICIO } from '@/services/authService';
@@ -13,7 +12,8 @@ interface EstadoAuth {
   usuario: Usuario | null;
   /** true mientras se comprueba si hay una sesión válida al cargar la página. */
   comprobando: boolean;
-  entrar: (correo: string, contrasena: string) => Promise<Usuario>;
+  /** Resuelve con el usuario y la ruta de inicio que indica el backend. */
+  entrar: (correo: string, contrasena: string) => Promise<{ usuario: Usuario; rutaInicio: string }>;
   salir: () => void;
   /** Ruta de inicio según el rol, tal como la indica el backend. */
   rutaInicio: string;
@@ -54,11 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUsuario(await obtenerCuenta(control.signal));
         } catch (error: unknown) {
           if (error instanceof DOMException && error.name === 'AbortError') return;
-          // Un fallo de red no debe expulsar al usuario: sólo lo hace el
-          // servidor, y de eso ya se encarga el interceptor de 401.
-          if (!(error instanceof ApiError) || !error.esSesionInvalida) {
-            // se conserva el token para reintentar más tarde
-          }
+          // Un fallo de red no debe expulsar al usuario: se conserva el token
+          // para reintentar más tarde. Sólo el servidor decide que dejó de
+          // valer, y de ese 401 ya se encarga el interceptor.
         }
       }
       setComprobando(false);
@@ -70,10 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const entrar = useCallback(async (correo: string, contrasena: string) => {
     const sesion = await loginApi(correo, contrasena);
+    const ruta = RUTA_INICIO[sesion.pantallaInicio] ?? '/perfiles';
     expirada.current = false;
     setUsuario(sesion.usuario);
-    setRutaInicio(RUTA_INICIO[sesion.pantallaInicio] ?? '/perfiles');
-    return sesion.usuario;
+    setRutaInicio(ruta);
+    // Se devuelve la ruta en lugar de que la pantalla lea `rutaInicio` del
+    // contexto: ese valor no se actualiza hasta el siguiente render.
+    return { usuario: sesion.usuario, rutaInicio: ruta };
   }, []);
 
   const salir = useCallback(() => {

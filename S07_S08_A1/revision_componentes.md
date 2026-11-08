@@ -98,13 +98,7 @@ La corrección no fue ampliar el tipo, sino sacar el `<h1>` de la tarjeta y pone
 
 **Lo que propuso el agente.** En el efecto de montaje, llamar a `/auth/me` y, en el `catch`, borrar el token.
 
-**Qué hicimos.** Sólo se borra si el error es un `ApiError` con estado 401:
-
-```ts
-if (error instanceof ApiError && error.esSesionInvalida) {
-  window.sessionStorage.removeItem(CLAVE_TOKEN);
-}
-```
+**Qué hicimos.** Sólo se borra si el servidor responde 401. En la primera versión la comprobación vivía en el propio efecto (`error instanceof ApiError && error.esSesionInvalida`); en S07-S08-A2 pasó al interceptor de 401 de `src/services/interceptores.ts`, que llama a `borrarToken()` de `almacenToken.ts`. El efecto de rehidratación ya no toca el token: ante un fallo de red simplemente lo conserva.
 
 **Por qué.** `fetch` también falla cuando no hay red o el backend está caído. Con el `catch` genérico, un usuario en el metro con mala cobertura perdía la sesión y tenía que volver a escribir su contraseña. Sólo el servidor puede decidir que un token dejó de valer.
 
@@ -128,7 +122,7 @@ El código original hacía `if (!guardado) { setCargando(false); return; }` en e
 
 **Lo que propuso el agente.** Un envoltorio con `try { const r = await fetch(...); return r.json(); } catch { ... }`.
 
-**Qué hicimos.** `src/services/api.ts` comprueba `respuesta.ok` explícitamente, traduce el cuerpo `{ codigo, mensaje, correlacionId }` del contrato del equipo a una clase `ApiError`, trata el `204` sin cuerpo, deja pasar `AbortError` sin convertirlo en error de red y reserva el `catch` del `fetch` para fallos de red y CORS.
+**Qué hicimos.** `src/services/clienteHttp.ts` (en la primera versión, `api.ts`) comprueba `respuesta.ok` explícitamente, traduce el cuerpo `{ codigo, mensaje, correlacionId }` del contrato del equipo a una clase `ApiError`, trata el `204` sin cuerpo, deja pasar `AbortError` sin convertirlo en error de red y reserva el `catch` del `fetch` para fallos de red y CORS.
 
 **Por qué.** Es el malentendido más común de `fetch`: sólo rechaza la promesa si la petición no llegó a completarse. Un 403 `SIN_PERMISOS` resuelve con normalidad, así que el código original habría intentado interpretar el cuerpo de error como si fuera un resultado válido.
 
@@ -211,7 +205,7 @@ cada pantalla en un `Suspense` para ganar un prerender que aquí no aporta nada.
 |---|---|
 | `npx tsc --noEmit` | Sin errores |
 | `npm run lint` | Sin errores ni avisos |
-| `npm run build` | Compila; 3 rutas prerenderizadas (`/`, `/login`, `/_not-found`) |
+| `npm run build` | Compila; 17 rutas al cerrar S07-S08-A1 (22 tras S07-S08-A2) |
 | Consola del navegador en `/` | 0 errores y 0 avisos (sólo los mensajes informativos de React DevTools y HMR, propios del modo desarrollo) |
 | Responsivo | Revisado a 1200 px y a 390 px; el menú plegable abre y cierra correctamente (capturas en `evidencia/`) |
 | Proxy del API | `GET /api/v1/salud` a través de Next devuelve 200 con la ruta y la cabecera de correlación intactas |

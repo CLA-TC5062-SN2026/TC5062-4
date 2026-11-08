@@ -33,7 +33,7 @@ El código está en `frontend/src/services/` y en las pantallas que lo consumen.
 
 La lentitud y la caída **no son simuladas con temporizadores**: se aplican con `Network.emulateNetworkConditions` del protocolo de DevTools, así que la petición es real y el estado de carga es el que vería alguien con mala cobertura.
 
-Los vídeos se grabaron conduciendo un navegador real con Playwright, que captura el área de la página. Los guiones están en el scratchpad de la sesión; se pueden volver a ejecutar contra cualquier instalación local.
+Los vídeos se grabaron conduciendo un navegador real con Playwright, que captura el área de la página. Los guiones de grabación no forman parte del repositorio.
 
 ## Cómo comprobarlo
 
@@ -56,7 +56,7 @@ Credenciales de prueba, sólo local y con datos ficticios:
 
 | Comprobación | Resultado |
 |---|---|
-| `npx tsc --noEmit` | Sin errores |
+| `npx tsc --noEmit` | Sin errores (en un clon limpio, correr antes `npm run build`: genera tipos como `LayoutProps`) |
 | `npm run lint` | Sin errores ni avisos |
 | `npm run build` | Compila; 22 rutas |
 | `GET /api/v1/salud` a través del proxy de Next | `{"estado":"ok","baseDatos":"ok"}` |

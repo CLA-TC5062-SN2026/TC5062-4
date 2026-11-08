@@ -19,7 +19,7 @@ frontend/src/services/
 ├── authService.ts          # /auth/login, /auth/register, /auth/me
 ├── perfilesService.ts      # perfiles de paciente
 ├── familiasService.ts      # familias y su círculo médico
-├── conversacionesService.ts# conversaciones, eventos y envíos
+├── conversacionesService.ts # conversaciones, eventos y envíos
 └── catalogosService.ts     # /salud, /etiquetas, /avisos (rutas públicas)
 ```
 
@@ -54,6 +54,8 @@ Adjunta `Authorization: Bearer <token>` leyendo el token del almacén, salvo que
 ### Interceptor de respuesta: el 401
 
 Un 401 significa que **el servidor** decidió que la sesión ya no vale: caducó por inactividad (`MINUTOS_SESION`), se revocó el `jti` o el token dejó de ser válido. El interceptor borra el token y avisa al contexto, que lleva a `/sesion-expirada`.
+
+Las peticiones públicas quedan fuera. El backend responde al login fallido con el mismo `401 NO_AUTENTICADO`, y ahí no hay sesión que cerrar: son credenciales incorrectas, y la pantalla de acceso lo dice junto al formulario («El correo o la contraseña no son correctos»), sin redirigir.
 
 Está centralizado a propósito. Si cada pantalla tuviera que acordarse de comprobar el 401, bastaría con olvidarlo en una para que el usuario se quedara mirando una lista vacía sin saber por qué.
 

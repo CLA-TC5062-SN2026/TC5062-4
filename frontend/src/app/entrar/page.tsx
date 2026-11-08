@@ -22,7 +22,7 @@ const PROMESAS = [
 
 export default function PaginaEntrar() {
   const router = useRouter();
-  const { entrar, usuario, comprobando, rutaInicio } = useAuth();
+  const { entrar, usuario, comprobando } = useAuth();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [errores, setErrores] = useState<{ correo?: string; contrasena?: string }>({});
@@ -47,15 +47,21 @@ export default function PaginaEntrar() {
 
     setEnviando(true);
     try {
-      await entrar(correo.trim(), contrasena);
+      const { rutaInicio } = await entrar(correo.trim(), contrasena);
       // El backend indica en `pantallaInicio` dónde empieza cada rol: la
       // familia en sus perfiles, el médico en su bandeja.
       router.replace(rutaInicio);
     } catch (error) {
       // Credenciales incorrectas es un fallo esperable del formulario: se
       // muestra en la propia pantalla, sin diálogo que interrumpa.
+      // El backend responde 401 NO_AUTENTICADO, el mismo código que una sesión
+      // caducada, así que aquí no sirve la traducción genérica por código.
       const credencialesMal = error instanceof ApiError && error.status === 401;
-      setErrorGeneral(mensajeParaUsuario(error));
+      setErrorGeneral(
+        credencialesMal
+          ? 'El correo o la contraseña no son correctos. Revíselos e inténtelo de nuevo.'
+          : mensajeParaUsuario(error)
+      );
       if (!credencialesMal) {
         // Lo demás (red caída, servidor apagado, cuenta desactivada) sí merece
         // un diálogo: ocurre lejos del campo que la persona estaba rellenando.

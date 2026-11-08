@@ -116,7 +116,7 @@ La excepción es la variante `interactive`: si una tarjeta llega a ser pulsable 
 - **Sin validación con lector de pantalla real.** La revisión se hizo sobre el árbol de accesibilidad y la semántica del marcado, no probando con VoiceOver ni NVDA. Las correcciones son las adecuadas según los criterios, pero no está verificado cómo se anuncian en la práctica.
 - **Sin gestión de foco al abrir el menú móvil.** Hoy el foco permanece en el botón hamburguesa. Lo correcto es llevarlo al panel y atraparlo mientras está abierto (patrón de diálogo), y cerrarlo con `Escape`.
 - **Sin auditoría automatizada del DOM.** `contraste.mjs` evalúa los tokens, no la página renderizada. Convendría añadir `axe-core` a las pruebas de S09 para detectar problemas que sólo existen una vez compuesta la interfaz.
-- **Zoom al 200 %** (1.4.4) y **reflujo a 320 px** (1.4.10) no se verificaron formalmente.
+- **Zoom al 200 %** (1.4.4) no se verificó formalmente. El **reflujo a 320 px** (1.4.10) sí se revisó al regrabar el vídeo: 14 rutas sin desbordes horizontales tras corregir uno de 5 px (detalle en `README.md`).
 
 ## 7. Referencias
 

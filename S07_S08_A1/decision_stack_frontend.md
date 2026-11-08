@@ -98,7 +98,7 @@ El diseño del equipo en Figma tiene **18 pantallas** (12 móviles de 390 × 844
 
 ## 5. Referencias
 
-- IEEE Computer Society. (2025). *Guide to the Software Engineering Body of Knowledge (SWEBOK) v4.0a*, Chapter 4: Software Construction. IEEE.
+- IEEE Computer Society. (2024). *Guide to the Software Engineering Body of Knowledge (SWEBOK) v4.0a*, Chapter 4: Software Construction. IEEE.
 - Norman, D. A. (2013). *The design of everyday things* (edición revisada y ampliada). Basic Books.
 - W3C. (2023). *Web Content Accessibility Guidelines (WCAG) 2.1*. https://www.w3.org/TR/WCAG21/
 - Documentos propios del equipo: `S03_A1/SRS_equipo.md` (§2.4), `S03_A2/sprint1_planning.md` (§riesgos), `S05_S06_A1/arquitectura_equipo.md` y `S05_S06_A2/revision_seguridad.md`.

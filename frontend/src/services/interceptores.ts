@@ -26,7 +26,11 @@ export function instalarInterceptores(alExpirarSesion: AlExpirarSesion): void {
   // Respuesta: un 401 significa que el servidor revocó la sesión (caducó por
   // inactividad, se cerró, o el token dejó de ser válido). Se limpia aquí, una
   // sola vez, en vez de que cada pantalla tenga que acordarse de hacerlo.
-  registrarInterceptorError((error) => {
+  // Las peticiones públicas quedan fuera: un 401 en el login significa
+  // credenciales incorrectas, no una sesión caducada, y lo resuelve el
+  // propio formulario.
+  registrarInterceptorError((error, config) => {
+    if (config.publica) return;
     if (error.esSesionInvalida) {
       borrarToken();
       alExpirarSesion();

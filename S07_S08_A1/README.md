@@ -7,7 +7,7 @@
 | Archivo | Qué es |
 |---|---|
 | `decision_stack_frontend.md` | Parte 0. Stack elegido, alternativas descartadas y justificación |
-| `scaffolding.mp4` | Parte 1. Grabación de pantalla de 18.8 s: arranque del proyecto y app cargando con la consola limpia |
+| `scaffolding.mp4` | Parte 1. Grabación de pantalla de 19.5 s: arranque del proyecto y app cargando con la consola limpia |
 | `revision_componentes.md` | Parte 2. Qué se cambió del código del agente y por qué |
 | `accesibilidad.md` | Parte 3. Auditoría WCAG 2.1 AA y correcciones |
 | `evidencia/contraste.mjs` | Auditoría de contraste ejecutable, sin dependencias |
@@ -51,8 +51,8 @@ Antes de grabar se verificó, de forma automatizada y sobre el servidor de desar
 |---|---|
 | `npx tsc --noEmit` | Sin errores |
 | `npm run lint` | Sin errores ni avisos |
-| `npm run build` | Compila; 17 rutas |
-| Consola del navegador | 30 cargas (15 rutas × 2 anchos): 0 errores, 0 avisos |
+| `npm run build` | Compila; 17 rutas (22 tras S07-S08-A2) |
+| Consola del navegador | 40 cargas (20 rutas × 2 anchos) sobre el build de producción: 0 errores, 0 avisos |
 | Panel «Issues» de Chrome | 14 rutas: 0 incidencias |
 | Responsivo | Revisado a 390 px y 1440 px contra las composiciones de Figma |
 | Proxy del API | `/api/v1/salud` a través de Next devuelve 200 con la ruta y `X-Correlation-Id` intactos |
