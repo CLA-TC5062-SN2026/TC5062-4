@@ -1,0 +1,324 @@
+/* ============================================================================
+   DAFI - estilos globales
+   ----------------------------------------------------------------------------
+   Aquí viven sólo tres cosas: los tokens de diseño, un reset mínimo y las
+   reglas que no pertenecen a ningún componente (foco, movimiento reducido).
+   Todo lo demás vive en el *.module.css del componente que lo usa.
+
+   Los tokens son los mismos valores que la colección «DAFI Tokens» del archivo
+   de Figma del equipo, para que diseño y código no se separen.
+
+   Los valores marcados con «WCAG» se corrigieron tras la auditoría de
+   contraste: ver S07_S08_A1/accesibilidad.md y evidencia/contraste.mjs.
+   ========================================================================== */
+
+:root {
+  /* --- Marca --- */
+  --color-brand-50: #eaf4f6;
+  --color-brand-100: #d3e7eb;
+  --color-brand-200: #afd3da;
+  --color-brand-500: #1f7a89;
+  --color-brand-600: #176371;
+  --color-brand-700: #114e5a;
+  --color-brand-900: #0a2f37;
+
+  /* --- Neutros --- */
+  --color-ink-0: #ffffff;
+  --color-ink-50: #f6f9fa;
+  --color-ink-100: #edf2f4;
+  --color-ink-200: #dee6e9;
+  --color-ink-300: #c3cfd4;
+  --color-ink-500: #7b8a91;  /* 3.57:1 sobre blanco: bordes e iconos, NUNCA texto */
+  --color-ink-600: #5c6b73;  /* WCAG 1.4.3: mínimo para texto secundario (5.52:1) */
+  --color-ink-700: #44555d;
+  --color-ink-900: #16262c;
+
+  /* --- Estados de conversación (enum EstadoConversacion del backend) --- */
+  --color-estado-borrador-bg: #eef1f4;
+  --color-estado-borrador-fg: #4f5b66;
+  --color-estado-enviada-bg: #e4eefd;
+  --color-estado-enviada-fg: #1d4ed8;
+  --color-estado-revision-bg: #efe9fb;
+  --color-estado-revision-fg: #6d28d9;
+  --color-estado-info-bg: #fdf0dc;
+  --color-estado-info-fg: #92400e;         /* WCAG 1.4.3: era #b45309 (4.47:1) */
+  --color-estado-indicaciones-bg: #e2f5e9;
+  --color-estado-indicaciones-fg: #166534; /* WCAG 1.4.3: era #15803d (4.41:1) */
+  --color-estado-cerrada-bg: #e8edf1;
+  --color-estado-cerrada-fg: #475569;
+  --color-estado-sinmedico-bg: #fde7ed;
+  --color-estado-sinmedico-fg: #be123c;
+
+  /* --- Señales --- */
+  --color-alerta-bg: #fff1f1;
+  --color-alerta-borde: #f6b9b9;
+  --color-alerta-fg: #9f1d1d;
+  --color-prioridad-bg: #fdf0dc;
+  --color-prioridad-fg: #9a4e07;
+  --color-peligro-500: #dc2626;
+  --color-peligro-600: #b91c1c;
+  --color-peligro-700: #991b1b;
+  --color-exito-500: #15803d;
+
+  /* --- Espaciado --- */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+
+  /* --- Radios --- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* --- Tipografía ---
+     Escala exacta del archivo de Figma (estilos de texto «DAFI/*»).
+     Cada entrada es tamaño / interlineado / grosor / espaciado entre letras. */
+  --fuente-base: var(--fuente-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --fuente-mono: var(--fuente-mono-roboto), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --display-tam: 28px;      --display-alto: 34px;    --display-ls: -0.3px;
+  --heading-l-tam: 22px;    --heading-l-alto: 28px;  --heading-l-ls: -0.2px;
+  --heading-m-tam: 18px;    --heading-m-alto: 24px;  --heading-m-ls: -0.1px;
+  --heading-s-tam: 16px;    --heading-s-alto: 22px;  --heading-s-ls: 0px;
+  --body-l-tam: 16px;       --body-l-alto: 24px;
+  --body-m-tam: 14px;       --body-m-alto: 20px;
+  --body-s-tam: 13px;       --body-s-alto: 18px;
+  --label-tam: 12px;        --label-alto: 16px;      --label-ls: 0.1px;
+  --overline-tam: 11px;     --overline-alto: 14px;   --overline-ls: 0.6px;
+  --mono-tam: 11px;         --mono-alto: 16px;
+
+  /* --- Elevación --- */
+  --medida-texto: 68ch;
+  --sombra-tarjeta: 0 1px 3px rgba(22, 38, 44, 0.06), 0 6px 16px -4px rgba(22, 38, 44, 0.04);
+}
+
+/* --- Reset mínimo --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul[class],
+ol[class] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Una cadena larga sin espacios (una URL, un identificador) no debe poder
+   empujar el ancho de la pagina y provocar desplazamiento horizontal.
+   WCAG 1.4.10 exige que a 320 px no haya scroll en el eje contrario. */
+body,
+p,
+li,
+h1, h2, h3, h4, h5, h6,
+span, a, button, label {
+  overflow-wrap: break-word;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--color-ink-50);
+  color: var(--color-ink-900);
+  font-family: var(--fuente-base);
+  font-size: var(--texto-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--color-brand-700);
+}
+
+/* WCAG 2.4.7 Foco visible: un anillo único y consistente para todo lo que
+   recibe foco por teclado. `:focus-visible` evita mostrarlo en clics de ratón.
+   El scaffold no traía ninguna regla de foco; ver accesibilidad.md. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* WCAG 2.3.3: respetar a quien pide menos animación en su sistema. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Utilidades globales (las únicas) --- */
+
+/* Visible sólo para lectores de pantalla (WCAG 1.3.1). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Enlace de salto al contenido: invisible hasta que recibe foco (WCAG 2.4.1). */
+.salto-contenido {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: var(--space-12) var(--space-16);
+  background: var(--color-brand-700);
+  color: var(--color-ink-0);
+  border-radius: 0 0 var(--radius-md) 0;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.salto-contenido:focus {
+  left: 0;
+}
+
+/* ============================================================================
+   Estilos de texto — equivalen uno a uno a los estilos «DAFI/*» de Figma.
+   Se exponen como clases globales porque los usan casi todos los componentes.
+   ========================================================================== */
+.t-display {
+  font-size: var(--display-tam); line-height: var(--display-alto);
+  letter-spacing: var(--display-ls); font-weight: 600;
+}
+.t-heading-l {
+  font-size: var(--heading-l-tam); line-height: var(--heading-l-alto);
+  letter-spacing: var(--heading-l-ls); font-weight: 600;
+}
+.t-heading-m {
+  font-size: var(--heading-m-tam); line-height: var(--heading-m-alto);
+  letter-spacing: var(--heading-m-ls); font-weight: 600;
+}
+.t-heading-s {
+  font-size: var(--heading-s-tam); line-height: var(--heading-s-alto);
+  font-weight: 600;
+}
+.t-body-l { font-size: var(--body-l-tam); line-height: var(--body-l-alto); font-weight: 400; }
+.t-body-m { font-size: var(--body-m-tam); line-height: var(--body-m-alto); font-weight: 400; }
+.t-body-m-fuerte { font-size: var(--body-m-tam); line-height: var(--body-m-alto); font-weight: 500; }
+.t-body-s { font-size: var(--body-s-tam); line-height: var(--body-s-alto); font-weight: 400; }
+.t-label {
+  font-size: var(--label-tam); line-height: var(--label-alto);
+  letter-spacing: var(--label-ls); font-weight: 500;
+}
+.t-overline {
+  font-size: var(--overline-tam); line-height: var(--overline-alto);
+  letter-spacing: var(--overline-ls); font-weight: 600;
+}
+.t-mono {
+  font-family: var(--fuente-mono);
+  font-size: var(--mono-tam); line-height: var(--mono-alto); font-weight: 500;
+}
+
+/* ============================================================================
+   SweetAlert2 con los tokens de DAFI.
+   La librería trae su propia estética; estas reglas la alinean con el resto
+   de la interfaz para que un error no parezca venir de otra aplicación.
+   ========================================================================== */
+.dafi-swal {
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  font-family: var(--fuente-base);
+  border: 1px solid var(--color-ink-200);
+}
+
+.dafi-swal-titulo {
+  font-size: var(--heading-m-tam);
+  line-height: var(--heading-m-alto);
+  font-weight: 600;
+  color: var(--color-ink-900);
+}
+
+.dafi-swal-texto {
+  font-size: var(--body-m-tam);
+  line-height: var(--body-m-alto);
+  color: var(--color-ink-700);
+}
+
+.dafi-swal-correlacion {
+  font-family: var(--fuente-mono);
+  font-size: var(--mono-tam);
+  color: var(--color-ink-600);
+}
+
+.dafi-swal-acciones {
+  gap: var(--space-8);
+  margin-top: var(--space-20);
+}
+
+.dafi-swal-boton,
+.dafi-swal-boton-secundario {
+  min-height: 44px;
+  padding: 0 var(--space-20);
+  border-radius: var(--radius-md);
+  font-size: var(--heading-s-tam);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.dafi-swal-boton {
+  background: var(--color-brand-500);
+  color: var(--color-ink-0);
+}
+.dafi-swal-boton:hover { background: var(--color-brand-600); }
+
+.dafi-swal-boton-secundario {
+  background: var(--color-ink-0);
+  color: var(--color-brand-700);
+  border-color: var(--color-ink-500);
+}
+.dafi-swal-boton-secundario:hover { background: var(--color-brand-50); }

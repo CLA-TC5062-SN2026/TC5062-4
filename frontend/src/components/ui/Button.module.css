@@ -1,0 +1,100 @@
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* --- Variantes --- */
+.primario {
+  background-color: var(--color-brand-500); /* blanco sobre brand-500 = 5.00:1 */
+  color: var(--color-ink-0);
+}
+.primario:hover:not(:disabled) { background-color: var(--color-brand-600); }
+.primario:active:not(:disabled) { background-color: var(--color-brand-700); }
+
+.secundario {
+  background-color: var(--color-ink-0);
+  color: var(--color-brand-700); /* 9.29:1 */
+  /* ink-500 y no ink-300: el borde define el límite del control (WCAG 1.4.11). */
+  border-color: var(--color-ink-500);
+}
+.secundario:hover:not(:disabled) { background-color: var(--color-brand-50); }
+.secundario:active:not(:disabled) { background-color: var(--color-brand-100); }
+
+.fantasma {
+  background-color: transparent;
+  color: var(--color-brand-700);
+}
+.fantasma:hover:not(:disabled) { background-color: var(--color-brand-50); }
+.fantasma:active:not(:disabled) { background-color: var(--color-brand-100); }
+
+.peligro {
+  background-color: var(--color-peligro-500); /* blanco sobre peligro-500 = 4.83:1 */
+  color: var(--color-ink-0);
+}
+.peligro:hover:not(:disabled) { background-color: var(--color-peligro-600); }
+.peligro:active:not(:disabled) { background-color: var(--color-peligro-700); }
+
+/* --- Tamaños ---
+   min-height 44px: objetivo táctil cómodo. WCAG 2.5.8 (AA, 2.2) pide 24px y
+   2.5.5 (AAA) pide 44px; tomamos el criterio holgado porque DAFI es una app
+   que se usa con una mano y con prisa. */
+.sm {
+  min-height: 36px;
+  padding: 0 var(--space-12);
+  font-size: var(--texto-sm);
+  gap: 6px;
+}
+.md {
+  min-height: 44px;
+  padding: 0 var(--space-20);
+  font-size: var(--texto-base);
+  gap: var(--space-8);
+}
+.lg {
+  min-height: 48px;
+  padding: 0 var(--space-24);
+  font-size: var(--texto-base);
+  gap: var(--space-8);
+}
+
+.anchoCompleto { width: 100%; }
+
+.icono {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.spinner {
+  flex-shrink: 0;
+  animation: girar 800ms linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Responsivo ---
+   En pantallas estrechas se reduce el relleno lateral para que etiquetas
+   largas como «Enviar a la Dra. Lucía Torres» no desborden el botón. */
+@media (max-width: 480px) {
+  .md { padding: 0 var(--space-12); }
+  .lg { padding: 0 var(--space-16); }
+  .boton { max-width: 100%; }
+  .etiqueta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

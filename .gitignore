@@ -1,0 +1,14 @@
+# Artefactos de herramientas de automatización del navegador (capturas y logs
+# de sesión). Las capturas que sí son evidencia viven en S07_S08_A1/evidencia/.
+.playwright-mcp/
+
+# Configuración local de asistentes de código. No es configuración del
+# proyecto: cada integrante usa las herramientas que prefiera, y los hooks se
+# ejecutan en la máquina de quien clone el repositorio.
+.codex/
+.claude/
+.agents/
+.impeccable/
+
+# macOS
+.DS_Store

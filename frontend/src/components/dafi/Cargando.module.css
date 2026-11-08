@@ -1,0 +1,64 @@
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-12);
+  padding: var(--space-32);
+  color: var(--color-ink-600);
+}
+
+.pantallaCompleta { min-height: 100dvh; }
+
+.rueda {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 3px solid var(--color-ink-200);
+  border-top-color: var(--color-brand-500);
+  animation: girar 900ms linear infinite;
+}
+
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* Esqueleto de contenido: comunica la forma de lo que está por llegar, que
+   es más útil que una rueda cuando ya se sabe qué va a aparecer. */
+.esqueleto { display: flex; flex-direction: column; gap: var(--space-12); width: 100%; }
+
+.tarjetaFalsa {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12);
+  border-radius: var(--radius-lg);
+  background: var(--color-ink-0);
+  border: 1px solid var(--color-ink-200);
+}
+
+.bloque {
+  background: linear-gradient(
+    90deg,
+    var(--color-ink-100) 25%,
+    var(--color-ink-50) 37%,
+    var(--color-ink-100) 63%
+  );
+  background-size: 400% 100%;
+  animation: brillo 1400ms ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+.circulo { width: 40px; height: 40px; border-radius: var(--radius-full); flex-shrink: 0; }
+.lineas { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.linea1 { height: 14px; width: 45%; }
+.linea2 { height: 12px; width: 70%; }
+
+@keyframes brillo {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Quien pide menos animación ve el esqueleto quieto, no parpadeando. */
+@media (prefers-reduced-motion: reduce) {
+  .rueda { animation: none; border-top-color: var(--color-brand-500); }
+  .bloque { animation: none; background: var(--color-ink-100); }
+}
