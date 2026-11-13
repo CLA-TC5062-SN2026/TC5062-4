@@ -1,0 +1,14 @@
+
+> backend@1.0.0 lint
+> eslint src scripts
+
+
+/home/ruan/Tec/TC5062-4-DevOps/backend/src/app.js
+  4:8  error  'pool' is defined but never used  no-unused-vars
+
+/home/ruan/Tec/TC5062-4-DevOps/backend/src/routes/perfiles.js
+  5:3  error  'invalid' is defined but never used  no-unused-vars
+
+✖ 2 problems (2 errors, 0 warnings)
+
+[eslint_process_exit_code=1]
