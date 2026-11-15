@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { randomUUID } from "node:crypto";
-import pool from "./config/database.js";
 import familias from "./routes/familias.js";
 import perfiles from "./routes/perfiles.js";
 import conversaciones from "./routes/conversaciones.js";

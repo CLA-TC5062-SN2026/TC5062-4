@@ -1,0 +1,510 @@
+{
+  "info": {
+    "name": "DAFI S09-A1 · Regresión de refactorizaciones",
+    "description": "Pruebas de regresión de R1 (F-01) y R2 (F-02). Requiere seed_demo.sql, seed_medico_demo.mjs y seed_cuidador_demo.mjs. Solo ambiente local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/v1"
+    },
+    {
+      "key": "familiaId",
+      "value": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "key": "medicoId",
+      "value": "33333333-3333-4333-8333-333333333333"
+    },
+    {
+      "key": "contrasenaCuidador",
+      "value": "CuidadorDemo123!"
+    },
+    {
+      "key": "contrasenaMedico",
+      "value": "MedicoDemo123!"
+    },
+    {
+      "key": "tokenCuidador",
+      "value": ""
+    },
+    {
+      "key": "tokenMedico",
+      "value": ""
+    },
+    {
+      "key": "perfilId",
+      "value": ""
+    },
+    {
+      "key": "conversacionId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Login cuidador demo (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"cuidador.demo@dafi.invalid\",\n  \"contrasena\": \"{{contrasenaCuidador}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('tokenCuidador', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Login médica demo (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"medico.demo@dafi.invalid\",\n  \"contrasena\": \"{{contrasenaMedico}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('tokenMedico', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. POST perfil (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenCuidador}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/familias/{{familiaId}}/perfiles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "familias",
+            "{{familiaId}}",
+            "perfiles"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"menor\",\n  \"nombre\": \"Paciente S09\",\n  \"fechaNacimiento\": \"2020-01-15\",\n  \"alergias\": [],\n  \"medicamentos\": []\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('perfilId', pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. R1 · PATCH con «toString» (422, antes 500)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenCuidador}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/perfiles/{{perfilId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "perfiles",
+            "{{perfilId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"toString\": \"x\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('422 y no 500', () => pm.response.to.have.status(422));",
+              "pm.test('DATOS_INVALIDOS', () => pm.expect(pm.response.json().codigo).to.eql('DATOS_INVALIDOS'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. R1 · PATCH con «constructor» (422, antes 500)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenCuidador}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/perfiles/{{perfilId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "perfiles",
+            "{{perfilId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"constructor\": \"x\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('422 y no 500', () => pm.response.to.have.status(422));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. R1 · PATCH válido sigue funcionando (200)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenCuidador}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/perfiles/{{perfilId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "perfiles",
+            "{{perfilId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Paciente S09 editado\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('nombre actualizado', () => pm.expect(pm.response.json().nombre).to.eql('Paciente S09 editado'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. POST conversación (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenCuidador}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/perfiles/{{perfilId}}/conversaciones",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "perfiles",
+            "{{perfilId}}",
+            "conversaciones"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Consulta S09\",\n  \"medicoId\": \"{{medicoId}}\",\n  \"etiquetas\": [\n    \"fiebre\"\n  ],\n  \"prioridadIndicada\": false\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('conversacionId', pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. POST envío (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenCuidador}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/conversaciones/{{conversacionId}}/envios",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "conversaciones",
+            "{{conversacionId}}",
+            "envios"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. R2 · Mensaje de la médica: autor.rol = medico (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenMedico}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/conversaciones/{{conversacionId}}/mensajes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "conversaciones",
+            "{{conversacionId}}",
+            "mensajes"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"texto\": \"Revisé el caso.\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.test('rol de la médica, no cuidador_principal', () => pm.expect(pm.response.json().autor.rol).to.eql('medico'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. R2 · Mensaje del cuidador: autor.rol = cuidador_principal (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenCuidador}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/conversaciones/{{conversacionId}}/mensajes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "conversaciones",
+            "{{conversacionId}}",
+            "mensajes"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"texto\": \"Gracias, doctora.\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.test('rol del cuidador', () => pm.expect(pm.response.json().autor.rol).to.eql('cuidador_principal'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. R2 · GET eventos coincide con los POST",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenMedico}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/conversaciones/{{conversacionId}}/eventos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "conversaciones",
+            "{{conversacionId}}",
+            "eventos"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const roles = pm.response.json().datos.filter((e) => e.tipo === 'mensaje').map((e) => e.autor.rol);",
+              "pm.test('mismo rol en lectura y escritura', () => pm.expect(roles).to.eql(['medico', 'cuidador_principal']));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

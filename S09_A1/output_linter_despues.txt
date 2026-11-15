@@ -1,0 +1,6 @@
+$ npm run lint
+
+> backend@1.0.0 lint
+> eslint src scripts test
+
+[eslint_process_exit_code=0]

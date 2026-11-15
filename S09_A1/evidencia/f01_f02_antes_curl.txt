@@ -1,0 +1,8 @@
+# F-01 y F-02 reproducidos con curl sobre main (bd27bb9 + PR #57), antes de refactorizar
+
+PATCH /perfiles/{id} {"toString":"x"} -> HTTP 500 ERROR_INTERNO
+
+POST /conversaciones/{id}/mensajes con token de la médica demo:
+{"id":"10011471-ae0a-4d0c-b2b4-419f38e88c24","conversacionId":"2f6a3711-bad9-4bcc-bd06-32c5538993a3","tipo":"mensaje","autor":{"id":"33333333-3333-4333-8333-333333333333","nombre":"Médica de prueba","rol":"cuidador_principal"},"fecha":"2026-11-15T00:51:06.770Z","texto":"Hola, revisé el caso.","fotoIds":[]}  HTTP 201
+
+GET /conversaciones/{id}/eventos para el mismo evento: autor.rol = medico

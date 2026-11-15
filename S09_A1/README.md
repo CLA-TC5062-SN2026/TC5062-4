@@ -10,6 +10,9 @@ Esta carpeta reúne la evidencia de auditoría estática y revisión técnica de
 - [`clasificacion_problemas.md`](./clasificacion_problemas.md): clasificación razonada de los hallazgos de ESLint por severidad y límites de ese análisis.
 - [`code_review.md`](./code_review.md): revisión del backend con hallazgos referenciados al código, correcciones propuestas y evaluación de los cinco principios SOLID.
 - [`deuda_tecnica.md`](./deuda_tecnica.md): línea base de deuda técnica, método de medición, ejemplos del proyecto y propuesta de integración con SCRUM.
+- [`refactorizacion.md`](./refactorizacion.md): antes y después de las tres refactorizaciones (F-01, F-02 y F-08), con su justificación técnica y cómo se verificaron.
+- [`output_linter_despues.txt`](./output_linter_despues.txt): ESLint después de la refactorización (0 problemas). No sustituye a la ejecución original.
+- [`evidencia/`](./evidencia/): salidas de Newman (colecciones A2 y S09, antes y después), de `npm test` y las reproducciones de F-01, F-02 y F-08 sobre `main`.
 
 ## ESLint del backend
 
@@ -34,3 +37,9 @@ npm run lint
 ```
 
 La ejecución registrada de `npm run lint` analizó `src/` y `scripts/`. Reportó dos errores de la regla `no-unused-vars` —los imports `pool` en `src/app.js` e `invalid` en `src/routes/perfiles.js`—, cero advertencias y código de salida 1. La salida completa está guardada en [`output_linter.txt`](./output_linter.txt), y ambos hallazgos están clasificados como menores en [`clasificacion_problemas.md`](./clasificacion_problemas.md). El código 1 indica que ESLint encontró infracciones de reglas; no representa un error al iniciar el backend.
+
+Tras la refactorización, el script `lint` también revisa `test/` (`eslint src scripts test`) y termina con código 0; la salida está en [`output_linter_despues.txt`](./output_linter_despues.txt).
+
+## Pruebas
+
+El backend ahora tiene `npm test` (`node --test`, sin dependencias nuevas), con pruebas unitarias en [`backend/test/`](../backend/test/) que no necesitan base de datos. Las pruebas de integración de las refactorizaciones están en la colección [`backend/postman/DAFI_S09.postman_collection.json`](../backend/postman/DAFI_S09.postman_collection.json), que necesita el backend corriendo con los seeds de demostración. Los pasos completos están en [`refactorizacion.md`](./refactorizacion.md#cómo-se-verificó).

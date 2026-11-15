@@ -1,0 +1,3 @@
+# Comportamiento de transaction() cuando falla el ROLLBACK (pool falso)
+main: propaga OTRO error: "conexión perdida durante ROLLBACK"
+rama: propaga el ORIGINAL

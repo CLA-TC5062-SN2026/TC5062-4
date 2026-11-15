@@ -35,6 +35,19 @@ export function assert(condition, mensaje) {
   if (!condition) throw invalid(mensaje);
 }
 
+// Devuelve las claves del cuerpo si todas están en la lista de campos
+// permitidos. Usa Object.hasOwn y no el operador `in`: `in` también recorre la
+// cadena de prototipos, así que una clave como "toString" o "constructor"
+// pasaba la validación y terminaba en un UPDATE con SQL inválido (500).
+export function allowedKeys(body, allowed) {
+  const keys = Object.keys(body);
+  assert(
+    keys.length > 0 && keys.every((key) => Object.hasOwn(allowed, key)),
+    "Campos de actualización inválidos",
+  );
+  return keys;
+}
+
 export function validName(value, field = "nombre") {
   assert(
     typeof value === "string" && value.trim().length > 0 && value.length <= 80,
@@ -100,15 +113,28 @@ export function pageParams(query) {
 
 export async function transaction(pool, callback) {
   const client = await pool.connect();
+  let conexionDanada;
   try {
     await client.query("BEGIN");
     const value = await callback(client);
     await client.query("COMMIT");
     return value;
   } catch (error) {
-    await client.query("ROLLBACK");
+    // Si el ROLLBACK también falla, su excepción no debe sustituir a la que
+    // abortó la transacción: esa es la causa que hay que diagnosticar.
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      conexionDanada = rollbackError;
+      console.error("Falló el ROLLBACK de la transacción", {
+        errorOriginal: error,
+        errorRollback: rollbackError,
+      });
+    }
     throw error;
   } finally {
-    client.release();
+    // Con un error, pg-pool descarta la conexión en vez de devolverla al pool:
+    // tras un ROLLBACK fallido podría seguir dentro de la transacción abortada.
+    client.release(conexionDanada);
   }
 }
