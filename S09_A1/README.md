@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Esta carpeta reúne la evidencia de auditoría estática y revisión técnica del backend DAFI para la actividad S09-A1. La herramienta se eligió según el stack inspeccionado: el backend está implementado en JavaScript con Node.js y Express, por lo que corresponde ESLint.
+Esta carpeta reúne la auditoría de calidad del backend DAFI para la actividad S09-A1. Usamos ESLint porque el backend está escrito en JavaScript, con Node.js y Express.
 
 ## Documentos
 
@@ -26,9 +26,9 @@ Los paquetes de desarrollo fijados en `backend/package.json` y `backend/package-
 | `@eslint/js` | `10.0.1` |
 | `globals` | `17.14.0` |
 
-ESLint 10 requiere Node.js `^20.19.0 || ^22.13.0 || >=24` y npm. La ejecución registrada para esta auditoría se realizó en WSL con Node.js 26.13.1 portátil dentro del repositorio; se verificó su checksum y se retiró al terminar. No se instaló Node.js en el sistema.
+ESLint 10 requiere Node.js `^20.19.0 || ^22.13.0 || >=24` y npm. La ejecución registrada se hizo en WSL con un Node.js 26.13.1 portátil dentro del repositorio (con su checksum verificado), que se borró al terminar; no se instaló Node.js en el sistema.
 
-Desde la raíz del clon, instala las dependencias declaradas usando el lockfile y ejecuta el mismo análisis desde WSL:
+Para repetir el análisis desde la raíz del clon, con las dependencias exactas del lockfile:
 
 ```bash
 cd backend
@@ -36,7 +36,7 @@ npm ci
 npm run lint
 ```
 
-La ejecución registrada de `npm run lint` analizó `src/` y `scripts/`. Reportó dos errores de la regla `no-unused-vars` —los imports `pool` en `src/app.js` e `invalid` en `src/routes/perfiles.js`—, cero advertencias y código de salida 1. La salida completa está guardada en [`output_linter.txt`](./output_linter.txt), y ambos hallazgos están clasificados como menores en [`clasificacion_problemas.md`](./clasificacion_problemas.md). El código 1 indica que ESLint encontró infracciones de reglas; no representa un error al iniciar el backend.
+La ejecución registrada de `npm run lint` analizó `src/` y `scripts/`. Reportó dos errores de la regla `no-unused-vars` (los imports `pool` en `src/app.js` e `invalid` en `src/routes/perfiles.js`), cero advertencias y código de salida 1. La salida completa está guardada en [`output_linter.txt`](./output_linter.txt), y ambos hallazgos están clasificados como menores en [`clasificacion_problemas.md`](./clasificacion_problemas.md). El código 1 sólo indica que ESLint encontró infracciones; el backend arranca sin problema.
 
 Tras la refactorización, el script `lint` también revisa `test/` (`eslint src scripts test`) y termina con código 0; la salida está en [`output_linter_despues.txt`](./output_linter_despues.txt).
 
