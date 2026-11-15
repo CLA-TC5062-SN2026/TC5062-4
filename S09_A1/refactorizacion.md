@@ -17,7 +17,7 @@ De los ocho hallazgos de [`code_review.md`](./code_review.md) elegimos los que c
 | **R2** | F-02, el mensaje responde siempre `rol: "cuidador_principal"` | Es un error reproducible: una médica que escribe un mensaje aparece como cuidadora en la respuesta, y esa respuesta queda guardada para los reintentos con la misma `Idempotency-Key`. |
 | **R3** | F-08, un `ROLLBACK` fallido oculta la excepción original | Está en `transaction()` de `utils/http.js`, que usan las seis operaciones compuestas del backend (registro, crear perfil, crear y editar conversación, envío y mensaje). Una sola corrección cubre todas. |
 
-`code_review.md` ya recomendaba corregir primero F-01 y F-02. Para la tercera descartamos F-03 (límite de intentos de login) y F-04 (CORS con lista de orígenes) porque exigen una dependencia nueva y una decisión de despliegue que aún no existe, ya que el backend sólo corre en local. F-06 y F-07 (dividir `conversaciones.js` y el despachador de autorización) son las más valiosas para la mantenibilidad, pero mover cientos de líneas sin una suite de pruebas que respalde el cambio era justo el tipo de riesgo que esta auditoría señala; quedan para cuando las pruebas que empieza este cambio cubran esas rutas. F-05 es la candidata siguiente.
+`code_review.md` ya recomendaba corregir primero F-01 y F-02. Para la tercera descartamos F-03 (límite de intentos de login) y F-04 (CORS con lista de orígenes) porque exigen una dependencia nueva y una decisión de despliegue que aún no existe, ya que el backend sólo corre en local. F-06 y F-07 (dividir `conversaciones.js` y el despachador de autorización) son las más valiosas para la mantenibilidad, pero mover cientos de líneas sin una suite de pruebas que respalde el cambio era justo el tipo de riesgo que esta auditoría señala; quedan para cuando las pruebas que empieza este cambio cubran esas rutas. F-05 se abordó posteriormente como mejora adicional.
 
 Para cada una le pedimos al agente (Claude Code) que propusiera la refactorización a partir del hallazgo. Abajo se indica qué tomamos de su propuesta y qué cambiamos.
 
@@ -166,6 +166,48 @@ Ignorar el error del rollback no deja datos a medias (PostgreSQL descarta la tra
 
 ---
 
+## Mejora adicional — F-05: Manejo de errores de bcrypt
+
+### Problema identificado
+
+En el endpoint `POST /auth/login`, la comparación de contraseñas utilizaba `.catch(() => false)`, convirtiendo cualquier excepción de bcrypt en un resultado de contraseña incorrecta.
+
+Esto impedía distinguir entre credenciales inválidas y errores internos inesperados, dificultando el diagnóstico.
+
+### Código anterior
+
+```javascript
+const ok = await bcrypt.compare(body.contrasena, r.rows[0]?.hash_contrasena ?? fakeHash).catch(() => false);
+```
+
+### Código refactorizado
+
+```javascript
+const candidateHash = r.rows[0]?.hash_contrasena ?? fakeHash;
+const ok = await bcrypt.compare(body.contrasena, candidateHash);
+```
+
+### Justificación técnica
+
+La modificación elimina la captura silenciosa de excepciones y permite que los errores inesperados se propaguen hacia el middleware centralizado.
+
+Se mantiene la utilización de un hash de respaldo para evitar revelar directamente la existencia de una cuenta mediante la omisión de la comparación.
+
+El cambio conserva el comportamiento esperado para contraseñas incorrectas, pero facilita identificar fallos internos de bcrypt.
+
+### Pruebas de regresión
+
+Se agregaron dos pruebas automatizadas en `backend/test/auth.test.js`:
+
+1. Una contraseña incorrecta sigue produciendo un error HTTP 401 con código `NO_AUTENTICADO`.
+2. Una excepción interna simulada de bcrypt se propaga sin convertirse en un error de credenciales.
+
+Las pruebas utilizan mocks y no requieren PostgreSQL.
+
+Esta corrección se realizó como mejora adicional a las tres refactorizaciones F-01, F-02 y F-08 ya implementadas para S09-A1.
+
+La suite completa pasa de 10 a 12 pruebas automatizadas.
+
 ## Limpieza que acompaña al cambio
 
 - Se quitaron los dos imports sin uso que reportó ESLint (`pool` en `app.js` e `invalid` en `perfiles.js`). `npm run lint` ahora termina con código 0.
@@ -179,4 +221,4 @@ Al revisar R2 encontramos que `GET /conversaciones/{id}/eventos` (`conversacione
 
 - Las pruebas nuevas cubren `utils/http.js` y, de forma integrada, el PATCH de perfil y los mensajes. El resto de rutas sigue sin pruebas automatizadas (QA-01 continúa abierto, aunque ya existe `npm test` donde agregarlas).
 - La colección S09 necesita un backend y una base con los seeds; no corre sola en CI todavía.
-- F-03 a F-07 siguen abiertos tal como están en `code_review.md`.
+- F-03, F-04, F-06 y F-07 siguen abiertos; F-05 se resolvió mediante una mejora adicional.
