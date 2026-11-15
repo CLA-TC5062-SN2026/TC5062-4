@@ -153,7 +153,8 @@ router.post('/auth/login', async (req, res) => {
   const r = await pool.query('SELECT id, hash_contrasena, activo FROM usuario WHERE lower(correo) = $1', [correo]);
   // Hash falso de respaldo: evita hacer obvia la existencia de un correo por tiempos.
   const fakeHash = '$2b$12$123456789012345678901uQ6X3mDng0bYrwPMkN7j6gD/5Mw6hllm';
-  const ok = await bcrypt.compare(body.contrasena, r.rows[0]?.hash_contrasena ?? fakeHash).catch(() => false);
+  const candidateHash = r.rows[0]?.hash_contrasena ?? fakeHash;
+  const ok = await bcrypt.compare(body.contrasena, candidateHash);
   if (!r.rowCount || !ok) throw badCredentials();
   if (!r.rows[0].activo) throw new ApiError(403, 'CUENTA_DESACTIVADA', 'Cuenta desactivada');
 

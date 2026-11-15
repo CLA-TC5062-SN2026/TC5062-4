@@ -2,7 +2,6 @@ import { Router } from "express";
 import { randomBytes, createHash } from "node:crypto";
 import pool from "../config/database.js";
 import {
-  invalid,
   missing,
   assert,
   requireObject,
@@ -124,8 +123,9 @@ router.patch("/perfiles/:perfilId", async (req, res) => {
     resumenActivo: "resumen_activo",
   };
   const keys = Object.keys(body);
+  const isAllowedField = (key) => Object.prototype.hasOwnProperty.call(columns, key);
   assert(
-    keys.length > 0 && keys.every((key) => key in columns),
+    keys.length > 0 && keys.every(isAllowedField),
     "Campos de actualización inválidos",
   );
   const current = await getPerfil(id);

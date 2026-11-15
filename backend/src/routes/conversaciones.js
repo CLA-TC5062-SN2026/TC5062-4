@@ -555,7 +555,7 @@ router.post("/conversaciones/:conversacionId/mensajes", async (req, res) => {
       autor: {
         id: author,
         nombre: user.rows[0].nombre,
-        rol: "cuidador_principal",
+        rol: req.auth.rol,
       },
       fecha: event.rows[0].fecha,
       texto: texto ?? null,

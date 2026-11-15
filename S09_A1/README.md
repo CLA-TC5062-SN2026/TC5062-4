@@ -9,6 +9,7 @@ Esta carpeta reúne la evidencia de auditoría estática y revisión técnica de
 - [`output_linter.txt`](./output_linter.txt): salida completa de la ejecución de ESLint, incluido su código de salida.
 - [`clasificacion_problemas.md`](./clasificacion_problemas.md): clasificación razonada de los hallazgos de ESLint por severidad y límites de ese análisis.
 - [`code_review.md`](./code_review.md): revisión del backend con hallazgos referenciados al código, correcciones propuestas y evaluación de los cinco principios SOLID.
+- [`refactorizacion.md`](./refactorizacion.md): implementación de tres refactorizaciones (F-01, F-02 y F-05), justificación técnica y resultados de siete pruebas de regresión.
 - [`deuda_tecnica.md`](./deuda_tecnica.md): línea base de deuda técnica, método de medición, ejemplos del proyecto y propuesta de integración con SCRUM.
 
 ## ESLint del backend
@@ -34,3 +35,26 @@ npm run lint
 ```
 
 La ejecución registrada de `npm run lint` analizó `src/` y `scripts/`. Reportó dos errores de la regla `no-unused-vars` —los imports `pool` en `src/app.js` e `invalid` en `src/routes/perfiles.js`—, cero advertencias y código de salida 1. La salida completa está guardada en [`output_linter.txt`](./output_linter.txt), y ambos hallazgos están clasificados como menores en [`clasificacion_problemas.md`](./clasificacion_problemas.md). El código 1 indica que ESLint encontró infracciones de reglas; no representa un error al iniciar el backend.
+
+## Verificación posterior a las refactorizaciones
+
+Se implementaron tres refactorizaciones derivadas del code review: F-01, F-02 y F-05. También se corrigieron los dos errores de importaciones no utilizadas detectados originalmente por ESLint.
+
+Las pruebas automatizadas están en [`backend/tests/refactorizacion.test.js`](../backend/tests/refactorizacion.test.js).
+
+Desde la carpeta `backend/`, se ejecutaron los siguientes comandos:
+
+```bash
+node --test tests/refactorizacion.test.js
+npm run lint
+```
+
+**Resultados:**
+
+- Pruebas de regresión: 7 ejecutadas, 7 aprobadas y 0 fallidas.
+- Análisis estático: ESLint finalizó sin errores ni advertencias.
+- Las pruebas utilizan mocks y no requieren una conexión real a PostgreSQL.
+
+La evidencia original de `output_linter.txt` se conserva para demostrar los hallazgos identificados antes de las correcciones.
+
+Los detalles de las modificaciones y sus justificaciones están documentados en [`refactorizacion.md`](./refactorizacion.md).
