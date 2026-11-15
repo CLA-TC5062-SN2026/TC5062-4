@@ -2,17 +2,17 @@
 
 ## Alcance y método
 
-Revisión estática del backend Node.js/Express con PostgreSQL en `backend/src/`, del manifiesto `backend/package.json` y de la documentación de límites del servicio. Base revisada: `bd27bb9` (`main` al crear esta rama), 12 de noviembre de 2026. En esta aportación se añadió ESLint recomendado al backend y se ejecutó sobre `src/` y `scripts/`; el resultado completo está en [`output_linter.txt`](./output_linter.txt) y su clasificación en [`clasificacion_problemas.md`](./clasificacion_problemas.md). No se cambió lógica de negocio.
+Revisión estática del backend Node.js/Express con PostgreSQL en `backend/src/`, de `backend/package.json` y de la documentación que fija los límites del servicio, sobre `bd27bb9` (`main` el 12 de noviembre de 2026). Las líneas citadas corresponden a esa versión. La revisión vino acompañada de ESLint con las reglas recomendadas, ejecutado sobre `src/` y `scripts/` ([`output_linter.txt`](./output_linter.txt), clasificado en [`clasificacion_problemas.md`](./clasificacion_problemas.md)). La revisión en sí no cambió lógica de negocio; las correcciones de F-01, F-02 y F-08 se hicieron después y están en [`refactorizacion.md`](./refactorizacion.md).
 
-El archivo seleccionado como foco principal por su complejidad es [`backend/src/routes/conversaciones.js`](../backend/src/routes/conversaciones.js): concentra 580 líneas de rutas, SQL, reglas de dominio, transacciones e idempotencia. Se revisaron módulos relacionados cuando eran necesarios para comprobar contratos, autorización y manejo de errores.
+Elegimos como foco [`backend/src/routes/conversaciones.js`](../backend/src/routes/conversaciones.js) porque es el archivo con la lógica más compleja: unas 580 líneas de rutas, SQL, reglas de dominio, transacciones e idempotencia. Los módulos relacionados se revisaron cuando hacía falta comprobar contratos, autorización o manejo de errores.
 
-El entorno WSL no tenía Node instalado. Para ejecutar ESLint se utilizó temporalmente Node LTS portátil en la carpeta del repositorio, con verificación de checksum oficial; no se instaló en el sistema. No se encontraron archivos de prueba automatizada bajo `backend/`, así que no se ejecutaron pruebas del backend. La colección Postman y los resultados de S05-S06-A2 son evidencia manual documentada, no sustituyen una suite automatizada. No se leyó `backend/.env`.
+Cuando se hizo la revisión no había pruebas automatizadas en `backend/`, así que no se corrió ninguna. Las colecciones Postman de S05-S06-A2 son evidencia manual y no reemplazan una suite automatizada. No se abrió `backend/.env`. El entorno con el que se corrió ESLint está descrito en el [`README.md`](./README.md).
 
 ### Resumen ejecutivo
 
-Se identificaron ocho hallazgos de código y una brecha de verificación. Ninguno se clasifica como crítico confirmado en el contexto documentado de uso local académico. Hay dos errores funcionales reproducibles a partir del flujo estático: el PATCH de perfil acepta nombres heredados del prototipo como campos permitidos y puede construir SQL inválido; el endpoint de mensajes informa siempre que el autor es cuidador principal. También hay controles que deben reforzarse antes de exponer la API fuera del entorno local, en particular la ausencia de limitación de intentos de login y CORS sin allowlist.
+Encontramos ocho hallazgos de código y una brecha de verificación. Ninguno es crítico confirmado para el uso local y académico que está documentado. Dos son errores funcionales, que después reprodujimos contra el API: el PATCH de perfil acepta como campos permitidos propiedades heredadas del prototipo y puede armar SQL inválido, y el endpoint de mensajes responde siempre que el autor es cuidador principal. Antes de exponer la API fuera de local también hay que reforzar dos controles: el límite de intentos de login y la lista de orígenes permitidos en CORS.
 
-No se encontró evidencia de interpolación directa de valores de usuario en las consultas SQL revisadas: se utilizan parámetros `$1`, `$2`, etc. El SQL dinámico de `perfiles.js` sí merece la corrección específica de F-01; el problema observado es la validación del nombre de columna y la respuesta 500, no una inyección SQL confirmada.
+Las consultas revisadas usan parámetros (`$1`, `$2`, etc.) y no interpolan valores del usuario. El SQL dinámico de `perfiles.js` necesita la corrección de F-01, pero lo que falla ahí es la validación del nombre de columna (que termina en 500); no encontramos una inyección SQL.
 
 ## Hallazgos
 
@@ -20,6 +20,7 @@ No se encontró evidencia de interpolación directa de valores de usuario en las
 
 **Severidad:** Importante (bug y manejo incorrecto de entrada).
 **Ubicación:** [`backend/src/routes/perfiles.js:118-129`](../backend/src/routes/perfiles.js#L118-L129).
+**Estado:** corregido en R1 ([`refactorizacion.md`](./refactorizacion.md)).
 
 `columns` es un objeto normal y la comprobación `key in columns` consulta también su cadena de prototipos. Una petición JSON con una clave como `toString` o `constructor` puede pasar la validación; luego `columns[key]` no corresponde a una columna admitida y se genera una sentencia SQL inválida. El cliente recibe un error interno en vez de un 422. La consulta parametriza valores, así que este hallazgo no demuestra inyección SQL.
 
@@ -42,8 +43,9 @@ También se puede crear `columns` con `Object.create(null)`. Añadir una prueba 
 
 **Severidad:** Importante (consistencia funcional de la respuesta).
 **Ubicación:** [`backend/src/routes/conversaciones.js:547-563`](../backend/src/routes/conversaciones.js#L547-L563).
+**Estado:** corregido en R2 ([`refactorizacion.md`](./refactorizacion.md)).
 
-La respuesta construida en `value.autor` fija `rol: "cuidador_principal"`. El middleware de autenticación ya proporciona el rol real en `req.auth.rol`; por tanto, un cocuidador —y cualquier rol autorizado para esa operación— puede recibir una respuesta cuyo rol de autor no coincide con su identidad. Aunque `autor_id` se persiste correctamente, consumidores del endpoint pueden mostrar o procesar una atribución falsa.
+La respuesta construida en `value.autor` fija `rol: "cuidador_principal"`, aunque el middleware de autenticación ya deja el rol real en `req.auth.rol`. Un cocuidador, o la médica de la conversación (a quien la política también deja escribir), recibe una respuesta con un rol que no es el suyo. `autor_id` se guarda bien, pero quien consuma el endpoint puede mostrar o procesar una atribución falsa.
 
 **Corrección propuesta:**
 
@@ -62,7 +64,7 @@ Probar el endpoint con cada rol que la política autoriza y verificar que el cue
 **Severidad:** Importante en seguridad; el riesgo aumenta si la API se expone a una red no confiable.
 **Ubicación:** [`backend/src/routes/auth.js:149-177`](../backend/src/routes/auth.js#L149-L177), especialmente la consulta y `bcrypt.compare` en 153-157.
 
-Cada intento llega a una comparación bcrypt con coste 12 y el código no limita frecuencia, origen ni intentos consecutivos. Esto facilita fuerza bruta y consumo de CPU. La documentación de S05-S06-A2 ya identifica esta limitación; el backend se describe como local y académico, por lo que no se presenta como un defecto explotable bajo una exposición que no se haya observado.
+Cada intento llega a una comparación bcrypt con coste 12 y el código no limita frecuencia, origen ni intentos consecutivos. Esto facilita la fuerza bruta y el consumo de CPU. La documentación de S05-S06-A2 ya registra esta limitación, y como el backend sólo corre en local, no lo tratamos como un defecto explotable hoy.
 
 **Corrección propuesta (requiere incorporar una dependencia y escoger un almacén adecuado):**
 
@@ -116,7 +118,7 @@ No habilitar `credentials` salvo que el diseño adopte cookies y controles CSRF.
 **Severidad:** Importante (diagnóstico y disponibilidad).
 **Ubicación:** [`backend/src/routes/auth.js:153-157`](../backend/src/routes/auth.js#L153-L157).
 
-El `.catch(() => false)` trata cualquier rechazo de `bcrypt.compare` como si la contraseña no coincidiera. Así se ocultan errores de ejecución o hashes corruptos como respuestas 401, dificultando distinguir un fallo de autenticación de un fallo interno. La respuesta genérica es adecuada para no revelar si una cuenta existe; el problema es suprimir toda excepción operacional.
+El `.catch(() => false)` trata cualquier rechazo de `bcrypt.compare` como si la contraseña no coincidiera. Un error de ejecución o un hash corrupto termina como un 401, y no hay forma de distinguir un fallo de autenticación de un fallo interno. La respuesta genérica sí conviene, porque no revela si una cuenta existe; lo que sobra es tragarse cualquier excepción.
 
 **Corrección propuesta:**
 
@@ -175,8 +177,9 @@ Separar checks reutilizables de rol, familia y recurso, y declarar en cada ruta 
 
 **Severidad:** Menor (diagnóstico de fallos de base de datos).
 **Ubicación:** [`backend/src/utils/http.js:101-113`](../backend/src/utils/http.js#L101-L113).
+**Estado:** corregido en R3 ([`refactorizacion.md`](./refactorizacion.md)).
 
-Si la operación transaccional falla y `ROLLBACK` también rechaza, la excepción del rollback reemplaza la original al salir del `catch`. El incidente queda más difícil de diagnosticar y se pierde la causa que inició la transacción.
+Si la operación transaccional falla y `ROLLBACK` también rechaza, la excepción del rollback reemplaza la original al salir del `catch`. Se pierde la causa que abortó la transacción, y el incidente queda más difícil de diagnosticar.
 
 **Corrección propuesta:**
 
@@ -201,7 +204,7 @@ Mantener los detalles en logs internos; la respuesta pública debe seguir siendo
 **Severidad:** Importante como deuda de verificación, no como bug funcional demostrado.
 **Ubicación:** [`backend/package.json:7-10`](../backend/package.json#L7-L10); inventario del directorio `backend/`.
 
-En la base revisada, los scripts eran `start` y `dev`; esta aportación agregó `lint` con ESLint recomendado, pero sigue sin haber script de pruebas ni archivos `*.test.js`/`*.spec.js` bajo `backend/`. Existen colecciones Postman y evidencias manuales para flujos seleccionados, pero no una regresión repetible que cubra el dispatcher de autorización, las rutas de conversación o errores de entrada.
+En la base revisada, los scripts eran `start` y `dev`. La auditoría agregó `lint`, pero no había script de pruebas ni archivos `*.test.js` o `*.spec.js` en `backend/`. Las colecciones Postman cubren a mano algunos flujos, sin una regresión repetible para el despachador de autorización, las rutas de conversación o las entradas inválidas.
 
 **Corrección propuesta:**
 
@@ -216,7 +219,7 @@ En la base revisada, los scripts eran `start` y `dev`; esta aportación agregó 
 }
 ```
 
-La parte `lint` ya está configurada por esta contribución. La siguiente mejora independiente es añadir pruebas con `node:test`, incorporar casos por prioridad de riesgo y ejecutar `npm test` junto con `npm run lint` en CI. No se afirma que las pruebas ya existan.
+La refactorización ya agregó `npm test` con `node:test` y las primeras pruebas (sobre `utils/http.js`), más la colección Postman `DAFI_S09` para el PATCH de perfil y los mensajes. QA-01 sigue abierto: falta cubrir el resto de rutas por orden de riesgo y correr `npm test` y `npm run lint` en CI.
 
 ## Evaluación SOLID
 
@@ -236,6 +239,6 @@ La parte `lint` ya está configurada por esta contribución. La siguiente mejora
 - Se usan transacciones para operaciones compuestas y bcrypt para contraseñas (`utils/http.js:101-114`, `auth.js:61`).
 - La documentación declara uso local con datos ficticios y advierte que la API no está lista para exposición pública (`backend/README_backend_DAFI.md:3-5,112-118`).
 
-## Conclusión
+## Siguiente paso
 
-La base incluye controles útiles de autenticación, autorización, SQL parametrizado y manejo central de errores, pero el código aún presenta dos fallos concretos de contrato, controles de despliegue no adecuados para exposición externa y brechas de modularidad y automatización. La siguiente iteración debería corregir F-01 y F-02 con pruebas de regresión, establecer pruebas automáticas para rutas/autorización y condicionar el uso externo a una política explícita de CORS y de limitación de login.
+F-01, F-02 y F-08 ya están corregidos, con pruebas ([`refactorizacion.md`](./refactorizacion.md)). Antes de usar la API fuera de local faltan F-03 y F-04. F-06 y F-07 conviene atacarlos cuando haya pruebas de autorización y de las rutas de conversación que respalden el cambio.
