@@ -1,0 +1,28 @@
+
+> backend@1.0.0 test
+> node --test
+
+✔ F-05: contraseña incorrecta conserva respuesta 401 (0.644125ms)
+✔ F-05: excepción inesperada de bcrypt no se oculta (0.137834ms)
+▶ allowedKeys (R1 / F-01)
+  ✔ devuelve las claves cuando todas están permitidas (0.517208ms)
+  ✔ rechaza la propiedad heredada «toString» con 422 (0.171416ms)
+  ✔ rechaza la propiedad heredada «constructor» con 422 (0.041167ms)
+  ✔ rechaza la propiedad heredada «hasOwnProperty» con 422 (0.092584ms)
+  ✔ rechaza la propiedad heredada «valueOf» con 422 (0.060417ms)
+  ✔ rechaza «__proto__» enviado como clave propia del JSON (0.111584ms)
+  ✔ rechaza un campo desconocido y un cuerpo vacío (0.06725ms)
+✔ allowedKeys (R1 / F-01) (1.940625ms)
+▶ transaction (R3 / F-08)
+  ✔ confirma con COMMIT y libera la conexión (0.350208ms)
+  ✔ ante un error hace ROLLBACK y propaga el error original (0.159708ms)
+  ✔ si el ROLLBACK falla, sigue propagando el error original (0.2375ms)
+✔ transaction (R3 / F-08) (0.90225ms)
+ℹ tests 12
+ℹ suites 2
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 126.453292
