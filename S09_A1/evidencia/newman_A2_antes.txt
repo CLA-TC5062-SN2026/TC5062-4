@@ -1,0 +1,56 @@
+newman
+
+DAFI A2 — Autenticación y roles
+
+→ 1. Registrar cuidador (201)
+  POST http://localhost:4105/api/v1/auth/register [201 Created, 637B, 264ms]
+  ✓  201
+  ✓  sin contraseña
+
+→ 2. Login cuidador (200)
+  POST http://localhost:4105/api/v1/auth/login [200 OK, 1.11kB, 230ms]
+  ✓  200
+
+→ 3. /auth/me token válido (200)
+  GET http://localhost:4105/api/v1/auth/me [200 OK, 605B, 5ms]
+  ✓  200
+
+→ 4. POST perfil token cuidador (201)
+  POST http://localhost:4105/api/v1/familias/25ef69d9-9898-489e-acd9-441d78f6df4c/perfiles [201 Created, 674B, 11ms]
+  ✓  201
+
+→ 5. POST perfil SIN token (401)
+  POST http://localhost:4105/api/v1/familias/25ef69d9-9898-489e-acd9-441d78f6df4c/perfiles [401 Unauthorized, 464B, 1ms]
+  ✓  401
+
+→ 6. POST perfil token médico (403)
+  POST http://localhost:4105/api/v1/familias/25ef69d9-9898-489e-acd9-441d78f6df4c/perfiles [403 Forbidden, 468B, 6ms]
+  ✓  403
+
+→ EXTRA. Token adulterado (401)
+  GET http://localhost:4105/api/v1/auth/me [401 Unauthorized, 464B, 2ms]
+  ✓  401
+
+→ PREPARACIÓN antes de grabar: login médico demo (200)
+  POST http://localhost:4105/api/v1/auth/login [200 OK, 967B, 229ms]
+  ✓  200
+
+┌─────────────────────────┬───────────────────┬───────────────────┐
+│                         │          executed │            failed │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              iterations │                 1 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│                requests │                 8 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│            test-scripts │                 8 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│      prerequest-scripts │                 2 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              assertions │                 9 │                 0 │
+├─────────────────────────┴───────────────────┴───────────────────┤
+│ total run duration: 839ms                                       │
+├─────────────────────────────────────────────────────────────────┤
+│ total data received: 2.66kB (approx)                            │
+├─────────────────────────────────────────────────────────────────┤
+│ average response time: 93ms [min: 1ms, max: 264ms, s.d.: 114ms] │
+└─────────────────────────────────────────────────────────────────┘

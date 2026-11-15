@@ -555,7 +555,9 @@ router.post("/conversaciones/:conversacionId/mensajes", async (req, res) => {
       autor: {
         id: author,
         nombre: user.rows[0].nombre,
-        rol: "cuidador_principal",
+        // El rol sale de req.auth, ya validado contra la BD en authenticate.js,
+        // igual que el id. Antes estaba fijo y una médica aparecía como cuidadora.
+        rol: req.auth.rol,
       },
       fecha: event.rows[0].fecha,
       texto: texto ?? null,

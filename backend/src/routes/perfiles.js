@@ -2,9 +2,9 @@ import { Router } from "express";
 import { randomBytes, createHash } from "node:crypto";
 import pool from "../config/database.js";
 import {
-  invalid,
   missing,
   assert,
+  allowedKeys,
   requireObject,
   uuidOr404,
   validName,
@@ -15,6 +15,17 @@ import {
 } from "../utils/http.js";
 
 const router = Router();
+
+// Campos que admite PATCH /perfiles/{id}: nombre del contrato -> columna.
+// Fuera de la ruta y congelado: es configuración, no estado de la petición.
+const COLUMNAS_PERFIL = Object.freeze({
+  nombre: "nombre",
+  fechaNacimiento: "fecha_nacimiento",
+  alergias: "alergias",
+  medicamentos: "medicamentos",
+  compartirConCocuidador: "compartir_con_cocuidador",
+  resumenActivo: "resumen_activo",
+});
 
 const selectPerfil = `
   SELECT p.id, p.familia_id AS "familiaId", p.tipo, p.nombre,
@@ -115,19 +126,7 @@ router.get("/perfiles/:perfilId", async (req, res) => {
 router.patch("/perfiles/:perfilId", async (req, res) => {
   const id = uuidOr404(req.params.perfilId);
   const body = requireObject(req.body);
-  const columns = {
-    nombre: "nombre",
-    fechaNacimiento: "fecha_nacimiento",
-    alergias: "alergias",
-    medicamentos: "medicamentos",
-    compartirConCocuidador: "compartir_con_cocuidador",
-    resumenActivo: "resumen_activo",
-  };
-  const keys = Object.keys(body);
-  assert(
-    keys.length > 0 && keys.every((key) => key in columns),
-    "Campos de actualización inválidos",
-  );
+  const keys = allowedKeys(body, COLUMNAS_PERFIL);
   const current = await getPerfil(id);
   if ("nombre" in body) body.nombre = validName(body.nombre);
   if ("fechaNacimiento" in body)
@@ -146,7 +145,7 @@ router.patch("/perfiles/:perfilId", async (req, res) => {
   );
   const values = keys.map((key) => body[key]);
   const assignments = keys
-    .map((key, index) => `${columns[key]} = $${index + 1}`)
+    .map((key, index) => `${COLUMNAS_PERFIL[key]} = $${index + 1}`)
     .join(", ");
   await pool.query(
     `UPDATE perfil_paciente SET ${assignments} WHERE id = $${keys.length + 1}`,
