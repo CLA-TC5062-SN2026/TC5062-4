@@ -45,6 +45,28 @@ export async function login(correo: string, contrasena: string, signal?: AbortSi
   return sesion;
 }
 
+export interface DatosRegistroFamilia {
+  nombre: string;
+  correo: string;
+  contrasena: string;
+  nombreFamilia: string;
+  declaraciones: {
+    mayorDeEdad: true;
+    consentimientoDatosPropios: true;
+    consentimientoDatosMenores: true;
+  };
+  avisoVersion: number;
+}
+
+/**
+ * Crea la familia y la cuenta del cuidador principal. Responde con la cuenta,
+ * sin token: la sesión se abre después con `login` (RF-01-AC-1).
+ */
+export function registrar(datos: DatosRegistroFamilia, signal?: AbortSignal) {
+  // `publica`: sin token, y un 401 aquí no es una sesión caducada (L-10).
+  return peticion<Usuario>('/auth/register', { method: 'POST', body: datos, publica: true, signal });
+}
+
 /** Revalida el token contra la BD: 401 si la sesión fue revocada. */
 export function obtenerCuenta(signal?: AbortSignal) {
   return peticion<Usuario>('/auth/me', { signal });
