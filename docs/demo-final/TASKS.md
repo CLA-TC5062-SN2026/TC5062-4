@@ -48,7 +48,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 
 ## 1. Backend
 
-### [ ] B1. `GET /familias/{familiaId}/miembros`
+### [x] B1. `GET /familias/{familiaId}/miembros`
 - Lista cuidadores y médicos de la familia; filtro opcional `?rol=medico`. Contrato en `openapi_equipo.yaml` línea 502.
 - Solo cuidadores de esa familia (403 por rol, 404 si es otra familia), igual que el resto de `authorize.js`.
 - **Unit:** validación del parámetro `rol` (valor fuera del enum es 422).
