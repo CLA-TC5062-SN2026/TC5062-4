@@ -3,7 +3,7 @@
 // Ejecutar desde backend/: npm test
 import { test, describe, mock } from "node:test";
 import assert from "node:assert/strict";
-import { allowedKeys, transaction, validRol, ApiError } from "../src/utils/http.js";
+import { allowedKeys, transaction, validRol, validRespuesta, ApiError } from "../src/utils/http.js";
 
 const PERMITIDOS = Object.freeze({ nombre: "nombre", alergias: "alergias" });
 
@@ -111,4 +111,56 @@ describe("validRol (B1, filtro ?rol= de miembros)", () => {
       assert.throws(() => validRol(valor), { status: 422, codigo: "DATOS_INVALIDOS" });
     });
   }
+});
+
+describe("validRespuesta (B2, RespuestaEntrada por tipo)", () => {
+  const LUGARES = ["Axila", "Boca"];
+  const NO_MEDIDA = ["No la he medido"];
+  const rechaza = (tipo, opciones, cuerpo) =>
+    assert.throws(() => validRespuesta(tipo, opciones, cuerpo), { status: 422, codigo: "DATOS_INVALIDOS" });
+
+  test("opción de la lista", () => {
+    assert.deepEqual(validRespuesta("opcion", LUGARES, { opcion: "Boca" }), { opcion: "Boca", texto: null, numero: null });
+  });
+
+  test("texto se guarda sin espacios sobrantes", () => {
+    assert.equal(validRespuesta("texto", [], { texto: "  Desde anoche " }).texto, "Desde anoche");
+  });
+
+  test("numero_u_opcion acepta número o la opción", () => {
+    assert.equal(validRespuesta("numero_u_opcion", NO_MEDIDA, { numero: 38.6 }).numero, 38.6);
+    assert.equal(validRespuesta("numero_u_opcion", NO_MEDIDA, { numero: 30 }).numero, 30);
+    assert.equal(validRespuesta("numero_u_opcion", NO_MEDIDA, { numero: 45 }).numero, 45);
+    assert.equal(validRespuesta("numero_u_opcion", NO_MEDIDA, { opcion: "No la he medido" }).opcion, "No la he medido");
+  });
+
+  test("opcion_con_texto acepta opción con texto opcional", () => {
+    assert.deepEqual(validRespuesta("opcion_con_texto", ["Sí", "No"], { opcion: "Sí", texto: "Paracetamol" }), {
+      opcion: "Sí", texto: "Paracetamol", numero: null,
+    });
+    rechaza("opcion_con_texto", ["Sí", "No"], { texto: "Paracetamol" });
+  });
+
+  test("opción fuera de la lista", () => {
+    rechaza("opcion", LUGARES, { opcion: "Pie" });
+    rechaza("numero_u_opcion", NO_MEDIDA, { opcion: "38" });
+  });
+
+  for (const numero of [29.9, 45.1, Infinity, NaN, "38.5", null]) {
+    test(`número inválido ${String(numero)}`, () => rechaza("numero_u_opcion", NO_MEDIDA, { numero }));
+  }
+
+  for (const texto of ["", "   ", "x".repeat(2001), 5]) {
+    test(`texto inválido de largo ${String(texto).length}`, () => rechaza("texto", [], { texto }));
+  }
+
+  test("campo equivocado para el tipo", () => {
+    rechaza("texto", [], { opcion: "Axila" });
+    rechaza("opcion", LUGARES, { texto: "Axila" });
+    rechaza("opcion", LUGARES, { numero: 38 });
+    rechaza("numero_u_opcion", NO_MEDIDA, { texto: "38" });
+    rechaza("numero_u_opcion", NO_MEDIDA, { numero: 38, opcion: "No la he medido" });
+    rechaza("opcion", LUGARES, { opcion: "Axila", extra: 1 });
+    rechaza("opcion", LUGARES, {});
+  });
 });
