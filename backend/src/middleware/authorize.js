@@ -93,6 +93,11 @@ export async function authorize(req, res, next) {
     } else sameFamily(req, id);
     return next();
   }
+  if ((m = match(/^\/familias\/([^/]+)\/miembros$/)) && method === 'GET') {
+    roles(req, caregiverRoles);
+    sameFamily(req, uuidOr404(m[1]));
+    return next();
+  }
   if ((m = match(/^\/familias\/([^/]+)\/perfiles$/))) {
     roles(req, method === 'POST' ? ['cuidador_principal'] : caregiverRoles);
     if (!['GET', 'POST'].includes(method)) throw missing();

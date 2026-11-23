@@ -138,3 +138,12 @@ export async function transaction(pool, callback) {
     client.release(conexionDanada);
   }
 }
+
+const ROLES = ["cuidador_principal", "cocuidador", "medico", "administrador"];
+
+// Filtro opcional `?rol=` (enum Rol del contrato). Ausente es «sin filtro».
+export function validRol(value) {
+  if (value === undefined) return null;
+  assert(ROLES.includes(value), "rol inválido");
+  return value;
+}

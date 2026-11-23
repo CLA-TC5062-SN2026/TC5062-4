@@ -3,7 +3,7 @@
 // Ejecutar desde backend/: npm test
 import { test, describe, mock } from "node:test";
 import assert from "node:assert/strict";
-import { allowedKeys, transaction, ApiError } from "../src/utils/http.js";
+import { allowedKeys, transaction, validRol, ApiError } from "../src/utils/http.js";
 
 const PERMITIDOS = Object.freeze({ nombre: "nombre", alergias: "alergias" });
 
@@ -93,4 +93,22 @@ describe("transaction (R3 / F-08)", () => {
     assert.equal(cliente.release.mock.callCount(), 1);
     assert.equal(cliente.release.mock.calls[0].arguments[0], detalle.errorRollback);
   });
+});
+
+describe("validRol (B1, filtro ?rol= de miembros)", () => {
+  test("sin parámetro no filtra", () => {
+    assert.equal(validRol(undefined), null);
+  });
+
+  test("acepta los valores del enum Rol", () => {
+    for (const rol of ["cuidador_principal", "cocuidador", "medico", "administrador"]) {
+      assert.equal(validRol(rol), rol);
+    }
+  });
+
+  for (const valor of ["doctor", "", "MEDICO", ["medico", "cocuidador"]]) {
+    test(`rechaza ${JSON.stringify(valor)} con 422`, () => {
+      assert.throws(() => validRol(valor), { status: 422, codigo: "DATOS_INVALIDOS" });
+    });
+  }
 });
