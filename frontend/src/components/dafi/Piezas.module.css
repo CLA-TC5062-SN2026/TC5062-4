@@ -92,7 +92,7 @@
   padding: var(--space-12) var(--space-4);
 }
 .filaDatoClave { color: var(--color-ink-600); }
-.filaDatoValor { color: var(--color-ink-900); text-align: right; }
+.filaDatoValor { color: var(--color-ink-900); text-align: right; min-width: 0; overflow-wrap: anywhere; }
 .filaDatoLinea { height: 1px; background: var(--color-ink-100); }
 
 /* --- Fila seleccionable (médico destinatario) --- */
