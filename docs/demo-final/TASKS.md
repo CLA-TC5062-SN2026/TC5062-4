@@ -101,7 +101,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - **Unit (Vitest):** validación del formulario (correo inválido, contraseña corta, declaración faltante).
 - **E2E:** registro nuevo llega a `/perfiles` vacío; **correo ya registrado muestra el mensaje del 409** (candidato a error de la demo).
 
-### [ ] F2. Crear perfil conectado a `crearPerfil`
+### [x] F2. Crear perfil conectado a `crearPerfil`
 - `perfiles/nuevo` envía `tipo`, `nombre`, `fechaNacimiento`, alergias, medicamentos, y `correo` si es `adulto_representado`. Un `menor` no muestra «compartir con cocuidador».
 - Validación en cliente de requeridos; al terminar, regresa a `/perfiles` con el perfil en la lista.
 - **Unit (Vitest):** validación por tipo de perfil (fecha futura, adulto sin correo, nombre vacío).
