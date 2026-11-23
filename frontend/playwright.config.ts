@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 // Precondición: el stack ya está corriendo (frontend :3000, backend :4000,
-// PostgreSQL) y los datos de demo están cargados con `demo:reset` (mientras no
-// exista, tarea B5: `node scripts/seed_integracion_demo.mjs` desde `backend/`).
+// PostgreSQL) y los datos de demo están cargados con
+// `npm --prefix backend run demo:reset`.
 // Por eso no hay `webServer`: Playwright no arranca ni detiene nada.
 export default defineConfig({
   testDir: './e2e',

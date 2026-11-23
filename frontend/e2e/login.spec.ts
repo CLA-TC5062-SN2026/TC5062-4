@@ -20,3 +20,8 @@ test('María entra y ve sus 3 perfiles', async ({ page }) => {
     await expect(page.getByRole('button', { name: new RegExp(`^${nombre}`) })).toBeVisible();
   }
 });
+
+test('la médica entra con su cuenta del seed', async ({ page }) => {
+  await entrarComo(page, 'medica');
+  await expect(page).not.toHaveURL(/\/entrar/);
+});

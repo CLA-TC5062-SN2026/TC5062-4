@@ -150,6 +150,31 @@ npm --prefix backend ci
 npm --prefix frontend ci
 ```
 
+### Reiniciar la base de demo (`demo:reset`)
+
+**Este comando borra toda la base configurada en `backend/.env`** (elimina y recrea el esquema `public`) y la deja lista para la demo. No necesita el backend activo: levanta la API dentro del mismo proceso en un puerto libre. Ejecútalo desde la raíz:
+
+```bash
+npm --prefix backend run demo:reset
+```
+
+Se niega a correr con `NODE_ENV=production`. Si `DB_HOST` no es `localhost`, `127.0.0.1` ni `::1`, pide escribir el nombre de la base para confirmar y, sin terminal interactiva, no hace nada. La lógica está en [demo_seed.mjs](backend/scripts/demo_seed.mjs) y carga:
+
+- el esquema, el aviso de privacidad ficticio versión 1 y el aviso de emergencias;
+- la cuenta de María con la «Familia Ruán» y sus perfiles Mateo Ruán, María Ruán y Rosa Aguilar, creados mediante el API;
+- la Dra. Laura Méndez Ortiz (Pediatría), activa y en el círculo de la familia;
+- las etiquetas `fiebre`, `piel` y `respiratorio` y las preguntas de contexto F1, F2 y F3 de fiebre (F3, «¿Desde cuándo tiene fiebre?», se agregó para la demo y no está en el SRS);
+- una conversación de Mateo de hace unas dos semanas y media, ya con indicaciones, para que el historial no salga vacío.
+
+Credenciales de demo, solo para uso local y con datos ficticios:
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Cuidadora principal | `maria.ruan@correo.com` | `DafiDemo2026!` |
+| Médica | `laura.mendez@correo.com` | `DafiDemo2026!` |
+
+Si el backend ya estaba corriendo, no hace falta reiniciarlo; las sesiones abiertas antes del reinicio dejan de ser válidas y hay que volver a entrar.
+
 ### Activar cuentas ficticias para pruebas de rol
 
 [seed_medico_demo.mjs](backend/scripts/seed_medico_demo.mjs) activa el usuario médico ficticio creado por `seed_demo.sql`, por ejemplo, para probar una respuesta 403. [seed_cuidador_demo.mjs](backend/scripts/seed_cuidador_demo.mjs) activa el cuidador ficticio de la misma semilla para escenarios de regresión S09-A1. Son opcionales, solo locales, requieren las dependencias del backend, `backend/.env`, la base preparada y el seed base aplicado, y no necesitan ejecutarse en cada arranque. Ambos scripts bloquean su ejecución cuando `NODE_ENV` es `production`. Los bloques siguientes parten de la raíz y cambian a `backend` únicamente durante cada ejecución.
@@ -263,16 +288,32 @@ Build frontend y validaciones de Next.js/TypeScript:
 npm --prefix frontend run build
 ```
 
-Pruebas e2e del frontend con Playwright ([frontend/e2e/](frontend/e2e/)), en Chromium de escritorio y en Chromium a 375 × 812. No arrancan servidores: antes hay que tener el stack corriendo (backend en :4000, frontend en :3000, PostgreSQL) y los datos de demo cargados con `demo:reset` (mientras ese script no exista, `node scripts/seed_integracion_demo.mjs` desde `backend/`). La primera vez se instala el navegador:
+Pruebas e2e del frontend con Playwright ([frontend/e2e/](frontend/e2e/)), en Chromium de escritorio y en Chromium a 375 × 812. No arrancan servidores: antes hay que tener el stack corriendo (backend en :4000, frontend en :3000, PostgreSQL) y los datos de demo cargados con `npm --prefix backend run demo:reset`. La primera vez se instala el navegador:
 
 ```bash
 (cd frontend && npx playwright install chromium)
 npm --prefix frontend run e2e
 ```
 
-Las pruebas de la médica leen `E2E_MEDICA_CORREO` y `E2E_MEDICA_CONTRASENA` hasta que su cuenta exista en el seed de demo.
+Las pruebas unitarias del frontend corren con `npm --prefix frontend run test` (Vitest). No hay script de `typecheck`; el build es la validación disponible para TypeScript. No hay un script reproducible de Newman declarado en los manifests. Estos comandos describen cómo ejecutar las comprobaciones; no afirman que se hayan ejecutado o aprobado en esta revisión.
 
-El frontend no declara un script de pruebas unitarias ni de `typecheck`; el build es la validación disponible para TypeScript. No hay un script reproducible de Newman declarado en los manifests. Estos comandos describen cómo ejecutar las comprobaciones; no afirman que se hayan ejecutado o aprobado en esta revisión.
+### Pruebas de integración
+
+Las pruebas de [backend/integration/](backend/integration/) (archivos `*.int.mjs`) levantan la API en un puerto libre y la llaman con `fetch` contra una base PostgreSQL real. `npm --prefix backend test` no las ejecuta, así que sigue funcionando sin base de datos.
+
+Crea una sola vez la base de prueba. Con el contenedor de Docker del proyecto:
+
+```bash
+docker exec dafi-postgres createdb -U dafi dafi_test
+```
+
+La conexión usa las variables `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, `TEST_DB_PASSWORD` y `TEST_DB_NAME`. Si no se definen, toma host, puerto, usuario y contraseña de `DB_*` en `backend/.env`, y el nombre `dafi_test`; nunca usa `DB_NAME`. El arnés **se niega a correr** si el nombre de la base no termina en `_test`, porque borra y recrea el esquema `public` con [S05_S06_A1/esquema_bd.sql](S05_S06_A1/esquema_bd.sql) y el aviso de [seed_auth_demo.sql](backend/scripts/seed_auth_demo.sql) antes de cada archivo de prueba. Los usuarios que crea son ficticios (`@dafi.invalid`).
+
+```bash
+npm --prefix backend run test:integration
+```
+
+Para usar otra base de prueba, por ejemplo `TEST_DB_NAME=dafi_ci_test npm --prefix backend run test:integration`. Los ayudantes `crearCuidadora()`, `crearMedicaEnCirculo(familiaId)`, `login(correo)` y `api(ruta, opciones)` están en [backend/integration/arnes.mjs](backend/integration/arnes.mjs).
 
 ## API y documentación
 
