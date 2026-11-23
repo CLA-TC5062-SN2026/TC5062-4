@@ -1,55 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
-import type { APIRequestContext, Page, TestInfo } from '@playwright/test';
-import { CUENTAS, entrarComo } from './entrarComo';
-import type { Cuenta } from './entrarComo';
+import type { Page, TestInfo } from '@playwright/test';
+import { abrirComoMedica, enviadaPorApi, entrarComo } from './entrarComo';
 
 // Tarea F6: lista e hilo de la cuidadora (paso 11 del guion). Datos ficticios.
 // Las conversaciones van en el perfil «María Ruán», no en Mateo (L-31).
 // La parte de la médica (paso 10) se hace por API hasta que exista su pantalla (F7).
-
-const API = 'http://localhost:4000/api/v1';
-
-async function token(request: APIRequestContext, cuenta: Cuenta) {
-  const r = await request.post(`${API}/auth/login`, { data: CUENTAS[cuenta] });
-  expect(r.status()).toBe(200);
-  const cuerpo = await r.json();
-  return { headers: { Authorization: `Bearer ${cuerpo.accessToken}` }, familiaId: cuerpo.usuario.familiaId as string };
-}
-
-/** Paso 10 por API: la médica abre la conversación (pasa a EN_REVISION) y, si hay texto, registra una indicación. */
-async function abrirComoMedica(request: APIRequestContext, id: string, indicacion?: string) {
-  const { headers } = await token(request, 'medica');
-  const lectura = await request.get(`${API}/conversaciones/${id}`, { headers });
-  expect((await lectura.json()).estado).toBe('EN_REVISION');
-  if (!indicacion) return;
-  const r = await request.post(`${API}/conversaciones/${id}/indicaciones`, {
-    headers: { ...headers, 'Idempotency-Key': randomUUID() },
-    data: { texto: indicacion, decision: 'consulta_presencial', plazoDias: 2 },
-  });
-  expect(r.status()).toBe(201);
-}
-
-/** Pasos 7 y 8 por API: conversación de fiebre enviada en el perfil «María Ruán». */
-async function enviadaPorApi(request: APIRequestContext, titulo: string) {
-  const { headers, familiaId } = await token(request, 'maria');
-  const perfiles = await (await request.get(`${API}/familias/${familiaId}/perfiles`, { headers })).json();
-  const perfil = perfiles.find((p: { nombre: string }) => p.nombre === 'María Ruán');
-  const medicos = await (await request.get(`${API}/familias/${familiaId}/miembros?rol=medico`, { headers })).json();
-  const conv = await request.post(`${API}/perfiles/${perfil.id}/conversaciones`, {
-    headers, data: { titulo, etiquetas: ['fiebre'], medicoId: medicos[0].usuarioId },
-  });
-  expect(conv.status()).toBe(201);
-  const { id } = await conv.json();
-  for (const [pregunta, valor] of [['F1', { numero: 38.4 }], ['F3', { texto: 'Desde la mañana' }]] as const) {
-    expect((await request.put(`${API}/conversaciones/${id}/preguntas/${pregunta}/respuesta`, { headers, data: valor })).ok()).toBe(true);
-  }
-  const envio = await request.post(`${API}/conversaciones/${id}/envios`, {
-    headers: { ...headers, 'Idempotency-Key': randomUUID() }, data: {},
-  });
-  expect(envio.status()).toBe(200);
-  return id as string;
-}
 
 const tituloUnico = (info: TestInfo, prefijo: string) => `${prefijo} ${info.project.name} ${Date.now()}`;
 

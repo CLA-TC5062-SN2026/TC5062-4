@@ -178,3 +178,19 @@ export function enviarConversacion(conversacionId: string, idempotencyKey: strin
     signal,
   });
 }
+
+export interface NuevaIndicacion {
+  texto: string;
+  decision: Decision | null;
+  /** Sólo con `consulta_presencial` (1 a 90); null en los demás casos. */
+  plazoDias: number | null;
+}
+
+/** B4: sólo la médica asignada; misma Idempotency-Key por intento que los mensajes. */
+export function registrarIndicacion(conversacionId: string, datos: NuevaIndicacion, idempotencyKey: string) {
+  return peticion<Indicacion>(`/conversaciones/${conversacionId}/indicaciones`, {
+    method: 'POST',
+    body: datos,
+    idempotencyKey,
+  });
+}

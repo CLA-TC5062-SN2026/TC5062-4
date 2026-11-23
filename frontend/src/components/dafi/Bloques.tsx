@@ -302,7 +302,7 @@ export function EstadoVacio({
 
 /* ===================== Compositor de mensaje ===================== */
 export function Compositor({
-  onEnviar, deshabilitado = false, enviando = false, aviso,
+  onEnviar, deshabilitado = false, enviando = false, aviso, etiqueta = 'Mensaje para el médico',
 }: {
   /** Devuelve true si el mensaje quedó enviado y el campo debe vaciarse. */
   onEnviar?: (texto: string) => Promise<boolean> | boolean | void;
@@ -310,6 +310,8 @@ export function Compositor({
   enviando?: boolean;
   /** Error o explicación que va justo encima del campo (L-26). */
   aviso?: ReactNode;
+  /** Nombre accesible del campo; cambia según quién escribe. */
+  etiqueta?: string;
 }) {
   const [texto, setTexto] = useState('');
   const bloqueado = deshabilitado || enviando || !texto.trim();
@@ -328,7 +330,7 @@ export function Compositor({
           name="mensaje"
           className={`${estilos.compositorCampo} t-body-l`}
           placeholder="Escriba un mensaje"
-          aria-label="Mensaje para el médico"
+          aria-label={etiqueta}
           maxLength={4000}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
