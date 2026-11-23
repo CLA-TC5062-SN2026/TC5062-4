@@ -304,7 +304,7 @@ function Contenido({ perfilId }: { perfilId: string }) {
                   prioridad={c.prioridadIndicada}
                   autor={c.medico?.nombre ?? 'Sin médico'}
                   cuando={fecha(c.ultimoEventoEn)}
-                  onClick={() => router.push(`/conversaciones/${c.id}`)}
+                  onClick={() => router.push(`/conversaciones/${c.id}${c.estado === 'BORRADOR' ? '/borrador' : ''}`)}
                 />
               ))}
               {paginas > 1 && (
