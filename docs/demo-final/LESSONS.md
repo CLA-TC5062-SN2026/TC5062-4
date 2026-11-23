@@ -202,3 +202,10 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** `authorize.js` da lectura por historial compartido, pero la API no tiene forma de crear ese permiso.
 - **Solución:** la prueba de integración inserta la fila con `pool`. La demo no usa historial compartido.
 - **Cómo evitarlo:** no meter ese caso al guion ni a las e2e; si se necesita, sembrarlo en `demo_seed.mjs`.
+
+### L-25. `/eventos` no devolvía los datos de la indicación
+- **Fecha / quién:** 2026-11-23, agente (B4)
+- **Síntoma:** tras registrar una indicación, `GET /conversaciones/{id}/eventos` traía el evento `indicacion` sin `decision`, `plazoDias` ni `vigente`; la familia no podía saber cuál era la vigente.
+- **Causa:** la consulta de `/eventos` no seleccionaba esas columnas, aunque el contrato define `Evento.indicacion`.
+- **Solución:** `/eventos` devuelve `indicacion` (objeto `Indicacion`) en los eventos de ese tipo y `null` en los demás. `GET /conversaciones/{id}` sigue sin `indicacionVigente`.
+- **Cómo evitarlo:** F6 y F7 leen la indicación desde `/eventos`. Ojo: `cambio_estado` e `indicacion` nacen en la misma transacción con la misma `fecha`, así que su orden entre sí no está garantizado.

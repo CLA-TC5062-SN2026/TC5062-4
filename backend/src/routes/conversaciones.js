@@ -369,6 +369,9 @@ router.get("/conversaciones/:conversacionId/eventos", async (req, res) => {
     `
     SELECT e.id, e.conversacion_id AS "conversacionId", e.tipo, e.fecha, e.texto,
       e.estado_anterior AS "estadoAnterior", e.estado_nuevo AS "estadoNuevo",
+      CASE WHEN e.tipo = 'indicacion' THEN json_build_object('id',e.id,'texto',e.texto,
+        'decision',e.decision,'plazoDias',e.plazo_dias,'registradaEn',e.fecha,'vigente',e.vigente,
+        'medico',json_build_object('id',u.id,'nombre',u.nombre,'rol','medico')) END AS indicacion,
       CASE WHEN u.id IS NOT NULL THEN json_build_object('id',u.id,'nombre',u.nombre,
         'rol',CASE WHEN u.tipo_usuario = 'cuidador' THEN 'cuidador_principal' ELSE u.tipo_usuario::text END)
       ELSE json_build_object('id','00000000-0000-4000-8000-000000000000','nombre','DAFI','rol','administrador') END AS autor

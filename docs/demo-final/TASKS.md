@@ -63,7 +63,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 - **Integration:** guardar y reemplazar respuesta; tras responder todas las obligatorias, `POST /envios` pasa de 422 a 200; respuesta en conversación ya enviada da 409; médica recibe 403.
 - **E2E:** cubierto por F5.
 
-### [ ] B3. Transición `ENVIADA → EN_REVISION` al abrir la médica
+### [x] B3. Transición `ENVIADA → EN_REVISION` al abrir la médica
 - Cuando la médica asignada hace `GET /conversaciones/{id}` y el estado es `ENVIADA`, pasa a `EN_REVISION` y se registra el evento `cambio_estado` (RF-16-AC-2). Una segunda lectura no crea otro evento.
 - La cuidadora que lee no cambia el estado.
 - **Unit:** función que decide si hay transición (rol, estado, médico asignado).

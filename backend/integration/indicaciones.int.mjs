@@ -109,6 +109,13 @@ test('segunda indicación en CON_INDICACIONES: solo evento indicacion y la anter
   const lista = await eventos(id, token);
   assert.equal(contar(lista, 'cambio_estado'), cambiosAntes);
   assert.equal(contar(lista, 'indicacion'), 2);
+  // La familia ve la vigente y su decisión en /eventos (contrato: Evento.indicacion).
+  const vistas = lista.filter((e) => e.tipo === 'indicacion').map((e) => e.indicacion);
+  assert.deepEqual(vistas.map((i) => [i.decision, i.vigente]).sort(), [
+    ['acudir_a_urgencias', true],
+    ['cuidado_en_casa', false],
+  ]);
+  assert.equal(lista.find((e) => e.tipo === 'cambio_estado').indicacion, null);
   assert.equal((await api(`/conversaciones/${id}`, { token })).body.estado, 'CON_INDICACIONES');
 
   const { rows } = await pool.query(
