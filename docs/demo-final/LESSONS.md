@@ -182,12 +182,12 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Solución:** volver a entrar con las dos cuentas después de cada reset.
 - **Cómo evitarlo:** en el checklist de grabación (D5), el orden es `demo:reset` y después iniciar sesión, nunca al revés.
 
-### L-22. `GET /etiquetas` no devuelve las preguntas generales
-- **Fecha / quién:** 2026-11-22, agente (B5, PR #66)
-- **Síntoma:** bajo `fiebre` salen F1 y F2, pero la conversación tiene tres preguntas (falta G2, «¿Qué le preocupa?»).
-- **Causa:** las preguntas con `es_general = true` aplican a toda conversación y no cuelgan de ninguna etiqueta.
-- **Solución:** el cuestionario del borrador se arma con las preguntas de `GET /conversaciones/{id}`.
-- **Cómo evitarlo:** F5 no usa `/etiquetas` para listar preguntas; su e2e responde las tres.
+### L-22. La pregunta F3 de fiebre no está en el SRS
+- **Fecha / quién:** 2026-11-22, Francisco (B5, PR #66)
+- **Síntoma:** TASKS.md pide 3 o 4 preguntas de contexto para `fiebre` y al menos una de texto libre, pero el SRS (RF-10) solo define F1 y F2, y ninguna es de texto.
+- **Causa:** el catálogo del SRS se quedó corto para lo que la demo necesita mostrar.
+- **Solución:** el seed agrega F3, «¿Desde cuándo tiene fiebre?» (texto, obligatoria). La primera versión usaba la pregunta general G2; se descartó porque `GET /etiquetas` no devuelve las generales y el borrador mostraba una pregunta que el catálogo no listaba.
+- **Cómo evitarlo:** la desviación se declara en la matriz de trazabilidad (D1). Ninguna otra pregunta fuera del SRS entra al seed sin aprobación del PO.
 
 ### L-23. No hay cambio de estado de `CON_INDICACIONES` a sí mismo
 - **Fecha / quién:** 2026-11-22, agente (B5, PR #66)

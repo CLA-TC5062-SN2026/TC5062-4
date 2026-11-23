@@ -14,13 +14,13 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 
 ## 0. Base (lunes, antes de todo lo demás)
 
-### [ ] E0. Entorno local de la demo funcionando (Francisco)
+### [x] E0. Entorno local de la demo funcionando (Francisco)
 - Levantar PostgreSQL en Docker, backend y frontend desde `main` siguiendo el README raíz.
 - Hacer login con `maria.ruan@correo.com` y ver `/perfiles`.
 - Anotar en LESSONS.md cada paso del README que no funcione tal cual.
 - **Terminado cuando:** el paso 1 y 2 del guion funcionan en la máquina de Francisco.
 
-### [ ] Q1. Arnés de pruebas de integración del backend
+### [x] Q1. Arnés de pruebas de integración del backend
 - Script `npm --prefix backend run test:integration` que:
   - usa `TEST_DB_*` (o `DB_NAME=dafi_test`) y **se niega a correr** si el nombre de la base no termina en `_test`;
   - recrea el esquema con `S05_S06_A1/esquema_bd.sql` antes de la suite;
@@ -31,7 +31,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 - Documentar en el README la sección «Pruebas de integración».
 - **Terminado cuando:** `npm test` sigue en 12/12 sin base, y `test:integration` pasa con la base de prueba.
 
-### [ ] Q2. Playwright para e2e
+### [x] Q2. Playwright para e2e
 - `@playwright/test` como devDependency de `frontend/`, script `npm --prefix frontend run e2e`, carpeta `frontend/e2e/`.
 - `playwright.config.ts` con `baseURL: http://localhost:3000`, proyecto Chromium y uno móvil (375 × 812).
 - Precondición documentada: stack corriendo y `demo:reset` ejecutado.
@@ -39,7 +39,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 - Primera prueba: login de María con contraseña mala muestra el mensaje del 401 y no navega; con la correcta llega a `/perfiles` y ve 3 tarjetas (paso 1 y 2 del guion).
 - **Terminado cuando:** `npm --prefix frontend run e2e` pasa en local.
 
-### [ ] Q3. Vitest para lógica del frontend
+### [x] Q3. Vitest para lógica del frontend
 - `vitest` como devDependency de `frontend/`, script `npm --prefix frontend run test`.
 - Primera prueba sobre `mensajeParaUsuario` de `src/services/errores.ts`: 401, 404, 409, 422 y error de red devuelven el texto esperado.
 - **Terminado cuando:** `npm --prefix frontend run test` pasa.
@@ -78,7 +78,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 - **Integration:** indicación válida da 201 y cambia estado; repetir con la misma `Idempotency-Key` devuelve la misma respuesta sin duplicar; cuidadora recibe 403; estado inválido da 409; falta de plazo da 422.
 - **E2E:** cubierto por F7 y F6.
 
-### [ ] B5. Seed de demo y `demo:reset`
+### [x] B5. Seed de demo y `demo:reset`
 - Script `npm --prefix backend run demo:reset` que **solo corre fuera de producción** y con confirmación si la base no es local, y que:
   - recrea el esquema;
   - crea a María (`maria.ruan@correo.com`) con su familia y 3 perfiles (Mateo, María, Rosa) por la API, como `seed_integracion_demo.mjs`;
