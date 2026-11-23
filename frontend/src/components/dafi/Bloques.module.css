@@ -204,18 +204,15 @@
 .vacioTexto { color: var(--color-ink-600); }
 
 /* ===================== Compositor ===================== */
-.compositor {
-  display: flex; align-items: center; gap: var(--space-8);
+/* Fijo al pie mientras se recorre el hilo: el campo siempre queda a mano. */
+.compositorPie {
+  display: flex; flex-direction: column; gap: var(--space-8);
   padding: var(--space-12);
   background: var(--color-ink-0);
   border-top: 1px solid var(--color-ink-200);
+  position: sticky; bottom: 0;
 }
-.compositorBoton {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; border-radius: var(--radius-md);
-  background: var(--color-ink-50); border: 1px solid var(--color-ink-500);
-  color: var(--color-ink-700); cursor: pointer; flex-shrink: 0;
-}
+.compositor { display: flex; align-items: center; gap: var(--space-8); }
 .compositorCampo {
   flex: 1; min-width: 0; height: 44px; padding: 0 var(--space-12);
   border-radius: var(--radius-md);
@@ -229,8 +226,12 @@
   background: var(--color-brand-500); color: var(--color-ink-0);
   border: none; cursor: pointer; flex-shrink: 0;
 }
+.compositorEnviar:disabled,
+.compositorCampo:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Tope de medida de lectura: ver --medida-texto en globals.css. */
+.burbuja > p,
+.eventoAvisoCuerpo > p { overflow-wrap: anywhere; white-space: pre-wrap; }
 .burbuja > p,
 .eventoAvisoCuerpo > p,
 .vacioTexto,

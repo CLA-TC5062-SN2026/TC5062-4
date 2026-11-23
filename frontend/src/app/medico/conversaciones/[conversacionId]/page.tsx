@@ -54,7 +54,7 @@ function Contenido() {
             texto="Le salieron unas ronchas en el antebrazo derecho desde ayer en la tarde. No tiene fiebre."
             fotos={2}
           />
-          <EventoCambioEstado desde="BORRADOR" hasta="ENVIADA" hora="09:42" />
+          <EventoCambioEstado texto="Enviada a Dra. Lucía Torres" hora="09:42" />
           <EventoMensaje
             autor="Dra. Lucía Torres"
             rol="medico"

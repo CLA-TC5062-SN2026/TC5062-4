@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 // Cuentas ficticias del seed de demo (backend/scripts/demo_seed.mjs), solo locales.
-const CUENTAS = {
+export const CUENTAS = {
   maria: { correo: 'maria.ruan@correo.com', contrasena: 'DafiDemo2026!' },
   medica: { correo: 'laura.mendez@correo.com', contrasena: 'DafiDemo2026!' },
 } as const;
