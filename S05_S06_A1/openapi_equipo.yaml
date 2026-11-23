@@ -2557,6 +2557,11 @@ components:
           maxItems: 30
           items: { type: string, maxLength: 100 }
           example: [Salbutamol inhalado]
+        tipoSangre:
+          type: string
+          nullable: true
+          enum: [A+, A-, B+, B-, AB+, AB-, O+, O-, null]
+          description: Opcional; se omite o es nulo si no se conoce.
         correo:
           type: string
           format: email
@@ -2580,6 +2585,11 @@ components:
           type: array
           maxItems: 30
           items: { type: string, maxLength: 100 }
+        tipoSangre:
+          type: string
+          nullable: true
+          enum: [A+, A-, B+, B-, AB+, AB-, O+, O-, null]
+          description: Nulo borra el tipo de sangre registrado.
         compartirConCocuidador: { type: boolean }
         resumenActivo: { type: boolean }
     Perfil:
@@ -2600,6 +2610,11 @@ components:
         medicamentos:
           type: array
           items: { type: string }
+        tipoSangre:
+          type: string
+          nullable: true
+          enum: [A+, A-, B+, B-, AB+, AB-, O+, O-, null]
+          description: Nulo si no está registrado.
         estado:
           type: string
           enum: [activo, pendiente_consentimiento]

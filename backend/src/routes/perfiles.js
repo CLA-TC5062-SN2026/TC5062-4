@@ -11,6 +11,7 @@ import {
   validDate,
   validTexts,
   validBoolean,
+  validTipoSangre,
   transaction,
 } from "../utils/http.js";
 
@@ -23,6 +24,7 @@ const COLUMNAS_PERFIL = Object.freeze({
   fechaNacimiento: "fecha_nacimiento",
   alergias: "alergias",
   medicamentos: "medicamentos",
+  tipoSangre: "tipo_sangre",
   compartirConCocuidador: "compartir_con_cocuidador",
   resumenActivo: "resumen_activo",
 });
@@ -30,7 +32,8 @@ const COLUMNAS_PERFIL = Object.freeze({
 const selectPerfil = `
   SELECT p.id, p.familia_id AS "familiaId", p.tipo, p.nombre,
     to_char(p.fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento",
-    p.edad_anios AS "edadAnios", p.alergias, p.medicamentos, p.estado,
+    p.edad_anios AS "edadAnios", p.alergias, p.medicamentos,
+    p.tipo_sangre AS "tipoSangre", p.estado,
     p.compartir_con_cocuidador AS "compartirConCocuidador",
     p.resumen_activo AS "resumenActivo"
   FROM v_perfil_paciente p
@@ -68,6 +71,7 @@ router.post("/familias/:familiaId/perfiles", async (req, res) => {
   const fecha = validDate(body.fechaNacimiento);
   const alergias = validTexts(body.alergias ?? [], "alergias");
   const medicamentos = validTexts(body.medicamentos ?? [], "medicamentos");
+  const tipoSangre = validTipoSangre(body.tipoSangre) ?? null;
   const compartir = validBoolean(
     body.compartirConCocuidador ?? false,
     "compartirConCocuidador",
@@ -93,10 +97,19 @@ router.post("/familias/:familiaId/perfiles", async (req, res) => {
       `
       INSERT INTO perfil_paciente (
         familia_id, tipo, nombre, fecha_nacimiento, alergias,
-        medicamentos, compartir_con_cocuidador
-      ) VALUES ($1,$2,$3,$4,$5::text[],$6::text[],$7) RETURNING id
+        medicamentos, compartir_con_cocuidador, tipo_sangre
+      ) VALUES ($1,$2,$3,$4,$5::text[],$6::text[],$7,$8) RETURNING id
     `,
-      [familiaId, body.tipo, nombre, fecha, alergias, medicamentos, compartir],
+      [
+        familiaId,
+        body.tipo,
+        nombre,
+        fecha,
+        alergias,
+        medicamentos,
+        compartir,
+        tipoSangre,
+      ],
     );
     const id = created.rows[0].id;
 
@@ -137,6 +150,7 @@ router.patch("/perfiles/:perfilId", async (req, res) => {
   for (const key of ["compartirConCocuidador", "resumenActivo"]) {
     if (key in body) body[key] = validBoolean(body[key], key);
   }
+  if ("tipoSangre" in body) validTipoSangre(body.tipoSangre);
   const compartir =
     body.compartirConCocuidador ?? current.compartirConCocuidador;
   assert(
