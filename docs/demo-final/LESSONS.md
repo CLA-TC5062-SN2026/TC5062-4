@@ -223,3 +223,17 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** backend y frontend se habían detenido; `playwright.config.ts` no los levanta.
 - **Solución:** levantar ambos (`npm run dev` en `backend/` y `frontend/`) y repetir.
 - **Cómo evitarlo:** antes de correr e2e, comprobar `curl localhost:4000/api/v1/health` y `curl localhost:3000`. Antes de grabar, lo mismo.
+
+### L-28. Borrar un perfil borra también su historial y su bitácora de accesos
+- **Fecha / quién:** 2026-11-23, agente (F3)
+- **Síntoma esperado:** al borrar un perfil desaparecen sus conversaciones, mensajes, fotos, indicaciones y los registros de `registro_acceso` de esas conversaciones.
+- **Causa:** `DELETE /perfiles/{id}` es un borrado físico y `esquema_bd.sql` lo propaga en cascada; el backend no lo rechaza aunque haya conversaciones.
+- **Solución:** la confirmación de F3 dice cuántas conversaciones se borran y que no se puede deshacer. No se cambió el backend.
+- **Cómo evitarlo:** en la demo, borrar solo un perfil recién creado, nunca a Mateo (tiene la conversación histórica); si pasa, `demo:reset`. La pérdida de la bitácora se declara como limitación en D1.
+
+### L-29. El historial se pagina por fecha de creación, no por actividad
+- **Fecha / quién:** 2026-11-23, agente (F3)
+- **Síntoma:** en el historial de un perfil, una conversación vieja con actividad reciente no sube a la primera página.
+- **Causa:** `GET /perfiles/{id}/conversaciones` ordena por `creada_en DESC` antes de paginar.
+- **Solución:** F3 reordena por `ultimoEventoEn` solo dentro de cada página (5 por página).
+- **Cómo evitarlo:** con los datos de la demo no se nota (menos de 5 conversaciones por perfil). Si se quiere el orden correcto entre páginas, hay que ordenar en el backend.

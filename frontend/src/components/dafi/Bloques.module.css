@@ -4,6 +4,7 @@
   flex-direction: column;
   gap: var(--space-8);
   width: 100%;
+  min-width: 0;
   padding: var(--space-16);
   border-radius: var(--radius-lg);
   background: var(--color-ink-0);
@@ -16,7 +17,7 @@
 .conversacionSeleccionada { border: 2px solid var(--color-brand-500); }
 .convCabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); }
 .convContexto { color: var(--color-ink-600); }
-.convTitulo { color: var(--color-ink-900); }
+.convTitulo { color: var(--color-ink-900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .convEtiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
 .convPrioridad { display: flex; }
 .convSeparador { height: 1px; background: var(--color-ink-100); }
