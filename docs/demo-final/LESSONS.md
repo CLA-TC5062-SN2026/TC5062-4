@@ -132,3 +132,45 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 ## Entradas de esta semana
 
 <!-- Agreguen aquí, con número consecutivo desde L-15, lo que aparezca entre el 23 y el 26 de noviembre. -->
+
+### L-15. El README raíz no trae los comandos de Docker
+- **Fecha / quién:** 2026-11-22, Francisco y agente (E0)
+- **Síntoma:** al levantar el entorno desde cero, «Instalación local» del README solo explica PostgreSQL instalado en la máquina (`createuser`, `createdb`, `psql -W`). Con Docker no hay `psql` local ni rol `dafi_app`.
+- **Causa:** los comandos de Docker viven en `S07_S08_A2/capa_servicios.md` sección 8 y en PLAN.md sección 9, no en el README.
+- **Solución:** se siguió `capa_servicios.md`: `docker run` en el 5434, `docker exec -i dafi-postgres psql -U dafi -d dafi < archivo.sql` para esquema y seeds, `DB_PORT=5434`, `DB_USER=dafi` y `seed_integracion_demo.mjs` con el backend ya arriba. Funcionó sin cambios.
+- **Cómo evitarlo:** D2 agrega la ruta de Docker al README; con B5 basta `demo:reset`.
+
+### L-16. Vitest 5 no se instala con `@types/node` 20
+- **Fecha / quién:** 2026-11-22, agente (Q3, PR #62)
+- **Síntoma:** `npm i -D vitest` termina con `ERESOLVE could not resolve`; al intentar `vitest@4`, npm 11.4 falla con `Cannot read properties of null (reading 'edgesOut')` y deja `node_modules` a medias.
+- **Causa:** Vitest 5 declara `@types/node@"^22.0.0 || >=24.0.0"` como peer y el frontend tenía `^20`.
+- **Solución:** `npm i -D vitest @types/node@^22` (el runtime local ya es Node 22). Tras el fallo de npm hubo que borrar `node_modules` y restaurar el lockfile.
+- **Cómo evitarlo:** no usar `--force` ni `--legacy-peer-deps`; si npm deja la instalación rota, `git checkout frontend/package-lock.json` y `npm ci`.
+
+### L-17. `esquema_bd.sql` no se puede ejecutar dos veces
+- **Fecha / quién:** 2026-11-22, agente (Q1, PR #63)
+- **Síntoma:** cargar el esquema sobre una base que ya lo tiene falla en el primer `CREATE TYPE`.
+- **Causa:** el archivo usa `CREATE TYPE` y `CREATE TABLE` sin `IF NOT EXISTS`.
+- **Solución:** el arnés de integración hace `DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;` y luego carga el archivo completo.
+- **Cómo evitarlo:** como ese `DROP` borra todo, el arnés se niega a correr si la base no termina en `_test`. `demo:reset` (B5) necesita la misma protección contra bases que no sean locales.
+
+### L-18. El arnés de integración no debe leer `DB_NAME`
+- **Fecha / quién:** 2026-11-22, agente (Q1, PR #63)
+- **Síntoma esperado:** las pruebas de integración borran la base de la demo.
+- **Causa:** `backend/.env` trae `DB_NAME=dafi` y `src/config/database.js` lee `DB_*` al importarse. Si el arnés usara `DB_NAME` como respaldo, o importara `app` antes de fijar el entorno, apuntaría a `dafi`.
+- **Solución:** el nombre sale solo de `TEST_DB_NAME` (por defecto `dafi_test`); el arnés asigna `process.env.DB_*` y después importa `app` con `await import()`.
+- **Cómo evitarlo:** toda prueba de integración importa `app` desde `integration/arnes.mjs`, nunca directo de `src/app.js`.
+
+### L-19. Las pruebas de integración se quedan colgadas si no se cierran conexiones
+- **Fecha / quién:** 2026-11-22, agente (Q1, PR #63)
+- **Síntoma:** `node --test` no termina aunque todas las pruebas pasen.
+- **Causa:** `fetch` deja conexiones keep-alive abiertas contra el servidor de prueba y el pool de `pg` sigue vivo.
+- **Solución:** `server.closeAllConnections()` antes de `server.close()`, y `pool.end()`. Además `--test-concurrency=1`, porque cada archivo `*.int.mjs` recrea el esquema y en paralelo competirían por la misma base.
+- **Cómo evitarlo:** cada archivo nuevo usa `before(iniciar)` y `after(cerrar)` del arnés.
+
+### L-20. El e2e móvil usa Chromium, no un perfil de iPhone
+- **Fecha / quién:** 2026-11-22, agente (Q2, PR #64)
+- **Síntoma esperado:** `npx playwright install chromium` no basta y las pruebas móviles fallan pidiendo WebKit.
+- **Causa:** los perfiles `iPhone` de Playwright usan WebKit, que es otra descarga.
+- **Solución:** proyecto `movil` con `Desktop Chrome`, viewport 375 × 812, `isMobile` y `hasTouch`. Chromium pesa unos 100 MB y queda en `~/Library/Caches/ms-playwright`.
+- **Cómo evitarlo:** en un clon limpio, correr `(cd frontend && npx playwright install chromium)` antes del primer `e2e`.
