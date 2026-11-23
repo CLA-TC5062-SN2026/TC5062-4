@@ -148,6 +148,17 @@ export function validRol(value) {
   return value;
 }
 
+const TIPOS_SANGRE = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+// tipoSangre opcional del perfil: undefined es «no enviado» y null lo borra.
+export function validTipoSangre(value) {
+  assert(
+    value === undefined || value === null || TIPOS_SANGRE.includes(value),
+    "tipoSangre inválido",
+  );
+  return value;
+}
+
 // Campos de RespuestaEntrada que admite cada tipo_respuesta de la pregunta.
 const CAMPOS_RESPUESTA = {
   opcion: ["opcion"],

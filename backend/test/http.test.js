@@ -3,7 +3,7 @@
 // Ejecutar desde backend/: npm test
 import { test, describe, mock } from "node:test";
 import assert from "node:assert/strict";
-import { allowedKeys, transaction, validRol, validRespuesta, validIndicacion, ApiError } from "../src/utils/http.js";
+import { allowedKeys, transaction, validRol, validRespuesta, validIndicacion, validTipoSangre, ApiError } from "../src/utils/http.js";
 
 const PERMITIDOS = Object.freeze({ nombre: "nombre", alergias: "alergias" });
 
@@ -109,6 +109,25 @@ describe("validRol (B1, filtro ?rol= de miembros)", () => {
   for (const valor of ["doctor", "", "MEDICO", ["medico", "cocuidador"]]) {
     test(`rechaza ${JSON.stringify(valor)} con 422`, () => {
       assert.throws(() => validRol(valor), { status: 422, codigo: "DATOS_INVALIDOS" });
+    });
+  }
+});
+
+describe("validTipoSangre (F9, tipoSangre del perfil)", () => {
+  test("acepta los 8 tipos", () => {
+    for (const tipo of ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]) {
+      assert.equal(validTipoSangre(tipo), tipo);
+    }
+  });
+
+  test("undefined es «no enviado» y null lo borra", () => {
+    assert.equal(validTipoSangre(undefined), undefined);
+    assert.equal(validTipoSangre(null), null);
+  });
+
+  for (const valor of ["C+", "o+", "", "A", 1, true, ["O+"], { tipo: "O+" }]) {
+    test(`rechaza ${JSON.stringify(valor)} con 422`, () => {
+      assert.throws(() => validTipoSangre(valor), { status: 422, codigo: "DATOS_INVALIDOS" });
     });
   }
 });

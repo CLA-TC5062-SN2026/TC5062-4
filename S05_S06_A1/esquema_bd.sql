@@ -74,6 +74,9 @@ CREATE TYPE tipo_perfil AS ENUM ('menor', 'propio', 'adulto_representado');
 
 CREATE TYPE estado_perfil AS ENUM ('activo', 'pendiente_consentimiento');
 
+-- Tipo de sangre opcional del perfil (pedido del PO, F9; no está en el SRS).
+CREATE TYPE tipo_sangre AS ENUM ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-');
+
 CREATE TYPE estado_consentimiento AS ENUM ('pendiente', 'otorgado', 'revocado', 'vencido');
 
 CREATE TYPE estado_conversacion AS ENUM (
@@ -304,6 +307,7 @@ CREATE TABLE perfil_paciente (
     fecha_nacimiento           date        NOT NULL,
     alergias                   text[]      NOT NULL DEFAULT '{}',
     medicamentos               text[]      NOT NULL DEFAULT '{}',
+    tipo_sangre                tipo_sangre,
     compartir_con_cocuidador   boolean     NOT NULL DEFAULT false,
     resumen_activo             boolean     NOT NULL DEFAULT true,
     -- Necesario para la FK compuesta de consentimiento_adulto.

@@ -133,7 +133,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - `/conversaciones/[id]` con detalle y eventos (`listarEventos`): mensajes, cambios de estado e indicaciones; caja para enviar mensaje (`POST /mensajes` con `Idempotency-Key`), deshabilitada en `BORRADOR` y `CERRADA`.
 - **E2E:** tras la indicación de la médica, la cuidadora la ve en el hilo y responde con un mensaje (paso 11).
 
-### [ ] F7. Médica: bandeja, detalle e indicaciones
+### [x] F7. Médica: bandeja, detalle e indicaciones
 - `/medico/bandeja` con `listarConversaciones`, agrupada por estado (Enviadas, En revisión, Con indicaciones) y ordenada por último evento.
 - `/medico/conversaciones/[id]`: contexto del perfil (alergias, medicamentos), respuestas, hilo; formulario de indicación (B4) y caja de mensaje.
 - **E2E:** la médica ve la conversación enviada por María; al abrirla queda «En revisión»; registra una indicación y la conversación pasa a «Con indicaciones».

@@ -28,7 +28,7 @@ export const CUENTA = {
 
 export const PERFILES = [
   { tipo: 'menor', nombre: 'Mateo Ruán', fechaNacimiento: '2021-03-14',
-    alergias: ['Penicilina'], medicamentos: ['Salbutamol'] },
+    alergias: ['Penicilina'], medicamentos: ['Salbutamol'], tipoSangre: 'O+' },
   { tipo: 'propio', nombre: 'María Ruán', fechaNacimiento: '1988-01-23',
     alergias: [], medicamentos: [], compartirConCocuidador: true },
   { tipo: 'adulto_representado', nombre: 'Rosa Aguilar', fechaNacimiento: '1955-06-02',

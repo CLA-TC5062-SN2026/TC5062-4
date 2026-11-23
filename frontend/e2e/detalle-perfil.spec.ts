@@ -89,4 +89,6 @@ test('el historial de Mateo muestra la conversación del seed (sólo lectura)', 
   await entrarComo(page, 'maria');
   await page.getByRole('button', { name: /^Mateo Ruán/ }).click();
   await expect(page.getByText('Fiebre desde anoche')).toBeVisible();
+  // F9: Mateo tiene O+ en el seed.
+  await expect(page.getByText('O+', { exact: true })).toBeVisible();
 });

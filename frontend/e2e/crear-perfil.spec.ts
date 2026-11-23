@@ -28,11 +28,22 @@ test('crear un perfil y verlo en la lista (pasos 3 y 4 del guion)', async ({ pag
   await page.getByLabel('Nombre').fill(nombre);
   await page.getByLabel('Fecha de nacimiento').fill('2021-03-14');
   await page.getByLabel('Alergias').fill('penicilina, polen');
+  await page.getByLabel('Tipo de sangre').selectOption('A+');
   await page.getByRole('button', { name: 'Guardar perfil' }).click();
 
   await expect(page).toHaveURL(/\/perfiles$/);
   await expect(page.getByRole('button', { name: new RegExp(`^${nombre}`) })).toBeVisible();
   await expect(page.getByText('1 perfil', { exact: true })).toBeVisible();
+
+  // F9: el tipo de sangre elegido se ve en el detalle, se edita y sobrevive a recargar.
+  await page.getByRole('button', { name: new RegExp(`^${nombre}`) }).click();
+  await expect(page.getByText('A+', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Editar perfil', exact: true }).click();
+  await page.getByLabel('Tipo de sangre').selectOption('O-');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByRole('button', { name: 'Editar perfil', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('O-', { exact: true })).toBeVisible();
 });
 
 test('fecha futura muestra el error sin llegar al backend', async ({ page }) => {

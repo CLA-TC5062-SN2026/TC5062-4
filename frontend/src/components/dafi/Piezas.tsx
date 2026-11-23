@@ -3,7 +3,10 @@
 import { useId } from 'react';
 import type { ReactNode } from 'react';
 import Icono from '@/components/ui/Icono';
+import { TIPOS_SANGRE } from '@/services/perfilesService';
+import type { TipoSangre } from '@/services/perfilesService';
 import estilos from './Piezas.module.css';
+import campo from '@/components/ui/Input.module.css';
 
 /* ===================== Avatar ===================== */
 export function Avatar({
@@ -118,6 +121,34 @@ export function FilaDato({ clave, valor }: { clave: ReactNode; valor: ReactNode 
         <span className={`${estilos.filaDatoValor} t-body-m-fuerte`}>{valor}</span>
       </div>
       <span className={estilos.filaDatoLinea} aria-hidden="true" />
+    </div>
+  );
+}
+
+/* ===================== Tipo de sangre ===================== */
+/** Select nativo con el aspecto de Input; '' es «Sin registrar» (null). */
+export function CampoTipoSangre({
+  valor,
+  onChange,
+}: {
+  valor: TipoSangre | null;
+  onChange: (valor: TipoSangre | null) => void;
+}) {
+  const id = `campo-${useId()}`;
+  return (
+    <div className={`${campo.campo} ${campo.anchoCompleto}`}>
+      <label htmlFor={id} className={campo.etiqueta}>Tipo de sangre</label>
+      <select
+        id={id}
+        className={campo.input}
+        value={valor ?? ''}
+        onChange={(e) => onChange((e.target.value || null) as TipoSangre | null)}
+      >
+        <option value="">Sin registrar</option>
+        {TIPOS_SANGRE.map((t) => (
+          <option key={t} value={t}>{t}</option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -207,6 +207,7 @@ function Contenido({ conversacionId }: { conversacionId: string }) {
         <div className={estilos.tarjeta}>
           <FilaDato clave="Paciente" valor={`${perfil.nombre} · ${perfil.edadAnios} años`} />
           <FilaDato clave="Familia" valor={conversacion.familiaNombre} />
+          <FilaDato clave="Tipo de sangre" valor={perfil.tipoSangre ?? 'Sin registrar'} />
           <FilaDato clave="Alergias" valor={lista(perfil.alergias)} />
           <FilaDato clave="Medicamentos" valor={lista(perfil.medicamentos)} />
         </div>

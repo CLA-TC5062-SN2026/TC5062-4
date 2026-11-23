@@ -3,6 +3,8 @@ import { peticion } from './clienteHttp';
 
 export type TipoPerfil = 'menor' | 'propio' | 'adulto_representado';
 export type EstadoPerfil = 'activo' | 'pendiente_consentimiento';
+export const TIPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
+export type TipoSangre = (typeof TIPOS_SANGRE)[number];
 
 export interface Perfil {
   id: string;
@@ -13,6 +15,7 @@ export interface Perfil {
   edadAnios: number;
   alergias: string[];
   medicamentos: string[];
+  tipoSangre: TipoSangre | null;
   estado: EstadoPerfil;
   compartirConCocuidador: boolean;
   resumenActivo: boolean;
@@ -24,6 +27,8 @@ export interface NuevoPerfil {
   fechaNacimiento: string;
   alergias?: string[];
   medicamentos?: string[];
+  /** null en el PATCH borra el valor registrado. */
+  tipoSangre?: TipoSangre | null;
   compartirConCocuidador?: boolean;
   /** Obligatorio para `adulto_representado`: recibe el enlace de consentimiento. */
   correo?: string;

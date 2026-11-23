@@ -9,10 +9,10 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Icono from '@/components/ui/Icono';
 import { ChipFiltro } from '@/components/dafi/Chips';
-import { Casilla } from '@/components/dafi/Piezas';
+import { CampoTipoSangre, Casilla } from '@/components/dafi/Piezas';
 import { useAuth } from '@/context/AuthContext';
 import { crearPerfil } from '@/services/perfilesService';
-import type { TipoPerfil } from '@/services/perfilesService';
+import type { TipoPerfil, TipoSangre } from '@/services/perfilesService';
 import { alertarError } from '@/services/alertas';
 import { ApiError, mensajeParaUsuario } from '@/services/errores';
 import { aLista, validarPerfil } from './validacion';
@@ -35,6 +35,7 @@ function Contenido() {
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [alergias, setAlergias] = useState('');
   const [medicamentos, setMedicamentos] = useState('');
+  const [tipoSangre, setTipoSangre] = useState<TipoSangre | null>(null);
   const [correo, setCorreo] = useState('');
   const [compartir, setCompartir] = useState(false);
   const [errores, setErrores] = useState<ErroresPerfil>({});
@@ -62,6 +63,7 @@ function Contenido() {
         fechaNacimiento,
         alergias: aLista(alergias),
         medicamentos: aLista(medicamentos),
+        tipoSangre,
         // El backend rechaza compartir en un menor (422).
         compartirConCocuidador: tipo !== 'menor' && compartir,
         ...(tipo === 'adulto_representado' && { correo: correo.trim() }),
@@ -126,6 +128,7 @@ function Contenido() {
           error={errores.fechaNacimiento}
           required
         />
+        <CampoTipoSangre valor={tipoSangre} onChange={setTipoSangre} />
         <Input
           label="Alergias"
           placeholder="Separe con comas (hasta 30)"
