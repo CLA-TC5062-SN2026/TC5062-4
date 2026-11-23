@@ -147,3 +147,51 @@ export function validRol(value) {
   assert(ROLES.includes(value), "rol inválido");
   return value;
 }
+
+// Campos de RespuestaEntrada que admite cada tipo_respuesta de la pregunta.
+const CAMPOS_RESPUESTA = {
+  opcion: ["opcion"],
+  zona_cuerpo: ["opcion"],
+  texto: ["texto"],
+  opcion_con_texto: ["opcion", "texto"],
+  numero_u_opcion: ["numero", "opcion"],
+};
+
+// Valida RespuestaEntrada contra el tipo y las opciones de la pregunta y
+// devuelve { opcion, texto, numero } con null en los campos que no aplican.
+export function validRespuesta(tipo, opciones, body) {
+  const permitidos = CAMPOS_RESPUESTA[tipo] ?? [];
+  const keys = Object.keys(body);
+  assert(
+    keys.length > 0 && keys.every((key) => permitidos.includes(key)),
+    `Esta pregunta se responde con: ${permitidos.join(" o ")}`,
+  );
+  // numero_u_opcion lleva uno u otro; opcion_con_texto exige la opción.
+  if (tipo === "numero_u_opcion") assert(keys.length === 1, "Envía numero u opcion, no ambos");
+  if (tipo === "opcion_con_texto") assert(Object.hasOwn(body, "opcion"), "Falta opcion");
+  const valor = { opcion: null, texto: null, numero: null };
+  if (Object.hasOwn(body, "opcion")) {
+    assert(opciones.includes(body.opcion), "La opción no está en la lista de la pregunta");
+    valor.opcion = body.opcion;
+  }
+  if (Object.hasOwn(body, "texto")) {
+    assert(
+      typeof body.texto === "string" &&
+        body.texto.trim().length > 0 &&
+        body.texto.length <= 2000,
+      "texto debe tener entre 1 y 2000 caracteres",
+    );
+    valor.texto = body.texto.trim();
+  }
+  if (Object.hasOwn(body, "numero")) {
+    assert(
+      typeof body.numero === "number" &&
+        Number.isFinite(body.numero) &&
+        body.numero >= 30 &&
+        body.numero <= 45,
+      "numero debe estar entre 30 y 45",
+    );
+    valor.numero = body.numero;
+  }
+  return valor;
+}

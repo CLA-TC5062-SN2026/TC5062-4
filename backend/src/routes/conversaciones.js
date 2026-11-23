@@ -14,6 +14,7 @@ import {
   validBoolean,
   pageParams,
   transaction,
+  validRespuesta,
 } from "../utils/http.js";
 
 const router = Router();
@@ -34,6 +35,13 @@ const base = `
   JOIN familia f ON f.id = p.familia_id
   LEFT JOIN usuario m ON m.id = c.medico_id
 `;
+
+// La pregunta q aplica a la conversación $1 si es general o está ligada a una de sus etiquetas.
+const preguntaAplica = `(q.es_general OR EXISTS (
+  SELECT 1 FROM etiqueta_pregunta ep
+  JOIN conversacion_etiqueta ce ON ce.etiqueta_id = ep.etiqueta_id
+  WHERE ep.pregunta_id = q.id AND ce.conversacion_id = $1
+))`;
 
 async function resumen(id, client = pool) {
   const { rows } = await client.query(`${base} WHERE c.id = $1`, [id]);
@@ -57,11 +65,7 @@ async function detalle(id, client = pool) {
         r.id AS "respuestaId", r.opcion, r.texto AS "respuestaTexto", r.numero
       FROM pregunta_contexto q
       LEFT JOIN respuesta r ON r.pregunta_id = q.id AND r.conversacion_id = $1
-      WHERE q.es_general OR EXISTS (
-        SELECT 1 FROM etiqueta_pregunta ep
-        JOIN conversacion_etiqueta ce ON ce.etiqueta_id = ep.etiqueta_id
-        WHERE ep.pregunta_id = q.id AND ce.conversacion_id = $1
-      ) ORDER BY id
+      WHERE ${preguntaAplica} ORDER BY id
     `,
       [id],
     ),
@@ -452,6 +456,82 @@ router.post("/conversaciones/:conversacionId/envios", async (req, res) => {
   if (result.replay) res.set("Idempotency-Replayed", "true");
   res.set("ETag", `"${result.value.version}"`).status(200).json(result.value);
 });
+
+router.put(
+  "/conversaciones/:conversacionId/preguntas/:preguntaId/respuesta",
+  async (req, res) => {
+    const id = uuidOr404(req.params.conversacionId);
+    const body = requireObject(req.body);
+    const result = await transaction(pool, async (client) => {
+      const conv = await client.query(
+        "SELECT estado FROM conversacion WHERE id = $1 FOR UPDATE",
+        [id],
+      );
+      if (!conv.rowCount) throw missing("Conversación no encontrada");
+      const found = await client.query(
+        `SELECT q.id, q.tipo_respuesta, q.opciones FROM pregunta_contexto q
+         WHERE q.codigo = $2 AND ${preguntaAplica}`,
+        [id, req.params.preguntaId],
+      );
+      if (!found.rowCount) throw missing("Pregunta no encontrada");
+      if (conv.rows[0].estado !== "BORRADOR")
+        throw conflict("Solo se puede responder en BORRADOR");
+      const q = found.rows[0];
+      const valor = validRespuesta(q.tipo_respuesta, q.opciones, body);
+      const params = [id, q.id, valor.opcion, valor.texto, valor.numero];
+      // Solo escribe (y registra evento) si el valor cambió: repetir el PUT no toca el historial.
+      const saved = await client.query(
+        `
+        INSERT INTO respuesta (conversacion_id, pregunta_id, opcion, texto, numero)
+        VALUES ($1,$2,$3,$4,$5)
+        ON CONFLICT (conversacion_id, pregunta_id) DO UPDATE
+          SET opcion = EXCLUDED.opcion, texto = EXCLUDED.texto, numero = EXCLUDED.numero,
+              version = respuesta.version + 1, registrada_en = now()
+          WHERE (respuesta.opcion, respuesta.texto, respuesta.numero)
+            IS DISTINCT FROM (EXCLUDED.opcion, EXCLUDED.texto, EXCLUDED.numero)
+        RETURNING opcion, texto, numero, registrada_en, version
+      `,
+        params,
+      );
+      if (!saved.rowCount) {
+        const same = await client.query(
+          "SELECT opcion, texto, numero, registrada_en, version FROM respuesta WHERE conversacion_id = $1 AND pregunta_id = $2",
+          [id, q.id],
+        );
+        return same.rows[0];
+      }
+      const r = saved.rows[0];
+      await client.query(
+        `
+        INSERT INTO evento (conversacion_id, tipo, autor_id, pregunta_id, valor)
+        VALUES ($1, 'respuesta', $2, $3, $4)
+      `,
+        [
+          id,
+          req.auth.id,
+          q.id,
+          [r.opcion, r.numero, r.texto]
+            .filter((v) => v !== null)
+            .join(": ")
+            .slice(0, 2000),
+        ],
+      );
+      return { ...r, creada: r.version === 1 };
+    });
+    const user = await pool.query("SELECT nombre FROM usuario WHERE id = $1", [
+      req.auth.id,
+    ]);
+    res.status(result.creada ? 201 : 200).json({
+      preguntaId: req.params.preguntaId,
+      opcion: result.opcion,
+      texto: result.texto,
+      // numeric llega como texto desde pg; el contrato pide número.
+      numero: result.numero === null ? null : Number(result.numero),
+      autor: { id: req.auth.id, nombre: user.rows[0].nombre, rol: req.auth.rol },
+      registradaEn: result.registrada_en,
+    });
+  },
+);
 
 // La identidad del autor proviene exclusivamente del JWT validado.
 router.post("/conversaciones/:conversacionId/mensajes", async (req, res) => {

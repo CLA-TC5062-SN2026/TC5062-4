@@ -133,5 +133,11 @@ export async function authorize(req, res, next) {
     await conversation(req, id, { write: writable, messages: allowMessages });
     return next();
   }
+  if ((m = match(/^\/conversaciones\/([^/]+)\/preguntas\/[^/]+\/respuesta$/))) {
+    if (method !== 'PUT') throw missing();
+    roles(req, caregiverRoles);
+    await conversation(req, m[1], { write: true });
+    return next();
+  }
   throw missing('Ruta no encontrada');
 }
