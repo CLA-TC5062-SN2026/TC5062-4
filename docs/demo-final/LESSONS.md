@@ -195,3 +195,10 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** el esquema prohíbe un evento `cambio_estado` con el mismo estado anterior y nuevo.
 - **Solución:** en B4, si la conversación ya está en `CON_INDICACIONES`, se registra solo el evento `indicacion`.
 - **Cómo evitarlo:** prueba de integración de B4 con dos indicaciones seguidas.
+
+### L-24. Ningún endpoint crea `permiso_historial`
+- **Fecha / quién:** 2026-11-23, agente (B3)
+- **Síntoma:** para probar a una médica que lee una conversación sin ser la asignada, la prueba tuvo que insertar la fila de `permiso_historial` con SQL directo.
+- **Causa:** `authorize.js` da lectura por historial compartido, pero la API no tiene forma de crear ese permiso.
+- **Solución:** la prueba de integración inserta la fila con `pool`. La demo no usa historial compartido.
+- **Cómo evitarlo:** no meter ese caso al guion ni a las e2e; si se necesita, sembrarlo en `demo_seed.mjs`.
