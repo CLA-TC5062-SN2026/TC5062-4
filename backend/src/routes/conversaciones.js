@@ -15,6 +15,7 @@ import {
   pageParams,
   transaction,
   validRespuesta,
+  validIndicacion,
 } from "../utils/http.js";
 import { debeIniciarRevision } from "../utils/revision.js";
 
@@ -368,6 +369,9 @@ router.get("/conversaciones/:conversacionId/eventos", async (req, res) => {
     `
     SELECT e.id, e.conversacion_id AS "conversacionId", e.tipo, e.fecha, e.texto,
       e.estado_anterior AS "estadoAnterior", e.estado_nuevo AS "estadoNuevo",
+      CASE WHEN e.tipo = 'indicacion' THEN json_build_object('id',e.id,'texto',e.texto,
+        'decision',e.decision,'plazoDias',e.plazo_dias,'registradaEn',e.fecha,'vigente',e.vigente,
+        'medico',json_build_object('id',u.id,'nombre',u.nombre,'rol','medico')) END AS indicacion,
       CASE WHEN u.id IS NOT NULL THEN json_build_object('id',u.id,'nombre',u.nombre,
         'rol',CASE WHEN u.tipo_usuario = 'cuidador' THEN 'cuidador_principal' ELSE u.tipo_usuario::text END)
       ELSE json_build_object('id','00000000-0000-4000-8000-000000000000','nombre','DAFI','rol','administrador') END AS autor
@@ -681,6 +685,107 @@ router.post("/conversaciones/:conversacionId/mensajes", async (req, res) => {
   res
     .location(`/api/v1/conversaciones/${id}/eventos/${result.value.id}`)
     .status(result.replay ? 201 : 201)
+    .json(result.value);
+});
+
+// Solo la médica asignada llega aquí (authorize.js). Sin correo a la familia (fuera de alcance).
+router.post("/conversaciones/:conversacionId/indicaciones", async (req, res) => {
+  const id = uuidOr404(req.params.conversacionId);
+  const body = requireObject(req.body);
+  const { texto, decision, plazoDias } = validIndicacion(body);
+  const key = req.get("Idempotency-Key");
+  if (!isUuid(key))
+    throw new ApiError(
+      400,
+      "SOLICITUD_MALFORMADA",
+      "Idempotency-Key debe ser UUID",
+    );
+  const author = req.auth.id;
+  const fingerprint = createHash("sha256")
+    .update(`${id}:indicacion:${JSON.stringify(body)}`)
+    .digest("hex");
+
+  const result = await transaction(pool, async (client) => {
+    const saved = await client.query(
+      `
+      INSERT INTO clave_idempotencia (usuario_id, clave, huella_cuerpo)
+      VALUES ($1,$2,$3) ON CONFLICT (usuario_id, clave) DO NOTHING RETURNING id
+    `,
+      [author, key, fingerprint],
+    );
+    if (!saved.rowCount) {
+      const prev = await client.query(
+        `
+        SELECT huella_cuerpo, codigo_http, cuerpo_respuesta
+        FROM clave_idempotencia WHERE usuario_id = $1 AND clave = $2 FOR UPDATE
+      `,
+        [author, key],
+      );
+      if (prev.rows[0].huella_cuerpo !== fingerprint)
+        throw invalid("Idempotency-Key reutilizada con otro cuerpo");
+      if (!prev.rows[0].codigo_http) throw conflict("Solicitud en curso");
+      return { replay: true, value: prev.rows[0].cuerpo_respuesta };
+    }
+    const conv = await client.query(
+      "SELECT estado FROM conversacion WHERE id = $1 FOR UPDATE",
+      [id],
+    );
+    if (!conv.rowCount) throw missing("Conversación no encontrada");
+    const estado = conv.rows[0].estado;
+    if (!["EN_REVISION", "INFO_SOLICITADA", "CON_INDICACIONES"].includes(estado))
+      throw conflict("No se pueden registrar indicaciones en este estado");
+    // La nueva sustituye a la vigente; las anteriores quedan en el historial.
+    await client.query(
+      "UPDATE evento SET vigente = false WHERE conversacion_id = $1 AND tipo = 'indicacion' AND vigente",
+      [id],
+    );
+    const event = await client.query(
+      `
+      INSERT INTO evento (conversacion_id, tipo, autor_id, texto, decision, plazo_dias, vigente)
+      VALUES ($1,'indicacion',$2,$3,$4,$5,true) RETURNING id, fecha
+    `,
+      [id, author, texto, decision, plazoDias],
+    );
+    // CON_INDICACIONES -> CON_INDICACIONES no es cambio de estado (L-23).
+    if (estado !== "CON_INDICACIONES") {
+      await client.query(
+        `
+        INSERT INTO evento (conversacion_id, tipo, autor_id, estado_anterior, estado_nuevo)
+        VALUES ($1, 'cambio_estado', $2, $3, 'CON_INDICACIONES')
+      `,
+        [id, author, estado],
+      );
+    }
+    await client.query(
+      "UPDATE conversacion SET estado = 'CON_INDICACIONES', version = version + 1 WHERE id = $1",
+      [id],
+    );
+    const user = await client.query(
+      "SELECT nombre FROM usuario WHERE id = $1",
+      [author],
+    );
+    const value = {
+      id: event.rows[0].id,
+      texto,
+      decision,
+      plazoDias,
+      medico: { id: author, nombre: user.rows[0].nombre, rol: req.auth.rol },
+      registradaEn: event.rows[0].fecha,
+      vigente: true,
+    };
+    await client.query(
+      `
+      UPDATE clave_idempotencia SET codigo_http = 201, cuerpo_respuesta = $3::jsonb
+      WHERE usuario_id = $1 AND clave = $2
+    `,
+      [author, key, JSON.stringify(value)],
+    );
+    return { replay: false, value };
+  });
+  if (result.replay) res.set("Idempotency-Replayed", "true");
+  res
+    .location(`/api/v1/conversaciones/${id}/eventos/${result.value.id}`)
+    .status(201)
     .json(result.value);
 });
 

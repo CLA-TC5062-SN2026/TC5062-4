@@ -133,6 +133,13 @@ export async function authorize(req, res, next) {
     await conversation(req, id, { write: writable, messages: allowMessages });
     return next();
   }
+  if ((m = match(/^\/conversaciones\/([^/]+)\/indicaciones$/))) {
+    if (method !== 'POST') throw missing();
+    roles(req, ['medico']);
+    // messages: sin lectura por historial compartido; solo la médica asignada pasa.
+    await conversation(req, m[1], { messages: true });
+    return next();
+  }
   if ((m = match(/^\/conversaciones\/([^/]+)\/preguntas\/[^/]+\/respuesta$/))) {
     if (method !== 'PUT') throw missing();
     roles(req, caregiverRoles);

@@ -3,7 +3,7 @@
 // Ejecutar desde backend/: npm test
 import { test, describe, mock } from "node:test";
 import assert from "node:assert/strict";
-import { allowedKeys, transaction, validRol, validRespuesta, ApiError } from "../src/utils/http.js";
+import { allowedKeys, transaction, validRol, validRespuesta, validIndicacion, ApiError } from "../src/utils/http.js";
 
 const PERMITIDOS = Object.freeze({ nombre: "nombre", alergias: "alergias" });
 
@@ -162,5 +162,48 @@ describe("validRespuesta (B2, RespuestaEntrada por tipo)", () => {
     rechaza("numero_u_opcion", NO_MEDIDA, { numero: 38, opcion: "No la he medido" });
     rechaza("opcion", LUGARES, { opcion: "Axila", extra: 1 });
     rechaza("opcion", LUGARES, {});
+  });
+});
+
+describe("validIndicacion (B4, IndicacionNueva)", () => {
+  const rechaza = (body) => assert.throws(() => validIndicacion(body), { status: 422 });
+
+  test("solo texto: recorta y deja decision y plazo en null", () => {
+    assert.deepEqual(validIndicacion({ texto: "  Líquidos y reposo " }), {
+      texto: "Líquidos y reposo",
+      decision: null,
+      plazoDias: null,
+    });
+  });
+
+  test("consulta_presencial con plazo y las otras decisiones sin plazo", () => {
+    assert.deepEqual(validIndicacion({ texto: "Vaya a consulta", decision: "consulta_presencial", plazoDias: 90 }), {
+      texto: "Vaya a consulta",
+      decision: "consulta_presencial",
+      plazoDias: 90,
+    });
+    assert.equal(validIndicacion({ texto: "x".repeat(4000), decision: "acudir_a_urgencias", plazoDias: null }).decision, "acudir_a_urgencias");
+    assert.equal(validIndicacion({ texto: "En casa", decision: null }).decision, null);
+  });
+
+  for (const texto of [undefined, "", "   ", "x".repeat(4001), 5]) {
+    test(`texto inválido (${String(texto).length} caracteres)`, () => rechaza({ texto }));
+  }
+
+  test("decision fuera del catálogo", () => rechaza({ texto: "x", decision: "llamar" }));
+
+  test("consulta_presencial sin plazoDias", () => {
+    rechaza({ texto: "x", decision: "consulta_presencial" });
+    rechaza({ texto: "x", decision: "consulta_presencial", plazoDias: null });
+  });
+
+  for (const plazoDias of [0, 91, 2.5, "7"]) {
+    test(`plazoDias inválido: ${JSON.stringify(plazoDias)}`, () =>
+      rechaza({ texto: "x", decision: "consulta_presencial", plazoDias }));
+  }
+
+  test("plazoDias sin consulta_presencial (la BD lo prohíbe)", () => {
+    rechaza({ texto: "x", plazoDias: 7 });
+    rechaza({ texto: "x", decision: "cuidado_en_casa", plazoDias: 7 });
   });
 });

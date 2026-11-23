@@ -195,3 +195,27 @@ export function validRespuesta(tipo, opciones, body) {
   }
   return valor;
 }
+
+const DECISIONES = ["cuidado_en_casa", "consulta_presencial", "acudir_a_urgencias"];
+
+// Valida IndicacionNueva y devuelve { texto, decision, plazoDias } listos para guardar.
+export function validIndicacion(body) {
+  const texto = typeof body.texto === "string" ? body.texto.trim() : "";
+  assert(
+    texto.length >= 1 && texto.length <= 4000,
+    "texto debe tener entre 1 y 4000 caracteres",
+  );
+  const decision = body.decision ?? null;
+  assert(decision === null || DECISIONES.includes(decision), "decision inválida");
+  const plazoDias = body.plazoDias ?? null;
+  assert(
+    plazoDias === null || (Number.isInteger(plazoDias) && plazoDias >= 1 && plazoDias <= 90),
+    "plazoDias debe ser un entero entre 1 y 90",
+  );
+  // La BD (ck_evento_plazo_consulta) exige el plazo con consulta presencial y solo con ella.
+  assert(
+    (decision === "consulta_presencial") === (plazoDias !== null),
+    "plazoDias es obligatorio con consulta_presencial y solo aplica a ella",
+  );
+  return { texto, decision, plazoDias };
+}
