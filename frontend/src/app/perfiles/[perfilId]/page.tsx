@@ -97,9 +97,8 @@ function Contenido({ perfilId }: { perfilId: string }) {
       try {
         const r = await listarPorPerfil(perfilId, { pagina, limite: POR_PAGINA }, control.signal);
         if (!vigente) return;
-        // shortcut: el backend pagina por fecha de creación; aquí sólo se reordena la página por
-        // última actividad. Ordenar de verdad requiere `orden=ultimoEvento` en el backend.
-        setHistorial([...r.datos].sort((a, b) => b.ultimoEventoEn.localeCompare(a.ultimoEventoEn)));
+        // El backend ya ordena por último evento antes de paginar (L-29).
+        setHistorial(r.datos);
         setTotal(r.paginacion.total);
       } catch (e) {
         if (!vigente || (e instanceof DOMException && e.name === 'AbortError')) return;
