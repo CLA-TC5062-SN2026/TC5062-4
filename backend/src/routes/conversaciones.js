@@ -16,6 +16,7 @@ import {
   transaction,
   validRespuesta,
 } from "../utils/http.js";
+import { debeIniciarRevision } from "../utils/revision.js";
 
 const router = Router();
 const base = `
@@ -267,7 +268,31 @@ router.post("/perfiles/:perfilId/conversaciones", async (req, res) => {
 });
 
 router.get("/conversaciones/:conversacionId", async (req, res) => {
-  const data = await detalle(uuidOr404(req.params.conversacionId));
+  const id = uuidOr404(req.params.conversacionId);
+  let data = await detalle(id);
+  const { rol, id: usuarioId } = req.auth;
+  if (debeIniciarRevision({ rol, usuarioId, estado: data.estado, medicoId: data.medico?.id })) {
+    data = await transaction(pool, async (client) => {
+      // Condicional: si dos lecturas llegan juntas, solo una cambia el estado y registra el evento.
+      const updated = await client.query(
+        `
+        UPDATE conversacion SET estado = 'EN_REVISION', version = version + 1
+        WHERE id = $1 AND estado = 'ENVIADA' AND medico_id = $2 RETURNING id
+      `,
+        [id, usuarioId],
+      );
+      if (updated.rowCount) {
+        await client.query(
+          `
+          INSERT INTO evento (conversacion_id, tipo, autor_id, estado_anterior, estado_nuevo)
+          VALUES ($1, 'cambio_estado', $2, 'ENVIADA', 'EN_REVISION')
+        `,
+          [id, usuarioId],
+        );
+      }
+      return detalle(id, client);
+    });
+  }
   res.set("ETag", `"${data.version}"`).json(data);
 });
 
