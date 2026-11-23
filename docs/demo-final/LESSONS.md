@@ -251,3 +251,10 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** cada corrida crea dos borradores para Mateo; con cinco, la conversación histórica pasa a la página 2 (L-29).
 - **Solución:** correr `npm --prefix backend run demo:reset` antes de cada corrida de e2e.
 - **Cómo evitarlo:** `demo:reset` antes de las e2e y antes de grabar.
+
+### L-32. El detalle devuelve la temperatura como texto
+- **Fecha / quién:** 2026-11-23, agente (F5)
+- **Síntoma:** `GET /conversaciones/{id}` trae `preguntas[].respuesta.numero` como `"38.6"` (texto), mientras que el `PUT` de la respuesta devuelve `38.6` (número).
+- **Causa:** `pg` entrega las columnas `numeric` como texto y `detalle()` no las convierte.
+- **Solución:** el borrador convierte con `Number(...)` al precargar. No se cambió el backend.
+- **Cómo evitarlo:** F7 muestra las respuestas a la médica y debe convertir igual, o se corrige `detalle()` en el backend en una sola línea.
