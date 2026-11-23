@@ -174,3 +174,24 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** los perfiles `iPhone` de Playwright usan WebKit, que es otra descarga.
 - **Solución:** proyecto `movil` con `Desktop Chrome`, viewport 375 × 812, `isMobile` y `hasTouch`. Chromium pesa unos 100 MB y queda en `~/Library/Caches/ms-playwright`.
 - **Cómo evitarlo:** en un clon limpio, correr `(cd frontend && npx playwright install chromium)` antes del primer `e2e`.
+
+### L-21. `demo:reset` cierra las sesiones abiertas
+- **Fecha / quién:** 2026-11-22, agente (B5, PR #66)
+- **Síntoma:** después de `demo:reset`, las ventanas que ya tenían sesión reciben 401 y van a «sesión expirada».
+- **Causa:** el script borra y recrea el esquema, incluida la tabla `sesion`. El backend que ya está corriendo sigue funcionando sin reiniciarse.
+- **Solución:** volver a entrar con las dos cuentas después de cada reset.
+- **Cómo evitarlo:** en el checklist de grabación (D5), el orden es `demo:reset` y después iniciar sesión, nunca al revés.
+
+### L-22. `GET /etiquetas` no devuelve las preguntas generales
+- **Fecha / quién:** 2026-11-22, agente (B5, PR #66)
+- **Síntoma:** bajo `fiebre` salen F1 y F2, pero la conversación tiene tres preguntas (falta G2, «¿Qué le preocupa?»).
+- **Causa:** las preguntas con `es_general = true` aplican a toda conversación y no cuelgan de ninguna etiqueta.
+- **Solución:** el cuestionario del borrador se arma con las preguntas de `GET /conversaciones/{id}`.
+- **Cómo evitarlo:** F5 no usa `/etiquetas` para listar preguntas; su e2e responde las tres.
+
+### L-23. No hay cambio de estado de `CON_INDICACIONES` a sí mismo
+- **Fecha / quién:** 2026-11-22, agente (B5, PR #66)
+- **Síntoma esperado:** la segunda indicación de una conversación falla con un error de la restricción `ck_evento_cambio_estado`.
+- **Causa:** el esquema prohíbe un evento `cambio_estado` con el mismo estado anterior y nuevo.
+- **Solución:** en B4, si la conversación ya está en `CON_INDICACIONES`, se registra solo el evento `indicacion`.
+- **Cómo evitarlo:** prueba de integración de B4 con dos indicaciones seguidas.
