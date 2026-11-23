@@ -8,13 +8,13 @@ import AppShell from '@/components/dafi/Shell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Icono from '@/components/ui/Icono';
-import { Avatar, FilaDato } from '@/components/dafi/Piezas';
+import { Avatar, CampoTipoSangre, FilaDato } from '@/components/dafi/Piezas';
 import { EstadoVacio, TarjetaConversacion } from '@/components/dafi/Bloques';
 import { EsqueletoLista } from '@/components/dafi/Cargando';
 import type { CodigoEtiqueta } from '@/components/dafi/Chips';
 import { useAuth } from '@/context/AuthContext';
 import { actualizarPerfil, borrarPerfil, obtenerPerfil } from '@/services/perfilesService';
-import type { Perfil } from '@/services/perfilesService';
+import type { Perfil, TipoSangre } from '@/services/perfilesService';
 import { listarPorPerfil } from '@/services/conversacionesService';
 import type { Conversacion } from '@/services/conversacionesService';
 import { alertarError, confirmarAccion } from '@/services/alertas';
@@ -54,7 +54,7 @@ function Contenido({ perfilId }: { perfilId: string }) {
   const [errorHistorial, setErrorHistorial] = useState<string | null>(null);
 
   const [editando, setEditando] = useState(false);
-  const [form, setForm] = useState({ nombre: '', alergias: '', medicamentos: '' });
+  const [form, setForm] = useState({ nombre: '', alergias: '', medicamentos: '', tipoSangre: null as TipoSangre | null });
   const [errores, setErrores] = useState<ErroresPerfil>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
@@ -115,7 +115,12 @@ function Contenido({ perfilId }: { perfilId: string }) {
 
   function abrirEdicion() {
     if (!perfil) return;
-    setForm({ nombre: perfil.nombre, alergias: perfil.alergias.join(', '), medicamentos: perfil.medicamentos.join(', ') });
+    setForm({
+      nombre: perfil.nombre,
+      alergias: perfil.alergias.join(', '),
+      medicamentos: perfil.medicamentos.join(', '),
+      tipoSangre: perfil.tipoSangre,
+    });
     setErrores({});
     setErrorGeneral(null);
     setEditando(true);
@@ -237,6 +242,7 @@ function Contenido({ perfilId }: { perfilId: string }) {
             error={errores.nombre}
             required
           />
+          <CampoTipoSangre valor={form.tipoSangre} onChange={(tipoSangre) => setForm({ ...form, tipoSangre })} />
           <Input
             label="Alergias"
             placeholder="Separe con comas (hasta 30)"
@@ -333,6 +339,7 @@ function Contenido({ perfilId }: { perfilId: string }) {
               </div>
             </div>
             <FilaDato clave="Fecha de nacimiento" valor={perfil.fechaNacimiento} />
+            <FilaDato clave="Tipo de sangre" valor={perfil.tipoSangre ?? 'Sin registrar'} />
             <FilaDato clave="Alergias" valor={lista(perfil.alergias)} />
             <FilaDato clave="Medicamentos" valor={lista(perfil.medicamentos)} />
             <FilaDato clave="Resumen de contexto" valor={perfil.resumenActivo ? 'Activado' : 'Desactivado'} />
