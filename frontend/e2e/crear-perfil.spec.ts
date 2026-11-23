@@ -32,7 +32,7 @@ test('crear un perfil y verlo en la lista (pasos 3 y 4 del guion)', async ({ pag
 
   await expect(page).toHaveURL(/\/perfiles$/);
   await expect(page.getByRole('button', { name: new RegExp(`^${nombre}`) })).toBeVisible();
-  await expect(page.getByText('1 perfiles')).toBeVisible();
+  await expect(page.getByText('1 perfil', { exact: true })).toBeVisible();
 });
 
 test('fecha futura muestra el error sin llegar al backend', async ({ page }) => {

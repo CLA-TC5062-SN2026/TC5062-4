@@ -95,7 +95,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 
 Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errores del backend con `alertarError`; revisar a 375 px.
 
-### [ ] F1. Crear cuenta conectada a `POST /auth/register`
+### [x] F1. Crear cuenta conectada a `POST /auth/register`
 - `registrar()` en `services/authService.ts`; la pantalla `crear-cuenta` envía nombre, correo, contraseña, `nombreFamilia`, `declaraciones` y `avisoVersion: 1`, y al terminar deja la sesión iniciada como `login`.
 - El botón no se habilita sin las tres declaraciones; botón en estado «Creando…» durante la petición.
 - **Unit (Vitest):** validación del formulario (correo inválido, contraseña corta, declaración faltante).

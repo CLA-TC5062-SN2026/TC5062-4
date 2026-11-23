@@ -91,7 +91,7 @@ function Contenido() {
       <div className={estilos.cabeceraSeccion}>
         <p className={`${estilos.rotulo} t-label`}>{usuario?.nombre ?? 'Su familia'}</p>
         <p className={`${estilos.apoyo} t-label`}>
-          {cargando ? 'Cargando…' : `${perfiles?.length ?? 0} perfiles`}
+          {cargando ? 'Cargando…' : perfiles?.length === 1 ? "1 perfil" : `${perfiles?.length ?? 0} perfiles`}
         </p>
         <div className={estilos.accionCabecera}>
           <Button onClick={() => router.push('/perfiles/nuevo')}>Agregar un perfil</Button>
