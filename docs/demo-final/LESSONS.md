@@ -1,0 +1,134 @@
+# Lecciones: errores y particularidades del desarrollo
+
+Aquí va cada error raro, configuración que costó trabajo o comportamiento inesperado del proyecto, para que no se repita. Se escribe el mismo día en que aparece, aunque la solución sea provisional.
+
+## Cómo agregar una entrada
+
+Copia la plantilla al final de la sección que corresponda. Una entrada por problema.
+
+```markdown
+### L-XX. Título corto del problema
+- **Fecha / quién:** 2026-11-23, Nombre
+- **Síntoma:** lo que se vio (mensaje de error exacto, pantalla, comando).
+- **Causa:** por qué pasó.
+- **Solución:** qué se hizo (commit o PR si aplica).
+- **Cómo evitarlo:** regla, prueba o paso de checklist que lo previene.
+```
+
+Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.md) sección 8 o a la tarea de [TASKS.md](TASKS.md) que corresponda.
+
+---
+
+## Entorno y configuración
+
+### L-01. El puerto de PostgreSQL no es el del `.env.example`
+- **Fecha / quién:** S07-S08-A2, equipo
+- **Síntoma:** el backend no conecta a la base (`ECONNREFUSED 127.0.0.1:5432`).
+- **Causa:** el contenedor de Docker publica PostgreSQL en el **5434** (`-p 5434:5432`) y `backend/.env.example` trae `DB_PORT=5432`.
+- **Solución:** poner `DB_PORT=5434` en `backend/.env` cuando se usa el contenedor.
+- **Cómo evitarlo:** el README dice qué puerto usar según se instale PostgreSQL local o en Docker.
+
+### L-02. `JWT_SECRET` corto impide arrancar el backend
+- **Fecha / quién:** S09-A1, equipo
+- **Síntoma:** el servidor termina con «JWT_SECRET debe configurarse con al menos 32 bytes aleatorios».
+- **Causa:** `backend/src/server.js` exige 32 bytes o más.
+- **Solución:** generar el secreto con `openssl rand -hex 32`.
+- **Cómo evitarlo:** nunca copiar el valor de ejemplo `replace_with_a_random_secret`.
+
+### L-03. Las cuentas de `seed_demo.sql` no pueden iniciar sesión
+- **Fecha / quién:** S05-S06-A2, equipo
+- **Síntoma:** login de `medico.demo@dafi.invalid` responde 401.
+- **Causa:** el seed SQL guarda `NO_ES_UN_HASH_VALIDO_SOLO_DEMO` como hash; las cuentas existen pero están inutilizables a propósito.
+- **Solución:** correr `seed_medico_demo.mjs` o `seed_cuidador_demo.mjs` para activarlas.
+- **Cómo evitarlo:** usar `demo:reset` (tarea B5), que crea las cuentas de la demo con contraseña conocida.
+
+### L-04. El navegador no debe conocer la URL del backend
+- **Fecha / quién:** S07-S08-A2, Armando
+- **Síntoma:** tentación de poner `http://localhost:4000` en una variable `NEXT_PUBLIC_*`.
+- **Causa:** Next reescribe `/api/v1/*` hacia Express (`frontend/next.config.ts`); el cliente usa rutas relativas y así no hay CORS.
+- **Solución:** `NEXT_PUBLIC_API_URL=/api/v1` y `BACKEND_URL` (sin prefijo) para el destino real.
+- **Cómo evitarlo:** si aparece un error de CORS en la consola, alguien llamó al backend directo en vez de pasar por el proxy.
+
+### L-05. `tsc --noEmit` falla en un clon limpio
+- **Fecha / quién:** S07-S08-A2, Armando
+- **Síntoma:** errores de tipos como `LayoutProps` no encontrado.
+- **Causa:** Next genera esos tipos durante el build.
+- **Solución:** correr `npm --prefix frontend run build` antes de `tsc --noEmit`.
+- **Cómo evitarlo:** usar el build como verificación de tipos (es lo que pide PLAN.md sección 8).
+
+## Backend y contrato
+
+### L-06. Las operaciones con efectos exigen `Idempotency-Key`
+- **Fecha / quién:** S09-A1, equipo
+- **Síntoma:** `400 SOLICITUD_MALFORMADA` «Idempotency-Key debe ser UUID» al enviar una conversación o un mensaje.
+- **Causa:** `POST /envios` y `POST /mensajes` (y `POST /indicaciones`, tarea B4) requieren el encabezado con un UUID.
+- **Solución:** generar `crypto.randomUUID()` por intento y **reutilizarlo** si el usuario reintenta la misma acción; reusar la clave con otro cuerpo da 422.
+- **Cómo evitarlo:** las pruebas de integración de esos endpoints cubren repetición y clave reutilizada.
+
+### L-07. La médica no ve borradores ni familias fuera de su círculo
+- **Fecha / quién:** S05-S06-A2, equipo
+- **Síntoma:** la médica recibe 404 en una conversación que sí existe.
+- **Causa:** un `BORRADOR` es privado de la familia (RF-12) y la médica debe estar en `miembro_circulo` de esa familia (RF-08-AC-3). `authorize.js` responde 404, no 403, para no revelar que el recurso existe.
+- **Solución:** enviar la conversación antes de probar como médica, y verificar que el seed la agrega al círculo.
+- **Cómo evitarlo:** el e2e del guion (Q4) recorre el orden real: crear, responder, enviar y luego abrir como médica.
+
+### L-08. Un perfil `menor` no acepta `compartirConCocuidador`
+- **Fecha / quién:** S07-S08-A2, equipo
+- **Síntoma:** 422 al crear un menor con esa casilla marcada.
+- **Causa:** regla de negocio en `routes/perfiles.js`: los menores ya se comparten con el cocuidador.
+- **Solución:** el formulario oculta la casilla cuando el tipo es `menor`.
+- **Cómo evitarlo:** prueba unitaria de la validación del formulario por tipo (F2).
+
+### L-09. La sesión caduca por inactividad del lado del servidor
+- **Fecha / quién:** S07-S08-A2, equipo
+- **Síntoma:** a media demo, una pantalla responde 401 aunque el token no ha expirado.
+- **Causa:** `authenticate.js` revoca la sesión tras `MINUTOS_SESION` (30) sin actividad.
+- **Solución:** iniciar sesión justo antes de grabar; para ensayos largos se puede subir `MINUTOS_SESION` en el `.env` local.
+- **Cómo evitarlo:** el checklist de grabación (D5) incluye entrar de nuevo con las dos cuentas antes de empezar.
+
+## Frontend
+
+### L-10. Un login fallido se trataba como sesión caducada
+- **Fecha / quién:** 2026-11-08, Francisco (PR #56)
+- **Síntoma:** con la contraseña mala, la app mandaba a «sesión expirada» en vez de decir que las credenciales eran incorrectas.
+- **Causa:** el backend usa `401 NO_AUTENTICADO` tanto para credenciales incorrectas como para sesión revocada, y el interceptor de 401 no distinguía las peticiones públicas.
+- **Solución:** `services/interceptores.ts` ignora el 401 de las peticiones marcadas `publica` (como el login) y `/entrar` muestra un mensaje específico.
+- **Cómo evitarlo:** toda petición nueva sin token (por ejemplo `registrar()` en F1) se marca `publica`. El e2e de login (Q2) prueba la contraseña incorrecta, que además es el error que se muestra en la demo.
+
+### L-11. Pantallas que parecen funcionar pero usan datos fijos
+- **Fecha / quién:** S11-A1, Daniel (matriz de trazabilidad)
+- **Síntoma:** una vista se ve completa pero no cambia aunque cambie la base.
+- **Causa:** importa `frontend/src/lib/datos-demo.ts`.
+- **Solución:** conectar la vista a su servicio y quitar el import.
+- **Cómo evitarlo:** antes de dar por terminada una tarea de frontend, `grep -rn "datos-demo" frontend/src/app` no debe mostrar la pantalla tocada. Al final de la semana el archivo debería poder borrarse.
+
+## Pruebas
+
+### L-12. `node --test` sin argumentos corre todo lo que parezca prueba
+- **Fecha / quién:** 2026-11-22, plan de la demo
+- **Síntoma esperado:** al agregar pruebas de integración, `npm test` empieza a fallar en máquinas sin PostgreSQL.
+- **Causa:** `node --test` busca por defecto archivos como `*.test.js` y todo lo que esté bajo carpetas `test/`.
+- **Solución:** pruebas de integración en `backend/integration/` con extensión `.int.mjs` y su propio script (tarea Q1).
+- **Cómo evitarlo:** después de agregar el arnés, confirmar que `npm test` sigue en verde sin base de datos.
+
+## Git y flujo de trabajo
+
+### L-13. Comandos corridos desde la carpeta equivocada
+- **Fecha / quién:** S09-A1, equipo (retrospectiva)
+- **Síntoma:** `npm` o `git` fallan o actúan sobre otro proyecto.
+- **Causa:** el repo tiene dos paquetes (`backend/` y `frontend/`) y la raíz no tiene `package.json`.
+- **Solución:** usar `npm --prefix backend ...` y `npm --prefix frontend ...` desde la raíz, como en el README.
+- **Cómo evitarlo:** todos los comandos de PLAN.md y TASKS.md usan `--prefix`.
+
+### L-14. Ramas largas terminan en conflictos
+- **Fecha / quién:** S09-A1, equipo (PR #58 y #60)
+- **Síntoma:** varias ramas tocando `backend/src/routes/` el mismo día y merges con conflictos.
+- **Causa:** PRs grandes que tardan en fusionarse.
+- **Solución:** un PR por tarea de TASKS.md, fusionado el mismo día; `git pull --rebase origin main` antes de abrir el PR.
+- **Cómo evitarlo:** regla de PLAN.md sección 8.
+
+---
+
+## Entradas de esta semana
+
+<!-- Agreguen aquí, con número consecutivo desde L-15, lo que aparezca entre el 23 y el 26 de noviembre. -->
