@@ -44,6 +44,9 @@ test('responder lo obligatorio habilita «Enviar» y la conversación queda «En
   await expect(enviar).toBeEnabled();
   await enviar.click();
   await expect(page).toHaveURL(/\/conversaciones$/);
+  // Con 5 por página y pruebas en paralelo puede no estar en la página 1 de «Todas»;
+  // en «Enviada» es la de actividad más reciente.
+  await page.getByRole('radio', { name: 'Enviada' }).click();
   const tarjeta = page.getByRole('button', { name: new RegExp(titulo) });
   await expect(tarjeta).toBeVisible();
   await expect(tarjeta.getByText('ENVIADA', { exact: true })).toBeVisible();

@@ -122,7 +122,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - **Unit (Vitest):** validación de 1 a 3 etiquetas y médico obligatorio.
 - **E2E:** crear conversación para Mateo con «Fiebre» y la médica, y llegar al borrador.
 
-### [ ] F5. Borrador: preguntas de contexto y envío
+### [x] F5. Borrador: preguntas de contexto y envío
 - Muestra las preguntas del detalle (`GET /conversaciones/{id}`), guarda cada respuesta con B2 y refleja `puntosPendientes`.
 - «Enviar» deshabilitado mientras haya pendientes; envía con `enviarConversacion` y `Idempotency-Key` (un UUID por intento de envío, reutilizado si se reintenta).
 - **Unit (Vitest):** cálculo de «listo para enviar» a partir de `puntosPendientes`.

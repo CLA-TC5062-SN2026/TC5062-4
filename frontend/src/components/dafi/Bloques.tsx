@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import Icono from '@/components/ui/Icono';
 import Button from '@/components/ui/Button';
@@ -177,13 +178,13 @@ export function EventoMensaje({
   );
 }
 
-export function EventoCambioEstado({ desde, hasta, hora }: { desde: string; hasta: string; hora: string }) {
+export function EventoCambioEstado({ texto, hora }: { texto: string; hora: string }) {
   return (
     <div className={estilos.cambioEstado}>
       <span className={estilos.cambioLinea} aria-hidden="true" />
-      <span className={`${estilos.cambioPastilla} t-overline`}>
+      <span className={`${estilos.cambioPastilla} t-body-s`}>
         <Icono nombre="check" tam={12} />
-        {desde} → {hasta} · {hora}
+        {texto} · {hora}
       </span>
       <span className={estilos.cambioLinea} aria-hidden="true" />
     </div>
@@ -191,12 +192,14 @@ export function EventoCambioEstado({ desde, hasta, hora }: { desde: string; hast
 }
 
 export function EventoAviso({
-  tipo, titulo, detalle, decision,
+  tipo, titulo, detalle, decision, marca,
 }: {
   tipo: 'solicitud' | 'indicacion';
   titulo: string;
   detalle: string;
   decision?: string;
+  /** Por ejemplo «Vigente» o «Sustituida». */
+  marca?: string;
 }) {
   return (
     <article
@@ -209,6 +212,7 @@ export function EventoAviso({
         <p className="t-body-m-fuerte">{titulo}</p>
         <p className={`${estilos.eventoAvisoDetalle} t-body-s`}>{detalle}</p>
         {decision && <span className={`${estilos.decision} t-overline`}>{decision}</span>}
+        {marca && <span className={`${estilos.decision} t-overline`}>{marca}</span>}
       </div>
     </article>
   );
@@ -297,33 +301,45 @@ export function EstadoVacio({
 }
 
 /* ===================== Compositor de mensaje ===================== */
-export function Compositor({ onEnviar }: { onEnviar?: (texto: string) => void }) {
+export function Compositor({
+  onEnviar, deshabilitado = false, enviando = false, aviso,
+}: {
+  /** Devuelve true si el mensaje quedó enviado y el campo debe vaciarse. */
+  onEnviar?: (texto: string) => Promise<boolean> | boolean | void;
+  deshabilitado?: boolean;
+  enviando?: boolean;
+  /** Error o explicación que va justo encima del campo (L-26). */
+  aviso?: ReactNode;
+}) {
+  const [texto, setTexto] = useState('');
+  const bloqueado = deshabilitado || enviando || !texto.trim();
   return (
-    <form
-      className={estilos.compositor}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const campo = (e.currentTarget.elements.namedItem('mensaje') as HTMLInputElement | null);
-        if (campo?.value.trim()) {
-          onEnviar?.(campo.value.trim());
-          campo.value = '';
-        }
-      }}
-    >
-      <button type="button" className={estilos.compositorBoton} aria-label="Adjuntar una foto">
-        <Icono nombre="camara" tam={20} />
-      </button>
-      <input
-        name="mensaje"
-        className={`${estilos.compositorCampo} t-body-l`}
-        placeholder="Escriba un mensaje"
-        aria-label="Mensaje para el médico"
-        maxLength={4000}
-      />
-      <button type="submit" className={estilos.compositorEnviar} aria-label="Enviar el mensaje">
-        <Icono nombre="enviar" tam={20} />
-      </button>
-    </form>
+    <div className={estilos.compositorPie}>
+      {aviso}
+      <form
+        className={estilos.compositor}
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (bloqueado) return;
+          if (await onEnviar?.(texto)) setTexto('');
+        }}
+      >
+        <input
+          name="mensaje"
+          className={`${estilos.compositorCampo} t-body-l`}
+          placeholder="Escriba un mensaje"
+          aria-label="Mensaje para el médico"
+          maxLength={4000}
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          disabled={deshabilitado}
+          readOnly={enviando}
+        />
+        <button type="submit" className={estilos.compositorEnviar} aria-label="Enviar el mensaje" disabled={bloqueado}>
+          <Icono nombre="enviar" tam={20} />
+        </button>
+      </form>
+    </div>
   );
 }
 

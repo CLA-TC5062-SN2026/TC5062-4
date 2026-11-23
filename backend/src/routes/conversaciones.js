@@ -172,7 +172,7 @@ async function list(req, res, where, params) {
   );
   const result = await pool.query(
     `
-    ${base} ${conditions} ORDER BY c.creada_en DESC
+    ${base} ${conditions} ORDER BY c.ultimo_evento_en DESC, c.creada_en DESC
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `,
     [...params, limite, offset],

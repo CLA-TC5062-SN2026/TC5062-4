@@ -258,3 +258,17 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** `pg` entrega las columnas `numeric` como texto y `detalle()` no las convierte.
 - **Solución:** el borrador convierte con `Number(...)` al precargar. No se cambió el backend.
 - **Cómo evitarlo:** F7 muestra las respuestas a la médica y debe convertir igual, o se corrige `detalle()` en el backend en una sola línea.
+
+### L-33. Con la máquina saturada falla el login y se caen las e2e
+- **Fecha / quién:** 2026-11-23, agente y Francisco (F6)
+- **Síntoma:** Francisco no pudo entrar a la app; el backend registró `Connection terminated due to connection timeout` en `auth.js`, y una corrida de e2e tuvo 16 timeouts en todas las pruebas.
+- **Causa:** carga promedio de la Mac por encima de 90 (procesos ajenos a DAFI más e2e en paralelo); Postgres en Docker no alcanzaba a responder.
+- **Solución:** esperar a que baje la carga y repetir; con carga normal pasan las 44 e2e.
+- **Cómo evitarlo:** antes de grabar, cerrar lo demás, revisar `uptime` y no correr e2e ni agentes al mismo tiempo.
+
+### L-34. Al cambiar un filtro, la lista anterior sigue en pantalla un instante
+- **Fecha / quién:** 2026-11-23, agente (F6)
+- **Síntoma:** una e2e de `/conversaciones` fallaba a ratos: tras tocar «En revisión» encontraba tarjetas de otros estados.
+- **Causa:** la lista de «Todas» se queda visible hasta que llega la respuesta filtrada.
+- **Solución:** la prueba espera a que todas las tarjetas visibles sean del estado elegido.
+- **Cómo evitarlo:** en e2e de listas con filtro, esperar por el dato filtrado, no solo por que haya una tarjeta visible.

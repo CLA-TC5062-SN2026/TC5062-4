@@ -33,7 +33,7 @@ export interface FiltrosConversacion {
   limite?: number;
 }
 
-function consulta(filtros: FiltrosConversacion = {}): string {
+function consulta(filtros: object = {}): string {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(filtros)) {
     if (v !== undefined && v !== null && v !== '') p.set(k, String(v));
@@ -112,8 +112,56 @@ export function crearConversacion(perfilId: string, datos: NuevaConversacion) {
   return peticion<Conversacion>(`/perfiles/${perfilId}/conversaciones`, { method: 'POST', body: datos });
 }
 
-export function listarEventos(conversacionId: string, signal?: AbortSignal) {
-  return peticion<Pagina<unknown>>(`/conversaciones/${conversacionId}/eventos`, { signal });
+export type Decision = 'cuidado_en_casa' | 'consulta_presencial' | 'acudir_a_urgencias';
+
+export interface Indicacion {
+  id: string;
+  texto: string;
+  decision: Decision | null;
+  plazoDias: number | null;
+  registradaEn: string;
+  vigente: boolean;
+  medico: { id: string; nombre: string; rol: string };
+}
+
+export interface Evento {
+  id: string;
+  conversacionId: string;
+  tipo: 'respuesta' | 'mensaje' | 'foto' | 'solicitud_informacion' | 'indicacion' | 'cambio_estado' | 'cita_marcada';
+  fecha: string;
+  texto: string | null;
+  estadoAnterior: EstadoConversacion | null;
+  estadoNuevo: EstadoConversacion | null;
+  autor: { id: string; nombre: string; rol: string };
+  /** Sólo en los eventos de tipo `indicacion`; null en los demás. */
+  indicacion: Indicacion | null;
+}
+
+/** El backend devuelve los eventos del más antiguo al más reciente; `limite` admite hasta 100. */
+export function listarEventos(conversacionId: string, filtros: { pagina?: number; limite?: number } = {}, signal?: AbortSignal) {
+  return peticion<Pagina<Evento>>(`/conversaciones/${conversacionId}/eventos${consulta(filtros)}`, { signal });
+}
+
+export interface MensajeEnviado {
+  id: string;
+  conversacionId: string;
+  tipo: 'mensaje';
+  autor: { id: string; nombre: string; rol: string };
+  fecha: string;
+  texto: string | null;
+  fotoIds: string[];
+}
+
+/**
+ * Igual que el envío del borrador: la API exige una Idempotency-Key (UUID) y
+ * devuelve el primer resultado si recibe la misma clave con el mismo cuerpo.
+ */
+export function enviarMensaje(conversacionId: string, texto: string, idempotencyKey: string) {
+  return peticion<MensajeEnviado>(`/conversaciones/${conversacionId}/mensajes`, {
+    method: 'POST',
+    body: { texto },
+    idempotencyKey,
+  });
 }
 
 /**
