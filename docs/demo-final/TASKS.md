@@ -115,7 +115,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - **Unit (Vitest):** construcción del `PATCH` (solo campos cambiados).
 - **E2E:** editar y ver el cambio tras recargar; borrar y confirmar que desaparece de la lista; cancelar el borrado no borra; URL con id inventado muestra el mensaje de no encontrado.
 
-### [ ] F4. Nueva conversación
+### [x] F4. Nueva conversación
 - `perfiles/[perfilId]/conversaciones/nueva`: etiquetas de `GET /etiquetas` (1 a 3), médica de `GET /familias/{id}/miembros?rol=medico` (B1), título y prioridad. Aviso fijo de emergencias visible (`GET /avisos/{codigo}`).
 - Al crear, navega al borrador de esa conversación (definir la ruta con id, por ejemplo `/conversaciones/{id}/borrador`; hoy `conversaciones/borrador` no recibe id).
 - Sin médicos en el círculo: «Agregue primero a un médico de su confianza».
