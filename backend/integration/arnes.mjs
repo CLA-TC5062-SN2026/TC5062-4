@@ -7,9 +7,9 @@
  * _test, porque el arnés borra y recrea el esquema public.
  */
 import 'dotenv/config';
-import { readFile } from 'node:fs/promises';
 import { randomBytes, randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import { recrearEsquema, peticion, insertarMedica } from '../scripts/demo_seed.mjs';
 
 const env = process.env;
 const DB_NAME = env.TEST_DB_NAME || 'dafi_test';
@@ -25,18 +25,14 @@ env.DB_NAME = DB_NAME;
 env.JWT_SECRET ||= randomBytes(32).toString('hex');
 
 const { default: app } = await import('../src/app.js');
-const { default: pool } = await import('../src/config/database.js');
+export const { default: pool } = await import('../src/config/database.js');
 
 export const CONTRASENA = 'PruebaInt2026!';
 let server;
-let base;
+export let base;
 
 export async function iniciar() {
-  const esquema = await readFile(new URL('../../S05_S06_A1/esquema_bd.sql', import.meta.url), 'utf8');
-  // El esquema no es re-ejecutable (CREATE TYPE/TABLE sin IF NOT EXISTS): se parte de public vacío.
-  await pool.query('DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;');
-  await pool.query(esquema);
-  await pool.query(await readFile(new URL('../scripts/seed_auth_demo.sql', import.meta.url), 'utf8'));
+  await recrearEsquema(pool);
   server = app.listen(0);
   await new Promise((resolve, reject) => server.once('listening', resolve).once('error', reject));
   base = `http://127.0.0.1:${server.address().port}/api/v1`;
@@ -48,18 +44,7 @@ export async function cerrar() {
   await pool.end();
 }
 
-export async function api(ruta, { method = 'GET', token, body } = {}) {
-  const res = await fetch(base + ruta, {
-    method,
-    headers: {
-      ...(body !== undefined && { 'Content-Type': 'application/json' }),
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const text = await res.text();
-  return { status: res.status, body: text ? JSON.parse(text) : null };
-}
+export const api = (ruta, opciones) => peticion(base, ruta, opciones);
 
 const correoFicticio = (prefijo) => `${prefijo}.${randomUUID().slice(0, 8)}@dafi.invalid`;
 
@@ -84,13 +69,9 @@ export async function crearCuidadora() {
 // activos, con contraseña conocida y en el círculo de la familia (L-03, L-07).
 export async function crearMedicaEnCirculo(familiaId) {
   const correo = correoFicticio('medica');
-  const hash = await bcrypt.hash(CONTRASENA, 4);
-  const { rows: [{ id }] } = await pool.query(`
-    INSERT INTO usuario (tipo_usuario, nombre, correo, hash_contrasena, correo_verificado)
-    VALUES ('medico', 'Médica de Prueba', $1, $2, true) RETURNING id
-  `, [correo, hash]);
-  await pool.query("INSERT INTO medico (id, especialidad, version_terminos) VALUES ($1, 'Pediatría', 1)", [id]);
-  await pool.query('INSERT INTO miembro_circulo (familia_id, medico_id) VALUES ($1, $2)', [familiaId, id]);
+  const id = await insertarMedica(pool, {
+    nombre: 'Médica de Prueba', correo, hash: await bcrypt.hash(CONTRASENA, 4), especialidad: 'Pediatría', familiaId,
+  });
   return { id, correo, contrasena: CONTRASENA };
 }
 
