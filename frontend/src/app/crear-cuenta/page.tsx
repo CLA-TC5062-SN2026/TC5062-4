@@ -112,13 +112,6 @@ export default function PaginaCrearCuenta() {
             onSubmit={alEnviar}
             noValidate
           >
-            {errorGeneral && (
-              <p className={estilos.errorGeneral} role="alert">
-                <Icono nombre="alerta" tam={16} />
-                <span className="t-body-s">{errorGeneral}</span>
-              </p>
-            )}
-
             <Input
               label="Nombre completo"
               autoComplete="name"
@@ -183,6 +176,14 @@ export default function PaginaCrearCuenta() {
                 Al crear la cuenta se crea también su familia y usted queda como cuidador principal.
               </span>
             </p>
+
+            {/* Junto al botón: arriba del formulario queda fuera de la vista en un teléfono. */}
+            {errorGeneral && (
+              <p className={estilos.errorGeneral} role="alert">
+                <Icono nombre="alerta" tam={16} />
+                <span className="t-body-s">{errorGeneral}</span>
+              </p>
+            )}
 
             {/* El backend rechaza el registro si falta cualquiera de las tres
                 declaraciones, así que el botón no se habilita hasta tenerlas. */}

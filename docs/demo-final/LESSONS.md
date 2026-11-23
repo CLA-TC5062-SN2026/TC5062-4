@@ -209,3 +209,17 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** la consulta de `/eventos` no seleccionaba esas columnas, aunque el contrato define `Evento.indicacion`.
 - **Solución:** `/eventos` devuelve `indicacion` (objeto `Indicacion`) en los eventos de ese tipo y `null` en los demás. `GET /conversaciones/{id}` sigue sin `indicacionVigente`.
 - **Cómo evitarlo:** F6 y F7 leen la indicación desde `/eventos`. Ojo: `cambio_estado` e `indicacion` nacen en la misma transacción con la misma `fecha`, así que su orden entre sí no está garantizado.
+
+### L-26. El error del formulario quedaba tapado en el teléfono
+- **Fecha / quién:** 2026-11-23, agente (F1)
+- **Síntoma:** en «Crear cuenta» a 375 px, el mensaje «Ya existe una cuenta con este correo.» no se veía tras pulsar el botón. La e2e pasaba porque Playwright considera visible un elemento aunque lo tape el encabezado fijo.
+- **Causa:** el mensaje estaba al inicio del formulario y el botón al final; al enviar, el inicio queda debajo del encabezado.
+- **Solución:** el error general se muestra justo encima del botón.
+- **Cómo evitarlo:** en formularios más altos que la pantalla, el error general va junto al botón. Revisar cada pantalla con captura a 375 px además de la e2e.
+
+### L-27. Los servidores de desarrollo no sobreviven entre sesiones
+- **Fecha / quién:** 2026-11-23, agente (F1)
+- **Síntoma:** las 12 e2e fallaron con `net::ERR_CONNECTION_REFUSED at http://localhost:3000`.
+- **Causa:** backend y frontend se habían detenido; `playwright.config.ts` no los levanta.
+- **Solución:** levantar ambos (`npm run dev` en `backend/` y `frontend/`) y repetir.
+- **Cómo evitarlo:** antes de correr e2e, comprobar `curl localhost:4000/api/v1/health` y `curl localhost:3000`. Antes de grabar, lo mismo.

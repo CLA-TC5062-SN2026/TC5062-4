@@ -70,7 +70,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 - **Integration:** primera lectura de la médica cambia estado y crea 1 evento; segunda lectura no crea otro; lectura de la cuidadora no cambia nada; médica con historial compartido pero no asignada no dispara la transición.
 - **E2E:** cubierto por F7 (la tarjeta pasa de «Enviada» a «En revisión»).
 
-### [ ] B4. `POST /conversaciones/{id}/indicaciones`
+### [x] B4. `POST /conversaciones/{id}/indicaciones`
 - Solo la médica asignada; desde `EN_REVISION`, `INFO_SOLICITADA` o `CON_INDICACIONES`; deja la conversación en `CON_INDICACIONES` y crea un evento. Contrato en línea 1508 (`IndicacionNueva`). Exige `Idempotency-Key` como `/mensajes`.
 - `consulta_presencial` sin `plazoDias` es 422; en `CERRADA` o `BORRADOR`, 409.
 - Sin notificaciones por correo (fuera de alcance; anotar la desviación en el PR).
