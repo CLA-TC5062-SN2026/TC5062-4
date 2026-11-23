@@ -265,6 +265,24 @@ npm --prefix frontend run build
 
 El frontend no declara un script separado de pruebas ni de `typecheck`; el build es la validación disponible para TypeScript. No hay un script reproducible de Newman declarado en los manifests. Estos comandos describen cómo ejecutar las comprobaciones; no afirman que se hayan ejecutado o aprobado en esta revisión.
 
+### Pruebas de integración
+
+Las pruebas de [backend/integration/](backend/integration/) (archivos `*.int.mjs`) levantan la API en un puerto libre y la llaman con `fetch` contra una base PostgreSQL real. `npm --prefix backend test` no las ejecuta, así que sigue funcionando sin base de datos.
+
+Crea una sola vez la base de prueba. Con el contenedor de Docker del proyecto:
+
+```bash
+docker exec dafi-postgres createdb -U dafi dafi_test
+```
+
+La conexión usa las variables `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, `TEST_DB_PASSWORD` y `TEST_DB_NAME`. Si no se definen, toma host, puerto, usuario y contraseña de `DB_*` en `backend/.env`, y el nombre `dafi_test`; nunca usa `DB_NAME`. El arnés **se niega a correr** si el nombre de la base no termina en `_test`, porque borra y recrea el esquema `public` con [S05_S06_A1/esquema_bd.sql](S05_S06_A1/esquema_bd.sql) y el aviso de [seed_auth_demo.sql](backend/scripts/seed_auth_demo.sql) antes de cada archivo de prueba. Los usuarios que crea son ficticios (`@dafi.invalid`).
+
+```bash
+npm --prefix backend run test:integration
+```
+
+Para usar otra base de prueba, por ejemplo `TEST_DB_NAME=dafi_ci_test npm --prefix backend run test:integration`. Los ayudantes `crearCuidadora()`, `crearMedicaEnCirculo(familiaId)`, `login(correo)` y `api(ruta, opciones)` están en [backend/integration/arnes.mjs](backend/integration/arnes.mjs).
+
 ## API y documentación
 
 - [SRS del equipo](S03_A1/SRS_equipo.md) y [backlog](S03_A1/backlog_completo.md).
