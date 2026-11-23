@@ -263,7 +263,16 @@ Build frontend y validaciones de Next.js/TypeScript:
 npm --prefix frontend run build
 ```
 
-El frontend no declara un script separado de pruebas ni de `typecheck`; el build es la validación disponible para TypeScript. No hay un script reproducible de Newman declarado en los manifests. Estos comandos describen cómo ejecutar las comprobaciones; no afirman que se hayan ejecutado o aprobado en esta revisión.
+Pruebas e2e del frontend con Playwright ([frontend/e2e/](frontend/e2e/)), en Chromium de escritorio y en Chromium a 375 × 812. No arrancan servidores: antes hay que tener el stack corriendo (backend en :4000, frontend en :3000, PostgreSQL) y los datos de demo cargados con `demo:reset` (mientras ese script no exista, `node scripts/seed_integracion_demo.mjs` desde `backend/`). La primera vez se instala el navegador:
+
+```bash
+(cd frontend && npx playwright install chromium)
+npm --prefix frontend run e2e
+```
+
+Las pruebas de la médica leen `E2E_MEDICA_CORREO` y `E2E_MEDICA_CONTRASENA` hasta que su cuenta exista en el seed de demo.
+
+El frontend no declara un script de pruebas unitarias ni de `typecheck`; el build es la validación disponible para TypeScript. No hay un script reproducible de Newman declarado en los manifests. Estos comandos describen cómo ejecutar las comprobaciones; no afirman que se hayan ejecutado o aprobado en esta revisión.
 
 ## API y documentación
 
