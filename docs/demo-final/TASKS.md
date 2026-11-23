@@ -55,7 +55,7 @@ Los códigos de error siguen el formato del proyecto: `{ codigo, mensaje, correl
 - **Integration:** la cuidadora ve a su médica con `?rol=medico`; lista vacía si no hay médicos; cuidadora de otra familia recibe 404; sin token, 401.
 - **E2E:** cubierto por F4 (el selector muestra a la médica).
 
-### [ ] B2. `PUT /conversaciones/{id}/preguntas/{preguntaId}/respuesta`
+### [x] B2. `PUT /conversaciones/{id}/preguntas/{preguntaId}/respuesta`
 - Guarda o reemplaza la respuesta de una pregunta de contexto según `tipoRespuesta` (opción, texto o número). Contrato en línea 1272.
 - Solo en `BORRADOR` (en otro estado, 409 `TRANSICION_INVALIDA`); pregunta que no aplica a las etiquetas de la conversación, 404; valor con tipo equivocado, 422.
 - Al guardar, `puntosPendientes` del detalle se actualiza.
