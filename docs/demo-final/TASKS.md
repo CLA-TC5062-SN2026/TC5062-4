@@ -128,7 +128,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - **Unit (Vitest):** cálculo de «listo para enviar» a partir de `puntosPendientes`.
 - **E2E:** responder todo y enviar; la conversación aparece como «Enviada» en `/conversaciones`.
 
-### [ ] F6. Conversaciones de la cuidadora: lista e hilo
+### [x] F6. Conversaciones de la cuidadora: lista e hilo
 - `/conversaciones` con `listarConversaciones` (estado, perfil, médica, último evento), ordenadas por último evento.
 - `/conversaciones/[id]` con detalle y eventos (`listarEventos`): mensajes, cambios de estado e indicaciones; caja para enviar mensaje (`POST /mensajes` con `Idempotency-Key`), deshabilitada en `BORRADOR` y `CERRADA`.
 - **E2E:** tras la indicación de la médica, la cuidadora la ve en el hilo y responde con un mensaje (paso 11).
@@ -143,6 +143,20 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - Recorrer todas las pantallas tocadas y confirmar que 401 lleva a sesión expirada, y 403, 404, 409 y 422 muestran el mensaje del backend.
 - **E2E:** salir regresa a `/entrar` y `/perfiles` vuelve a pedir login.
 
+
+### [ ] F9. Tipo de sangre en el perfil (pedido del PO, 23 nov)
+- Campo real y opcional `tipoSangre` (A+, A-, B+, B-, AB+, AB-, O+, O- o sin dato): columna en `esquema_bd.sql`, validación en el backend, `POST` y `PATCH` de perfil, y campo en crear, editar y ver perfil.
+- El PO aprobó modificar `openapi_equipo.yaml` y `esquema_bd.sql` para esto. No está en el SRS: se declara como desviación en la matriz (D1).
+- **Unit:** validador del tipo de sangre. **Integration:** crear y editar con valor válido, valor inválido da 422. **E2E:** guardar el tipo de sangre y verlo tras recargar.
+
+### [ ] F10. Pantalla informativa «Documentos» (pedido del PO, 23 nov)
+- Botón «Docs (recetas, análisis…)» en el detalle del perfil que abre una pantalla marcada como «Próximamente»: explica que la familia podrá guardar recetas, análisis e imágenes en DAFI y compartirlos con su médico. No guarda archivos.
+- Se redacta como archivo personal de la familia, no como expediente clínico (el SRS excluye recetas y documentos con validez de expediente, RD-04). Desviación declarada en D1.
+- **E2E:** el botón abre la pantalla y se puede volver al perfil.
+
+### [ ] F11. Preguntas de contexto para «Piel» en el seed (pedido del PO, 23 nov)
+- `demo_seed.mjs` carga las preguntas de piel definidas en el SRS (RF-10), para que un borrador con «Piel» no salga vacío.
+- **Integration:** el seed sigue corriendo dos veces sin duplicar. **E2E:** un borrador con «Piel» muestra sus preguntas.
 ---
 
 ## 3. E2E del guion completo

@@ -272,3 +272,17 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** la lista de «Todas» se queda visible hasta que llega la respuesta filtrada.
 - **Solución:** la prueba espera a que todas las tarjetas visibles sean del estado elegido.
 - **Cómo evitarlo:** en e2e de listas con filtro, esperar por el dato filtrado, no solo por que haya una tarjeta visible.
+
+### L-35. La médica lee alergias y medicamentos con `GET /perfiles/{id}`
+- **Fecha / quién:** 2026-11-23, agente (F7)
+- **Síntoma:** `GET /conversaciones/{id}` solo trae `perfil { id, nombre }`; faltaban edad, alergias y medicamentos para el detalle de la médica.
+- **Causa:** el detalle de la conversación no incluye el contexto del perfil.
+- **Solución:** `authorize.js` ya permite a la médica `GET /perfiles/{id}` cuando tiene una conversación enviada de ese perfil; la pantalla hace esa segunda llamada. Sin cambios de backend.
+- **Cómo evitarlo:** antes de pedir un cambio de backend, revisar en `authorize.js` qué rutas existentes puede usar cada rol.
+
+### L-36. Capturas tomadas justo después de un clic salen deslavadas o tapadas
+- **Fecha / quién:** 2026-11-23, agente (F7)
+- **Síntoma:** en las capturas a 375 px los chips se veían pálidos y un botón quedaba bajo la caja de mensaje fija.
+- **Causa:** la captura caía a mitad de la transición de color de 150 ms, y `scrollIntoViewIfNeeded` da por visible lo que tapa una barra fija (igual que L-26).
+- **Solución:** esperar unos 300 ms tras el clic y desplazar hasta el final antes de capturar.
+- **Cómo evitarlo:** mismo cuidado al grabar el video: pausar un instante tras cada clic.
