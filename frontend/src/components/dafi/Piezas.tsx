@@ -44,14 +44,15 @@ export function Avatar({
 export const TEXTO_EMERGENCIAS =
   'DAFI no atiende emergencias. Si la persona tiene dificultad para respirar, pierde el conocimiento o la situación le preocupa, llame al 911 o acuda a urgencias.';
 
-export function AvisoEmergencias() {
+/** `texto` viene de GET /avisos/emergencias; mientras carga o si falla, se usa el fijo. */
+export function AvisoEmergencias({ texto = TEXTO_EMERGENCIAS }: { texto?: string }) {
   return (
     // role="note" y no "alert": es un aviso permanente del catálogo, no algo
     // que acaba de ocurrir. Un "alert" interrumpiría al lector en cada pantalla.
     <aside className={estilos.aviso} role="note" aria-label="Aviso de emergencias">
       <Icono nombre="alerta" tam={18} className={estilos.avisoIcono} />
       <div className={estilos.avisoCuerpo}>
-        <p className="t-body-s">{TEXTO_EMERGENCIAS}</p>
+        <p className="t-body-s">{texto}</p>
         <a className={`${estilos.llamar911} t-label`} href="tel:911">
           <Icono nombre="telefono" tam={14} />
           Llamar al 911

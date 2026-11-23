@@ -54,6 +54,18 @@ export function obtenerConversacion(conversacionId: string, signal?: AbortSignal
   return peticion<Conversacion>(`/conversaciones/${conversacionId}`, { signal });
 }
 
+export interface NuevaConversacion {
+  titulo: string;
+  etiquetas: string[];
+  medicoId: string;
+  prioridadIndicada: boolean;
+}
+
+/** El backend no pide Idempotency-Key aquí; el botón en estado de carga evita el doble envío. */
+export function crearConversacion(perfilId: string, datos: NuevaConversacion) {
+  return peticion<Conversacion>(`/perfiles/${perfilId}/conversaciones`, { method: 'POST', body: datos });
+}
+
 export function listarEventos(conversacionId: string, signal?: AbortSignal) {
   return peticion<Pagina<unknown>>(`/conversaciones/${conversacionId}/eventos`, { signal });
 }
