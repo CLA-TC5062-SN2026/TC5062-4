@@ -12,34 +12,13 @@
  * los perfiles que falten.
  */
 import 'dotenv/config';
+import { CUENTA, PERFILES } from './demo_seed.mjs';
 
 if (process.env.NODE_ENV === 'production') {
   throw new Error('No ejecutar seed_integracion_demo.mjs en producción');
 }
 
 const API = process.env.API_URL ?? `http://localhost:${process.env.PORT || 4000}/api/v1`;
-
-const CUENTA = {
-  nombre: 'María Ruán Aguilar',
-  correo: 'maria.ruan@correo.com',
-  contrasena: 'DafiDemo2026!',
-  nombreFamilia: 'Familia Ruán',
-  avisoVersion: 1,
-  declaraciones: {
-    mayorDeEdad: true,
-    consentimientoDatosPropios: true,
-    consentimientoDatosMenores: true,
-  },
-};
-
-const PERFILES = [
-  { tipo: 'menor', nombre: 'Mateo Ruán', fechaNacimiento: '2021-03-14',
-    alergias: ['Penicilina'], medicamentos: ['Salbutamol'] },
-  { tipo: 'propio', nombre: 'María Ruán', fechaNacimiento: '1988-01-23',
-    alergias: [], medicamentos: [], compartirConCocuidador: true },
-  { tipo: 'adulto_representado', nombre: 'Rosa Aguilar', fechaNacimiento: '1955-06-02',
-    correo: 'rosa.aguilar@correo.com', alergias: ['Sulfas'], medicamentos: ['Metformina'] },
-];
 
 async function pedir(ruta, { method = 'GET', body, token } = {}) {
   const cabeceras = { Accept: 'application/json' };

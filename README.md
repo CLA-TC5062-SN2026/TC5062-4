@@ -150,6 +150,31 @@ npm --prefix backend ci
 npm --prefix frontend ci
 ```
 
+### Reiniciar la base de demo (`demo:reset`)
+
+**Este comando borra toda la base configurada en `backend/.env`** (elimina y recrea el esquema `public`) y la deja lista para la demo. No necesita el backend activo: levanta la API dentro del mismo proceso en un puerto libre. Ejecútalo desde la raíz:
+
+```bash
+npm --prefix backend run demo:reset
+```
+
+Se niega a correr con `NODE_ENV=production`. Si `DB_HOST` no es `localhost`, `127.0.0.1` ni `::1`, pide escribir el nombre de la base para confirmar y, sin terminal interactiva, no hace nada. La lógica está en [demo_seed.mjs](backend/scripts/demo_seed.mjs) y carga:
+
+- el esquema, el aviso de privacidad ficticio versión 1 y el aviso de emergencias;
+- la cuenta de María con la «Familia Ruán» y sus perfiles Mateo Ruán, María Ruán y Rosa Aguilar, creados mediante el API;
+- la Dra. Laura Méndez Ortiz (Pediatría), activa y en el círculo de la familia;
+- las etiquetas `fiebre`, `piel` y `respiratorio` y las preguntas de contexto F1, F2 y F3 de fiebre (F3, «¿Desde cuándo tiene fiebre?», se agregó para la demo y no está en el SRS);
+- una conversación de Mateo de hace unas dos semanas y media, ya con indicaciones, para que el historial no salga vacío.
+
+Credenciales de demo, solo para uso local y con datos ficticios:
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Cuidadora principal | `maria.ruan@correo.com` | `DafiDemo2026!` |
+| Médica | `laura.mendez@correo.com` | `DafiDemo2026!` |
+
+Si el backend ya estaba corriendo, no hace falta reiniciarlo; las sesiones abiertas antes del reinicio dejan de ser válidas y hay que volver a entrar.
+
 ### Activar cuentas ficticias para pruebas de rol
 
 [seed_medico_demo.mjs](backend/scripts/seed_medico_demo.mjs) activa el usuario médico ficticio creado por `seed_demo.sql`, por ejemplo, para probar una respuesta 403. [seed_cuidador_demo.mjs](backend/scripts/seed_cuidador_demo.mjs) activa el cuidador ficticio de la misma semilla para escenarios de regresión S09-A1. Son opcionales, solo locales, requieren las dependencias del backend, `backend/.env`, la base preparada y el seed base aplicado, y no necesitan ejecutarse en cada arranque. Ambos scripts bloquean su ejecución cuando `NODE_ENV` es `production`. Los bloques siguientes parten de la raíz y cambian a `backend` únicamente durante cada ejecución.

@@ -132,7 +132,7 @@ npm --prefix backend run dev
 npm --prefix frontend run dev
 ```
 
-`demo:reset` no existe todavía: es la tarea B5 de TASKS.md (recrea el esquema y carga el seed de demo). Mientras tanto vale el procedimiento de la sección 8 de `S07_S08_A2/capa_servicios.md`.
+`demo:reset` (tarea B5) borra toda la base de `backend/.env`, recrea el esquema y carga el seed de demo; el README raíz trae las credenciales.
 
 ## 10. Riesgos
 
