@@ -108,7 +108,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - **E2E:** crear un perfil y verlo en la lista (pasos 3 y 4 del guion); fecha futura muestra el error de validación sin llegar al backend.
 - **Integration (backend, ya existe la regla):** `POST` con fecha futura responde 422; queda como respaldo si el cliente deja pasar algo.
 
-### [ ] F3. Detalle de perfil real con editar y borrar
+### [x] F3. Detalle de perfil real con editar y borrar
 - `perfiles/[perfilId]` deja de usar `datos-demo.ts`: carga con `obtenerPerfil` y el historial con `listarPorPerfil`.
 - Editar alergias, medicamentos y nombre con `actualizarPerfil`; borrar con `borrarPerfil` tras `confirmarAccion` y regreso a `/perfiles`.
 - Perfil inexistente o de otra familia muestra «Perfil no encontrado», no pantalla en blanco.

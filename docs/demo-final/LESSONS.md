@@ -237,3 +237,17 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** `GET /perfiles/{id}/conversaciones` ordena por `creada_en DESC` antes de paginar.
 - **Solución:** F3 reordena por `ultimoEventoEn` solo dentro de cada página (5 por página).
 - **Cómo evitarlo:** con los datos de la demo no se nota (menos de 5 conversaciones por perfil). Si se quiere el orden correcto entre páginas, hay que ordenar en el backend.
+
+### L-30. `tsc` falla tras mover una ruta por tipos viejos de `next build`
+- **Fecha / quién:** 2026-11-23, agente (F4)
+- **Síntoma:** `npx tsc --noEmit` reportó errores en `frontend/.next/types/validator.ts` que apuntaban a `conversaciones/borrador`, una ruta que ya no existe.
+- **Causa:** un `next build` anterior dejó tipos generados en `.next/types`; el servidor de desarrollo escribe los suyos en `.next/dev/types` y no limpia los otros.
+- **Solución:** quitar `frontend/.next/types` (no está versionado) y repetir `tsc`.
+- **Cómo evitarlo:** después de mover o borrar una ruta, borrar `.next/types` o correr `npm --prefix frontend run build` con el servidor de desarrollo detenido.
+
+### L-31. Las e2e dejan borradores en Mateo y terminan rompiendo otra prueba
+- **Fecha / quién:** 2026-11-23, agente (F4)
+- **Síntoma esperado:** tras tres corridas de e2e sin `demo:reset`, falla la prueba que busca «Fiebre desde anoche» en el historial de Mateo.
+- **Causa:** cada corrida crea dos borradores para Mateo; con cinco, la conversación histórica pasa a la página 2 (L-29).
+- **Solución:** correr `npm --prefix backend run demo:reset` antes de cada corrida de e2e.
+- **Cómo evitarlo:** `demo:reset` antes de las e2e y antes de grabar.
