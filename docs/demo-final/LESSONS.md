@@ -286,3 +286,17 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** la captura caía a mitad de la transición de color de 150 ms, y `scrollIntoViewIfNeeded` da por visible lo que tapa una barra fija (igual que L-26).
 - **Solución:** esperar unos 300 ms tras el clic y desplazar hasta el final antes de capturar.
 - **Cómo evitarlo:** mismo cuidado al grabar el video: pausar un instante tras cada clic.
+
+### L-37. Un cambio en `esquema_bd.sql` no llega solo a la base de demo
+- **Fecha / quién:** 2026-11-23, agente (F9)
+- **Síntoma esperado:** tras agregar `tipo_sangre`, el backend falla con «column does not exist» si la base `dafi` no se recreó.
+- **Causa:** el proyecto no tiene migraciones; el esquema solo se carga completo. Además la vista `v_perfil_paciente` usa `p.*` y fija sus columnas al crearse.
+- **Solución:** `npm --prefix backend run demo:reset` después de actualizar `main`. `dafi_test` se recrea sola en cada corrida de integración.
+- **Cómo evitarlo:** después de fusionar cualquier cambio de esquema, correr `demo:reset` antes de probar o grabar.
+
+### L-38. No hay PyYAML para validar el contrato
+- **Fecha / quién:** 2026-11-23, agente (F9)
+- **Síntoma:** `python3 -c "import yaml"` falla al querer comprobar que `openapi_equipo.yaml` sigue siendo válido.
+- **Causa:** PyYAML no está instalado y `pip` está bloqueado fuera de un venv.
+- **Solución:** `node -e "require('./frontend/node_modules/js-yaml').load(require('fs').readFileSync('S05_S06_A1/openapi_equipo.yaml','utf8'))"`.
+- **Cómo evitarlo:** usar ese comando cada vez que se toque el contrato.
