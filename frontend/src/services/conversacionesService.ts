@@ -50,8 +50,54 @@ export function listarPorPerfil(perfilId: string, filtros: FiltrosConversacion =
   return peticion<Pagina<Conversacion>>(`/perfiles/${perfilId}/conversaciones${consulta(filtros)}`, { signal });
 }
 
+export type TipoRespuesta = 'opcion' | 'zona_cuerpo' | 'texto' | 'opcion_con_texto' | 'numero_u_opcion';
+
+export interface Pregunta {
+  id: string;
+  texto: string;
+  tipoRespuesta: TipoRespuesta;
+  opciones: string[];
+  obligatoria: boolean;
+  etiqueta: string | null;
+  // El GET del detalle devuelve `numero` como texto ("38.6"); el PUT, como número.
+  respuesta?: { id: string; opcion: string | null; texto: string | null; numero: number | string | null };
+}
+
+export interface PuntoPendiente {
+  tipo: string;
+  referencia: string;
+  mensaje: string;
+}
+
+export interface DetalleConversacion extends Conversacion {
+  preguntas: Pregunta[];
+  puntosPendientes: PuntoPendiente[];
+}
+
 export function obtenerConversacion(conversacionId: string, signal?: AbortSignal) {
-  return peticion<Conversacion>(`/conversaciones/${conversacionId}`, { signal });
+  return peticion<DetalleConversacion>(`/conversaciones/${conversacionId}`, { signal });
+}
+
+/** Cuerpo de B2: sólo los campos que admite el tipo de la pregunta. */
+export interface ValorRespuesta {
+  opcion?: string;
+  texto?: string;
+  numero?: number;
+}
+
+export interface RespuestaGuardada {
+  preguntaId: string;
+  opcion: string | null;
+  texto: string | null;
+  numero: number | null;
+}
+
+/** B2: crea o reemplaza la respuesta; repetir el mismo valor no cambia nada. */
+export function responderPregunta(conversacionId: string, preguntaId: string, valor: ValorRespuesta) {
+  return peticion<RespuestaGuardada>(`/conversaciones/${conversacionId}/preguntas/${preguntaId}/respuesta`, {
+    method: 'PUT',
+    body: valor,
+  });
 }
 
 export interface NuevaConversacion {
@@ -73,13 +119,14 @@ export function listarEventos(conversacionId: string, signal?: AbortSignal) {
 /**
  * Enviar un borrador no debe repetirse si el usuario pulsa dos veces: la API
  * exige una Idempotency-Key en formato UUID y devuelve el resultado del primer
- * envío si recibe la misma clave.
+ * envío si recibe la misma clave. Quien llama genera la clave y la reutiliza
+ * al reintentar tras un fallo de red o un 5xx.
  */
-export function enviarConversacion(conversacionId: string, signal?: AbortSignal) {
-  return peticion<Conversacion>(`/conversaciones/${conversacionId}/envios`, {
+export function enviarConversacion(conversacionId: string, idempotencyKey: string, signal?: AbortSignal) {
+  return peticion<DetalleConversacion>(`/conversaciones/${conversacionId}/envios`, {
     method: 'POST',
     body: {},
-    idempotencyKey: crypto.randomUUID(),
+    idempotencyKey,
     signal,
   });
 }
