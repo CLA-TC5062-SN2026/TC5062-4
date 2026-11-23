@@ -44,7 +44,7 @@ try {
   console.log(`Base "${nombreBase}" en ${host}:${env.DB_PORT || 5432} recreada con la demo.`);
   console.log(`- Familia Ruán (${demo.familiaId}) con ${PERFILES.length} perfiles: ${PERFILES.map((p) => p.nombre).join(', ')}`);
   console.log(`- ${MEDICA.nombre} (${MEDICA.especialidad}) en el círculo de la familia`);
-  console.log('- Etiquetas: fiebre, piel, respiratorio; preguntas F1, F2 (fiebre) y G2 (general)');
+  console.log('- Etiquetas: fiebre, piel, respiratorio; preguntas F1, F2 y F3 (fiebre)');
   console.log(`- Conversación histórica de Mateo con indicaciones: ${demo.conversacionId}`);
   console.log('\nCredenciales de demo (solo locales, datos ficticios):');
   console.log(`  Cuidadora: ${CUENTA.correo} / ${CUENTA.contrasena}`);

@@ -45,14 +45,15 @@ export const MEDICA = {
 // Contenido que revisa el PO: catálogo y conversación histórica.
 const ETIQUETAS = [['fiebre', 'Fiebre'], ['piel', 'Piel'], ['respiratorio', 'Respiratorio']];
 
-// Códigos y textos del SRS (RF-10). G2 es general: aplica a toda conversación.
+// F1 y F2 salen del SRS (RF-10). F3 no está en el SRS: la agregó el PO para la demo
+// (TASKS.md B5 pide 3 o 4 preguntas de fiebre y una de texto libre).
 const PREGUNTAS = [
   { codigo: 'F1', texto: 'Temperatura más alta que midió', tipo: 'numero_u_opcion',
     opciones: ['No la he medido'], obligatoria: true, etiqueta: 'fiebre' },
   { codigo: 'F2', texto: '¿Dónde la midió?', tipo: 'opcion',
     opciones: ['Axila', 'Boca', 'Oído', 'Frente', 'Recto'], obligatoria: false, etiqueta: 'fiebre' },
-  { codigo: 'G2', texto: '¿Qué le preocupa?', tipo: 'texto',
-    opciones: [], obligatoria: true, etiqueta: null },
+  { codigo: 'F3', texto: '¿Desde cuándo tiene fiebre?', tipo: 'texto',
+    opciones: [], obligatoria: true, etiqueta: 'fiebre' },
 ];
 
 const HISTORICA = {
@@ -60,7 +61,7 @@ const HISTORICA = {
   respuestas: [
     { codigo: 'F1', numero: 38.6, valor: '38.6' },
     { codigo: 'F2', opcion: 'Axila', valor: 'Axila' },
-    { codigo: 'G2', texto: 'Tiene temperatura desde anoche y casi no quiso cenar. Hoy está más dormido de lo normal, aunque sí toma agua.' },
+    { codigo: 'F3', texto: 'Desde anoche, como a las nueve. Casi no quiso cenar y hoy está más dormido de lo normal, aunque sí toma agua.' },
   ],
   indicacion: 'Ofrézcale líquidos con frecuencia y déjelo descansar. Si tiene molestias, puede darle paracetamol en la dosis que corresponde a su peso. Si mañana por la tarde sigue con fiebre, escríbame por aquí. Si le cuesta respirar o lo nota muy decaído, acuda a urgencias.',
   mensaje: 'Gracias, doctora. Ya le bajó la temperatura; mañana le cuento cómo amaneció.',

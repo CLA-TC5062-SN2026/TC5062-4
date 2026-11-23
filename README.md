@@ -163,7 +163,7 @@ Se niega a correr con `NODE_ENV=production`. Si `DB_HOST` no es `localhost`, `12
 - el esquema, el aviso de privacidad ficticio versión 1 y el aviso de emergencias;
 - la cuenta de María con la «Familia Ruán» y sus perfiles Mateo Ruán, María Ruán y Rosa Aguilar, creados mediante el API;
 - la Dra. Laura Méndez Ortiz (Pediatría), activa y en el círculo de la familia;
-- las etiquetas `fiebre`, `piel` y `respiratorio` y las preguntas de contexto F1 y F2 (fiebre) y G2 (general);
+- las etiquetas `fiebre`, `piel` y `respiratorio` y las preguntas de contexto F1, F2 y F3 de fiebre (F3, «¿Desde cuándo tiene fiebre?», se agregó para la demo y no está en el SRS);
 - una conversación de Mateo de hace unas dos semanas y media, ya con indicaciones, para que el historial no salga vacío.
 
 Credenciales de demo, solo para uso local y con datos ficticios:
