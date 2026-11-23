@@ -6,8 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "lint": "eslint src scripts test",
-    "test": "node --test"
+    "lint": "eslint src scripts test integration",
+    "test": "node --test",
+    "test:integration": "node --test --test-concurrency=1 integration/*.int.mjs"
   },
   "keywords": [],
   "author": "",
