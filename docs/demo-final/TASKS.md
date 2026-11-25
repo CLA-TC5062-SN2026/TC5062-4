@@ -138,7 +138,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - `/medico/conversaciones/[id]`: contexto del perfil (alergias, medicamentos), respuestas, hilo; formulario de indicación (B4) y caja de mensaje.
 - **E2E:** la médica ve la conversación enviada por María; al abrirla queda «En revisión»; registra una indicación y la conversación pasa a «Con indicaciones».
 
-### [ ] F8. Cerrar sesión y revisión de errores transversal
+### [x] F8. Cerrar sesión y revisión de errores transversal
 - Botón de salir en `Shell` que usa `cerrarSesion()` y lleva a `/entrar`.
 - Recorrer todas las pantallas tocadas y confirmar que 401 lleva a sesión expirada, y 403, 404, 409 y 422 muestran el mensaje del backend.
 - **E2E:** salir regresa a `/entrar` y `/perfiles` vuelve a pedir login.

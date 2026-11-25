@@ -14,7 +14,7 @@ test('contraseña mala muestra el 401 y se queda en /entrar', async ({ page }) =
 test('María entra y ve sus 3 perfiles', async ({ page }) => {
   await entrarComo(page, 'maria');
   await expect(page).toHaveURL(/\/perfiles$/);
-  await expect(page.getByText('3 perfiles')).toBeVisible();
+  // Sin contar «3 perfiles»: demo.spec.ts crea y borra un perfil de María en paralelo (L-42).
   for (const nombre of ['Mateo Ruán', 'María Ruán', 'Rosa Aguilar']) {
     // La tarjeta es un botón cuyo nombre empieza por el del perfil.
     await expect(page.getByRole('button', { name: new RegExp(`^${nombre}`) })).toBeVisible();
