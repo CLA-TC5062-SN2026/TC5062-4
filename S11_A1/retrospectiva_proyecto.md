@@ -6,13 +6,13 @@ Con base en el código, los PR y las lecciones registradas, esta retrospectiva s
 
 ### ¿Qué salió bien?
 
-- En la semana de la demo, una rama y un PR por tarea de [TASKS.md](../docs/demo-final/TASKS.md) mantuvo los cambios chicos: entre el 22 y el 24 de noviembre se fusionaron 23 PR (#62 a #84).
+- En la semana de la demo, una rama y un PR por tarea de [TASKS.md](../docs/demo-final/TASKS.md) mantuvo los cambios chicos: en tres días se fusionaron 23 PR (#62 a #84).
 - Las lecciones se anotaron el mismo día en [LESSONS.md](../docs/demo-final/LESSONS.md) y varias se volvieron reglas de prueba o de grabación.
 
 ### ¿Qué no salió bien?
 
 - La integración llegó tarde: después del PR #56 solo `/perfiles` usaba datos reales, y la conversación se conectó en la última semana.
-- El build del frontend que PLAN.md pedía antes de cada PR no se corrió en los PR #76, #77, #79 y #82 (chocaba con el servidor de desarrollo); se comprobó en `main` hasta el 24 de noviembre.
+- El build del frontend que PLAN.md pedía antes de cada PR dejó de correrse después de la primera pantalla (chocaba con el servidor de desarrollo); se comprobó en `main` hasta el 24 de noviembre.
 - Las e2e dependen del estado de la base y exigen `demo:reset` entre corridas (L-31).
 
 ### ¿Qué haríamos diferente?
@@ -49,7 +49,7 @@ Antes, cuando un borrador afirmaba más de lo implementado. Esta semana, por lo 
 
 ### ¿Cómo cambió la forma de programar?
 
-El agente abría el PR solo después de correr las pruebas de PLAN.md (sección 8); en F10 construyó un subagente y la sesión principal volvió a correr las e2e (L-39). Cada PR declara «Decisiones a revisar» y «No verificado», y el PO revisó y fusionó cada uno. Los cambios de alcance entraron solo con su aprobación.
+Cada tarea la construyó un subagente y la sesión principal volvió a correr las pruebas de PLAN.md (sección 8) antes de abrir el PR; en F10 eso detectó que el subagente había entregado sin e2e (L-39). Cada PR declara «Decisiones a revisar» y «No verificado», y el PO revisó y fusionó cada uno. Los cambios de alcance entraron solo con su aprobación.
 
 > **[PENDIENTE Francisco]** ¿Qué te sorprendió más de trabajar con el agente programando y tú revisando?
 
@@ -94,6 +94,6 @@ Sigue los segmentos de D4 en [TASKS.md](../docs/demo-final/TASKS.md) y la secci�
    9. La médica la ve en «Enviadas».
    10. La abre («En revisión») y registra una indicación.
    11. María ve la indicación y contesta.
-3. **Decisión técnica (30 s):** Next.js, Express y PostgreSQL, fijados por el SRS.
+3. **Decisión técnica (30 s):** Next.js, Express (fijado por el SRS) y PostgreSQL.
 4. **Uso del agente (30 s):** el error tapado que la e2e no detectó (L-26) y la revisión de cada PR.
 5. **Qué haríamos diferente (30 s):** integrar desde el primer sprint; círculo médico, fotos y notificaciones siguen pendientes.

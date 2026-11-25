@@ -41,7 +41,7 @@ Se usan dos ventanas: una normal con la cuidadora y una de incógnito con la mé
 | 5 | María | `/perfiles/{id}` | Edita alergias y guarda | `PATCH /perfiles/{id}` |
 | 6 | María | `/perfiles/{id}` | Borra el perfil recién creado, con confirmación | `DELETE /perfiles/{id}` |
 | 7 | María | `/perfiles/{id}/conversaciones/nueva` | Abre conversación para Mateo: etiqueta «Fiebre», médica, prioridad | `GET /etiquetas`, `GET /familias/{id}/miembros?rol=medico`, `POST /perfiles/{id}/conversaciones` |
-| 8 | María | `/conversaciones/borrador` | Responde las preguntas de contexto y envía | `PUT .../preguntas/{preguntaId}/respuesta`, `POST /conversaciones/{id}/envios` |
+| 8 | María | `/conversaciones/{id}/borrador` | Responde las preguntas de contexto y envía | `PUT .../preguntas/{preguntaId}/respuesta`, `POST /conversaciones/{id}/envios` |
 | 9 | Dra. (médica) | `/medico/bandeja` | Ve la conversación nueva en «Enviadas» | `GET /conversaciones` |
 | 10 | Dra. | `/medico/conversaciones/{id}` | La abre (pasa a `EN_REVISION`) y registra una indicación | `GET /conversaciones/{id}`, `POST /conversaciones/{id}/indicaciones` |
 | 11 | María | `/conversaciones/{id}` | Ve la indicación en el hilo y contesta con un mensaje | `GET /conversaciones/{id}/eventos`, `POST /conversaciones/{id}/mensajes` |
