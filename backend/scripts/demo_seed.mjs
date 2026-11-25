@@ -45,9 +45,22 @@ export const MEDICA = {
 // Contenido que revisa el PO: catálogo y conversación histórica.
 const ETIQUETAS = [['fiebre', 'Fiebre'], ['piel', 'Piel'], ['respiratorio', 'Respiratorio']];
 
-// F1 y F2 salen del SRS (RF-10). F3 no está en el SRS: la agregó el PO para la demo
-// (TASKS.md B5 pide 3 o 4 preguntas de fiebre y una de texto libre).
+// P1 a P3, F1 y F2 salen del SRS (RF-10; las zonas de P1, del catálogo de la sección 3.0).
+// F3 no está en el SRS: la agregó el PO para la demo (TASKS.md B5 pide 3 o 4 preguntas
+// de fiebre y una de texto libre). Las de piel las pidió el PO el 23 nov (TASKS.md F11).
+const ZONAS_CUERPO = [
+  'Cabeza y cuello', 'Cara', 'Boca y labios', 'Pecho y abdomen', 'Espalda',
+  'Brazo izquierdo', 'Brazo derecho', 'Mano izquierda', 'Mano derecha', 'Zona del pañal o genital',
+  'Pierna izquierda', 'Pierna derecha', 'Pie izquierdo', 'Pie derecho',
+];
+
 const PREGUNTAS = [
+  { codigo: 'P1', texto: '¿En qué parte del cuerpo?', tipo: 'opcion',
+    opciones: ZONAS_CUERPO, obligatoria: true, etiqueta: 'piel' },
+  { codigo: 'P2', texto: '¿Pica o duele?', tipo: 'opcion',
+    opciones: ['Pica', 'Duele', 'Ambas', 'Ninguna'], obligatoria: true, etiqueta: 'piel' },
+  { codigo: 'P3', texto: '¿Ha crecido o se ha extendido?', tipo: 'opcion',
+    opciones: ['Sí', 'No', 'No sé'], obligatoria: true, etiqueta: 'piel' },
   { codigo: 'F1', texto: 'Temperatura más alta que midió', tipo: 'numero_u_opcion',
     opciones: ['No la he medido'], obligatoria: true, etiqueta: 'fiebre' },
   { codigo: 'F2', texto: '¿Dónde la midió?', tipo: 'opcion',

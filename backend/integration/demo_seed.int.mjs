@@ -49,4 +49,13 @@ test('el seed de demo corre dos veces seguidas sin fallar ni duplicar datos', as
 
   const etiquetas = await api('/etiquetas');
   assert.deepEqual(etiquetas.body.map((e) => e.codigo).sort(), ['fiebre', 'piel', 'respiratorio']);
+
+  // F11: «Piel» trae P1 a P3 del SRS (RF-10), una sola vez cada una tras dos corridas.
+  const piel = etiquetas.body.find((e) => e.codigo === 'piel');
+  assert.deepEqual(piel.preguntas.map((p) => [p.id, p.texto, p.obligatoria]), [
+    ['P1', '¿En qué parte del cuerpo?', true],
+    ['P2', '¿Pica o duele?', true],
+    ['P3', '¿Ha crecido o se ha extendido?', true],
+  ]);
+  assert.equal(piel.preguntas[0].opciones.length, 14);
 });
