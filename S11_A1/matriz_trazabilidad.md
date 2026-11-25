@@ -118,7 +118,6 @@ RF-23 | Fallas de red y módulo de resumen | AC-1–3: fallback ante resumen fal
 3. **Resumen de contexto (impacto alto; riesgo alto; costo alto):** no hay módulo, verificación de citas, fallback ni evaluación.
 4. **Privacidad y operaciones (impacto alto; riesgo alto; costo medio/alto):** borrar un perfil elimina su historial sin registro mínimo; `DELETE /conversaciones` no limita por estado; la sesión no se revoca al salir; no hay correo ni reportes.
 5. **Pruebas fuera del guion (impacto medio; riesgo medio; costo bajo/medio):** el aviso de emergencias, `/mensajes`, el rechazo por consentimiento pendiente y el 403 del cocuidador no tienen prueba automatizada aunque el código existe.
-6. **Verificación de entrega (impacto medio; riesgo medio; costo bajo):** el build de producción del frontend no se ha vuelto a correr desde F1.
 
 ## 8. Desviaciones respecto al SRS y al contrato
 
@@ -159,7 +158,7 @@ Cada desviación se verificó en el código del commit auditado. Las que aprobó
 
 - La matriz cubre los 23 RF de SRS v3.0; no cubre RNF ni RD como filas. Se citan cuando explican una brecha funcional.
 - No se ejecutó ninguna suite durante esta revisión. Los resultados de la sección 2 son los que verificó el equipo sobre `main` el 24 de noviembre; no hay output versionado de esa corrida. Los outputs de Newman y la evidencia manual previos corresponden a commits anteriores.
-- El build de producción del frontend no se ha vuelto a correr desde F1.
+- El build de producción del frontend (`npm --prefix frontend run build`) pasa en `main` el 24 de noviembre, corrido con el servidor de desarrollo detenido.
 - Las e2e prueban los pasos del guion y algunos errores; no cubren todos los AC. Corren contra el seed de demo y dependen de `demo:reset` antes de cada corrida (L-31, L-42).
 - Lo que se afirma del comportamiento de las pantallas sin e2e (por ejemplo el aviso de emergencias o la bandeja con varias familias) sale de leer el código, no de ejecutarlo.
 - La especificación original de S02 no está versionada en este clon; el problema se reconstruye únicamente desde `PRODUCT.md` y el SRS consolidado.
