@@ -144,7 +144,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - **E2E:** salir regresa a `/entrar` y `/perfiles` vuelve a pedir login.
 
 
-### [ ] F9. Tipo de sangre en el perfil (pedido del PO, 23 nov)
+### [x] F9. Tipo de sangre en el perfil (pedido del PO, 23 nov)
 - Campo real y opcional `tipoSangre` (A+, A-, B+, B-, AB+, AB-, O+, O- o sin dato): columna en `esquema_bd.sql`, validación en el backend, `POST` y `PATCH` de perfil, y campo en crear, editar y ver perfil.
 - El PO aprobó modificar `openapi_equipo.yaml` y `esquema_bd.sql` para esto. No está en el SRS: se declara como desviación en la matriz (D1).
 - **Unit:** validador del tipo de sangre. **Integration:** crear y editar con valor válido, valor inválido da 422. **E2E:** guardar el tipo de sangre y verlo tras recargar.
