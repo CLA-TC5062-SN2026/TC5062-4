@@ -8,15 +8,27 @@ DAFI no diagnostica, no sustituye la valoración de un profesional y no reemplaz
 
 ## Funcionalidades implementadas
 
-| Estado | Alcance comprobable |
-|---|---|
-| Implementado en backend | API Express con registro e inicio de sesión JWT, consulta de usuario autenticado, autorización por roles y operaciones de perfil y conversación respaldadas por PostgreSQL. La cobertura de cada flujo respecto al OpenAPI es parcial. |
-| Integración frontend/backend | El inicio de sesión y el listado de perfiles tienen integración documentada. La autenticación y los controles de acceso también cuentan con revisión y evidencia de solicitudes seleccionadas. |
-| Parcialmente implementado | Los flujos backend de conversaciones, mensajes y eventos cubren parte del contrato; faltan criterios y transiciones, incluidos consentimiento completo, recuperación de cuenta, fotos, notificaciones y cierre. |
-| Prototipo visual | Vistas de nueva conversación, hilo, bandeja e historial consumen [`frontend/src/lib/datos-demo.ts`](frontend/src/lib/datos-demo.ts) en partes importantes. Los fixtures no representan integración real con el API. |
-| No implementado | No hay módulo funcional de resumen de contexto, entrega de notificaciones, administración de reportes ni despliegue público documentado. |
+Todas las pantallas de esta tabla llaman al API de Express y guardan en PostgreSQL; ninguna usa datos fijos. Las rutas del backend están en [backend/src/routes/](backend/src/routes/) y las pantallas en [frontend/src/app/](frontend/src/app/).
 
-La matriz S11 clasifica los 23 requisitos funcionales como 0 completos, 17 parcialmente implementados, 6 no implementados y 0 no aplica. La clasificación y sus evidencias están en [S11_A1/matriz_trazabilidad.md](S11_A1/matriz_trazabilidad.md).
+| Quién | Funcionalidad | Pantalla | Endpoints principales |
+|---|---|---|---|
+| Familia | Crear cuenta (con aviso de privacidad) | `/crear-cuenta` | `POST /auth/register` |
+| Todos | Iniciar sesión; los errores del backend se muestran en el formulario | `/entrar` | `POST /auth/login` |
+| Familia | Perfiles: lista, crear, editar (alergias, medicamentos, tipo de sangre) y borrar con confirmación | `/perfiles`, `/perfiles/nuevo`, `/perfiles/{id}` | `GET/POST /familias/{id}/perfiles`, `GET/PATCH/DELETE /perfiles/{id}` |
+| Familia | Nueva conversación con etiquetas, médica y prioridad | `/perfiles/{id}/conversaciones/nueva` | `GET /etiquetas`, `GET /familias/{id}/miembros`, `POST /perfiles/{id}/conversaciones` |
+| Familia | Borrador: preguntas de contexto de «Fiebre» y «Piel», y envío | `/conversaciones/{id}/borrador` | `PUT /conversaciones/{id}/preguntas/{preguntaId}/respuesta`, `POST /conversaciones/{id}/envios` |
+| Familia | Lista de conversaciones con filtro por estado, e hilo con indicaciones y mensajes | `/conversaciones`, `/conversaciones/{id}` | `GET /conversaciones`, `GET /conversaciones/{id}/eventos`, `POST /conversaciones/{id}/mensajes` |
+| Médica | Bandeja por estado; al abrir una conversación enviada pasa a «En revisión» | `/medico/bandeja`, `/medico/conversaciones/{id}` | `GET /conversaciones`, `GET /conversaciones/{id}` |
+| Médica | Registrar indicación y enviar mensajes | `/medico/conversaciones/{id}` | `POST /conversaciones/{id}/indicaciones`, `POST /conversaciones/{id}/mensajes` |
+| Todos | Cerrar sesión (solo borra el token en el navegador; el backend no tiene endpoint para revocarlo) | `/cuenta`, `/medico/cuenta` | — |
+| Familia | Pantalla informativa «Documentos», marcada como «Próximamente»; no guarda archivos | `/perfiles/{id}/documentos` | — |
+
+Pendiente:
+
+- Pantallas que solo explican lo que vendrá: `/circulo`, `/cuenta` (salvo cerrar sesión), `/medico/pacientes` y `/medico/familias`.
+- No existen: fotos en la conversación, cerrar una conversación, solicitar información a la familia, invitaciones y consentimientos completos, recuperación de contraseña, notificaciones, resumen de contexto, reportes y despliegue público.
+
+La clasificación de cada requisito funcional y su evidencia está en [S11_A1/matriz_trazabilidad.md](S11_A1/matriz_trazabilidad.md).
 
 ## Arquitectura
 
@@ -63,6 +75,7 @@ Versiones confirmadas en [backend/package.json](backend/package.json), [backend/
 - [S07_S08_A2/](S07_S08_A2/) — evidencia de interfaz e integración.
 - [S09_A1/](S09_A1/) — auditoría de calidad y deuda técnica.
 - [S11_A1/](S11_A1/) — trazabilidad y retrospectiva.
+- [docs/demo-final/](docs/demo-final/) — plan, tareas y lecciones de la demo final; [docs/capturas/](docs/capturas/) — capturas de este README.
 
 ## Requisitos previos
 
@@ -92,6 +105,8 @@ cp frontend/.env.example frontend/.env.local
 ```
 
 Edita `backend/.env` localmente. Configura `DB_USER` para que coincida con el rol PostgreSQL, conserva `DB_NAME=dafi` si usas los comandos siguientes y establece `DB_PASSWORD` según la autenticación local. Configura `JWT_SECRET` con al menos 32 bytes aleatorios y `JWT_EXPIRATION`. No compartas ni versiones los archivos `.env`. La plantilla del backend está en [backend/.env.example](backend/.env.example).
+
+Si usas PostgreSQL en Docker, sigue los pasos de [Aplicación en producción](#aplicación-en-producción) en lugar de las dos subsecciones siguientes: el contenedor ya crea el rol y la base, y `demo:reset` carga el esquema.
 
 ### Crear el rol y la base en una instalación inicial
 
@@ -163,7 +178,7 @@ Se niega a correr con `NODE_ENV=production`. Si `DB_HOST` no es `localhost`, `12
 - el esquema, el aviso de privacidad ficticio versión 1 y el aviso de emergencias;
 - la cuenta de María con la «Familia Ruán» y sus perfiles Mateo Ruán, María Ruán y Rosa Aguilar, creados mediante el API;
 - la Dra. Laura Méndez Ortiz (Pediatría), activa y en el círculo de la familia;
-- las etiquetas `fiebre`, `piel` y `respiratorio` y las preguntas de contexto F1, F2 y F3 de fiebre (F3, «¿Desde cuándo tiene fiebre?», se agregó para la demo y no está en el SRS);
+- las etiquetas `fiebre`, `piel` y `respiratorio`, las preguntas de contexto F1, F2 y F3 de fiebre (F3, «¿Desde cuándo tiene fiebre?», se agregó para la demo y no está en el SRS) y P1, P2 y P3 de piel;
 - una conversación de Mateo de hace unas dos semanas y media, ya con indicaciones, para que el historial no salga vacío.
 
 Credenciales de demo, solo para uso local y con datos ficticios:
@@ -262,7 +277,14 @@ curl http://localhost:4000/api/v1/health
 
 ## Pruebas y calidad
 
-Ejecuta desde la raíz los scripts declarados en [backend/package.json](backend/package.json) y [frontend/package.json](frontend/package.json).
+Ejecuta desde la raíz los scripts declarados en [backend/package.json](backend/package.json) y [frontend/package.json](frontend/package.json). Los números son los de `main` el 24 de noviembre de 2026.
+
+| Suite | Comando | Pruebas | Necesita |
+|---|---|---|---|
+| Backend, unitarias (`node:test`) | `npm --prefix backend test` | 69 | Nada más |
+| Backend, integración | `npm --prefix backend run test:integration` | 32 | PostgreSQL con la base `dafi_test` |
+| Frontend, unitarias (Vitest) | `npm --prefix frontend test` | 55 | Nada más |
+| Frontend, e2e (Playwright) | `npm --prefix frontend run e2e` (equivale a `npx playwright test` dentro de `frontend/`) | 60: 30 en `escritorio` y 30 en `movil` (375 × 812) | Stack corriendo y `demo:reset` |
 
 Pruebas backend con `node:test`:
 
@@ -282,20 +304,36 @@ ESLint frontend:
 npm --prefix frontend run lint
 ```
 
-Build frontend y validaciones de Next.js/TypeScript:
+Build frontend y validaciones de Next.js/TypeScript (pasa en `main` el 24 de noviembre de 2026; córrelo con el servidor de desarrollo detenido):
 
 ```bash
 npm --prefix frontend run build
 ```
 
-Pruebas e2e del frontend con Playwright ([frontend/e2e/](frontend/e2e/)), en Chromium de escritorio y en Chromium a 375 × 812. No arrancan servidores: antes hay que tener el stack corriendo (backend en :4000, frontend en :3000, PostgreSQL) y los datos de demo cargados con `npm --prefix backend run demo:reset`. La primera vez se instala el navegador:
+Pruebas unitarias del frontend con Vitest:
+
+```bash
+npm --prefix frontend test
+```
+
+Pruebas e2e del frontend con Playwright ([frontend/e2e/](frontend/e2e/)), en Chromium de escritorio (`escritorio`) y en Chromium a 375 × 812 (`movil`). No arrancan servidores. Antes de correrlas:
+
+1. PostgreSQL arriba, backend en :4000 y frontend en :3000 (ver [Aplicación en producción](#aplicación-en-producción)).
+2. `npm --prefix backend run demo:reset`, porque cada corrida deja conversaciones nuevas en Mateo y, tras varias, una prueba deja de encontrar la conversación histórica.
+3. La primera vez, instalar el navegador.
 
 ```bash
 (cd frontend && npx playwright install chromium)
 npm --prefix frontend run e2e
 ```
 
-Las pruebas unitarias del frontend corren con `npm --prefix frontend run test` (Vitest). No hay script de `typecheck`; el build es la validación disponible para TypeScript. No hay un script reproducible de Newman declarado en los manifests. Estos comandos describen cómo ejecutar las comprobaciones; no afirman que se hayan ejecutado o aprobado en esta revisión.
+El guion completo de la demo (pasos 1 a 11 de [PLAN.md](docs/demo-final/PLAN.md), con una ventana para María y otra para la médica) está en [frontend/e2e/demo.spec.ts](frontend/e2e/demo.spec.ts). Para correr solo ese archivo:
+
+```bash
+npm --prefix frontend run e2e -- e2e/demo.spec.ts
+```
+
+No hay script de `typecheck`; el build es la validación disponible para TypeScript. No hay un script reproducible de Newman declarado en los manifests.
 
 ### Pruebas de integración
 
@@ -325,17 +363,71 @@ Para usar otra base de prueba, por ejemplo `TEST_DB_NAME=dafi_ci_test npm --pref
 
 ## Aplicación en producción
 
+**No hay despliegue.** DAFI no está publicado en ninguna URL. La demo final (S11-A1) corre en local, en la máquina de un integrante, con PostgreSQL 16 en Docker y datos ficticios. Para reproducirla, desde la raíz del repositorio:
+
+1. Levanta PostgreSQL 16 en Docker, publicado en el puerto 5434. Cambia `cambia_esta_clave` por una contraseña local tuya; no la versiones.
+
+   ```bash
+   docker run -d --name dafi-postgres \
+     -e POSTGRES_USER=dafi \
+     -e POSTGRES_PASSWORD=cambia_esta_clave \
+     -e POSTGRES_DB=dafi \
+     -p 5434:5432 postgres:16
+   ```
+
+   Si el contenedor ya existe, basta `docker start dafi-postgres`.
+
+2. Crea `backend/.env` y `frontend/.env.local` desde sus plantillas ([Configurar el entorno local](#configurar-el-entorno-local)). En `backend/.env` usa `DB_PORT=5434`, `DB_USER=dafi`, `DB_NAME=dafi`, en `DB_PASSWORD` la misma contraseña del paso 1 y en `JWT_SECRET` un valor de al menos 32 bytes (por ejemplo, la salida de `openssl rand -hex 32`). El frontend funciona con los valores de la plantilla.
+
+3. Instala dependencias:
+
+   ```bash
+   npm --prefix backend ci
+   npm --prefix frontend ci
+   ```
+
+4. Carga los datos de demo. **Borra todo lo que haya en la base `dafi`** ([detalle](#reiniciar-la-base-de-demo-demoreset)).
+
+   ```bash
+   npm --prefix backend run demo:reset
+   ```
+
+5. Arranca el backend en :4000 (terminal 1) y el frontend en :3000 (terminal 2):
+
+   ```bash
+   npm --prefix backend run dev
+   ```
+
+   ```bash
+   npm --prefix frontend run dev
+   ```
+
+6. Comprueba que el backend responde con `curl http://localhost:4000/api/v1/health` y abre `http://localhost:3000/entrar`.
+
+7. Entra con las dos cuentas de demo de la tabla de [credenciales](#reiniciar-la-base-de-demo-demoreset): María (cuidadora principal) en una ventana normal y la Dra. Laura Méndez (médica) en una de incógnito, para no cerrar sesión a cada paso. El guion de la demo está en [PLAN.md](docs/demo-final/PLAN.md), sección 3.
+
+`demo:reset` cierra las sesiones abiertas: después de cada reinicio hay que volver a entrar con las dos cuentas.
+
 ## Capturas de pantalla
 
-Las capturas versionadas muestran una condición de error de interfaz y un listado de tres perfiles ficticios servidos por PostgreSQL; no representan una publicación en producción.
+Capturas de la versión de la demo final a 375 × 812 (ancho de teléfono), con los datos ficticios de `demo:reset`. Las de S07-S08 siguen en [S07_S08_A2/evidencia/](S07_S08_A2/evidencia/).
 
-![Listado de perfiles ficticios de demostración](S07_S08_A2/evidencia/perfiles_datos_reales.png)
+![Bandeja de la Dra. Laura Méndez con la conversación «Fiebre y dolor de oído» de Mateo Ruán en «Enviadas» y la conversación histórica en «Con indicaciones»](docs/capturas/bandeja-medica-375.png)
 
-![Condición de error en la interfaz](S07_S08_A2/evidencia/error_sweetalert.png)
+![Hilo de la conversación «Fiebre y dolor de oído» visto por María: eventos de envío y apertura, e indicación vigente de la médica con consulta presencial en 2 días](docs/capturas/hilo-cuidadora-indicacion-375.png)
+
+![Pantalla de inicio de sesión con el mensaje «El correo o la contraseña no son correctos» que devuelve el backend ante una contraseña incorrecta](docs/capturas/login-error-contrasena-375.png)
 
 ## Estado funcional y limitaciones
 
-El producto implementa autenticación y algunas operaciones de perfiles y conversaciones en el backend. La integración demostrada en frontend se limita al inicio de sesión y al listado de perfiles. Las vistas de conversación, bandeja e historial contienen fixtures y son prototipos visuales; no equivalen a persistencia ni a integración con Express. La cobertura del OpenAPI, los criterios de aceptación y las pruebas es parcial. No están implementados flujos completos de consentimiento, recuperación de cuenta, fotos, notificaciones, reportes ni resumen de contexto. No hay URL pública de producción documentada.
+El flujo completo de la demo funciona de punta a punta contra Express y PostgreSQL: la familia crea perfiles y abre una conversación, responde el contexto y la envía; la médica la ve en su bandeja, la abre y registra una indicación; la familia la lee en el hilo y contesta. Lo que falta está en [Funcionalidades implementadas](#funcionalidades-implementadas). Otras limitaciones conocidas:
+
+- Cerrar sesión no revoca el token en el backend; la sesión caduca por inactividad a los 30 minutos (`MINUTOS_SESION`).
+- Borrar un perfil borra también sus conversaciones y la bitácora de accesos de esas conversaciones.
+- El historial de un perfil se pagina por fecha de creación, no por última actividad.
+- No hay URL pública de producción.
+
+Las particularidades encontradas durante el desarrollo están en [LESSONS.md](docs/demo-final/LESSONS.md).
 
 PostgreSQL es la base de datos implementada y vigente. El SRS conserva una referencia histórica a MongoDB que constituye una inconsistencia documental.
 
@@ -349,4 +441,19 @@ PostgreSQL es la base de datos implementada y vigente. El SRS conserva una refer
 
 ## Equipo y documentación
 
-Proyecto académico del Equipo 4. La lista de integrantes y las actividades están en los documentos versionados; este README no asigna cargos. La documentación del producto y de las actividades se enlaza en [API y documentación](#api-y-documentación), y la trazabilidad y retrospectiva actuales están en [S11_A1](S11_A1/).
+Proyecto académico del Equipo 4 (TC5062). Integrantes, tal como aparecen en los documentos de equipo (por ejemplo, [SRS_equipo.md](S03_A1/SRS_equipo.md)):
+
+- Armando Arredondo Valle (A01424709)
+- Isaac González Trejo (A01274193)
+- Francisco Martínez Álvarez (A01840483)
+- Daniel Ruán Aguilar (A01731921)
+
+Este README no asigna cargos.
+
+Documentación vigente:
+
+- [Plan de la demo final](docs/demo-final/PLAN.md), [tareas](docs/demo-final/TASKS.md) y [lecciones](docs/demo-final/LESSONS.md).
+- [Matriz de trazabilidad](S11_A1/matriz_trazabilidad.md) y [retrospectiva del proyecto](S11_A1/retrospectiva_proyecto.md).
+- [Contrato OpenAPI](S05_S06_A1/openapi_equipo.yaml) y [SRS del equipo](S03_A1/SRS_equipo.md).
+
+El resto de la documentación de las actividades se enlaza en [API y documentación](#api-y-documentación).
