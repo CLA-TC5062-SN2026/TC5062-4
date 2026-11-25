@@ -328,3 +328,10 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** el guion crea y borra un perfil en la cuenta de María (pasos 3 a 6) y Playwright corre los archivos en paralelo contra la misma base.
 - **Solución:** `login.spec.ts` y el paso 2 del guion comprueban los tres nombres del seed, no el conteo.
 - **Cómo evitarlo:** ningún spec debe afirmar conteos exactos sobre la cuenta de María; para eso, una cuenta desechable.
+
+### L-43. El indicador de desarrollo de Next.js sale en capturas y grabación
+- **Fecha / quién:** 2026-11-24, agente (D4)
+- **Síntoma:** un círculo «N» abajo a la izquierda tapa la primera etiqueta de la barra de navegación («Perfiles», «Pacientes») en las capturas a 375 px.
+- **Causa:** `npm run dev` inyecta el indicador de desarrollo (`<nextjs-portal>`); no existe en un build de producción.
+- **Solución:** en las capturas con Playwright, `page.addStyleTag({ content: 'nextjs-portal{display:none!important}' })`. Las del guion (salvo la 11) todavía lo muestran.
+- **Cómo evitarlo:** para grabar, correr `npm run build && npm start` en el frontend, o poner `devIndicators: false` en `next.config` antes de D5.
