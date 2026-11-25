@@ -24,7 +24,7 @@ Esta versión actualiza la auditoría del 22 de noviembre con el trabajo de la s
 - **Pruebas previas que se conservan como evidencia:** [S05_S06_A2/evidencia/pruebas_terminal_daniel.md](../S05_S06_A2/evidencia/pruebas_terminal_daniel.md), [S07_S08_A2/README.md](../S07_S08_A2/README.md), [S09_A1/evidencia/](../S09_A1/evidencia/) y la auditoría S09 ([clasificacion_problemas.md](../S09_A1/clasificacion_problemas.md), [code_review.md](../S09_A1/code_review.md), [deuda_tecnica.md](../S09_A1/deuda_tecnica.md)).
 - `S02_A1/` no está versionada en este repositorio. El problema original se reconstruye a partir de `PRODUCT.md` y del SRS consolidado; no se afirma haber revisado la entrevista original.
 
-**Resultado de las suites en `main` (24 nov 2026):** 69 pruebas unitarias del backend, 32 de integración, 55 de Vitest y 60 e2e (30 por proyecto) pasan. Ese resultado lo verificó el equipo sobre `main` el mismo día; no hay un archivo de salida versionado de esa corrida y en esta revisión no se volvieron a ejecutar. `npm --prefix frontend run build` no se ha vuelto a correr desde F1, así que esta matriz no afirma que el build pase.
+**Resultado de las suites en `main` (24 nov 2026):** 69 pruebas unitarias del backend, 32 de integración, 55 de Vitest y 60 e2e (30 por proyecto) pasan. Ese resultado lo verificó el equipo sobre `main` el mismo día; no hay un archivo de salida versionado de esa corrida y en esta revisión no se volvieron a ejecutar. `npm --prefix frontend run build` pasa en `main` el mismo día, corrido con el servidor de desarrollo detenido.
 
 ## 3. Criterios de clasificación
 
