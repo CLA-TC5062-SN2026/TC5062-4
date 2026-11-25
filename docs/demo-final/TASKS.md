@@ -179,7 +179,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - Comandos `demo:reset`, `test:integration`, `e2e` y `test` del frontend.
 - Integrantes del equipo en «Equipo y documentación».
 
-### [ ] D3. Retrospectiva con ejemplos concretos (el agente redacta, Francisco aporta las anécdotas)
+### [x] D3. Retrospectiva con ejemplos concretos (el agente redacta, Francisco aporta las anécdotas)
 - Agregar ejemplos reales del uso del agente (la priorización del agente PO en S03-A1, el login 401 tratado como sesión caducada en el PR #56, el manejo de errores de bcrypt del PR #60) y lo aprendido en LESSONS.md esta semana.
 - Actualizar la sección B con lo que la demo ahora sí muestra.
 

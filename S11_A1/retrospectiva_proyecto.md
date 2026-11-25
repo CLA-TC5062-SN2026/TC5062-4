@@ -19,15 +19,13 @@ Con base en el código, los PR y las lecciones registradas, esta retrospectiva s
 
 Conectaríamos una pantalla al backend con su e2e desde el primer sprint, en lugar de construir las vistas con datos de muestra y conectarlas al final. Montaríamos las pruebas de integración antes de S09, cuando el backend no tenía ninguna ([code_review.md](../S09_A1/code_review.md)). También revisaríamos cada pantalla con captura a 375 px además de la e2e (L-26).
 
-> **[PENDIENTE Francisco]** Si repitieras esta semana, ¿qué cambiarías en tu forma de revisar y fusionar los PR del agente?
+En la revisión, el PO leería el diff completo de cada PR (esta semana revisó sobre todo el resumen, las capturas y los resultados de las pruebas) y fusionaría menos PR por día para poder hacerlo.
 
 ### ¿En qué fases fueron útiles los agentes?
 
 Antes de S11 los agentes produjeron primeras versiones del esquema, del backend y de los componentes, y localizaron hallazgos de código; en la semana de la demo escribieron el código, las pruebas y los borradores de documentación ([PLAN.md](../docs/demo-final/PLAN.md), sección 6).
 
 **Priorización del agente PO (S03-A1).** Un agente independiente priorizó las 18 historias sin ver nuestro orden. Coincidió en las ocho primeras y bajó el resumen de contexto a Media porque al principio no hay historial que resumir. Mantuvimos HU-13 en Alta, condicionamos HU-14 a una prueba técnica y adoptamos su argumento sobre eliminación de datos como regla de liberación ([priorizacion_comparada.md](../S03_A1/priorizacion_comparada.md), [respuesta del agente](../S03_A1/evidencia/priorizacion_agente_PO.md), [ajustes_backlog.md](../S03_A1/ajustes_backlog.md)). El resumen que defendimos como Alta no se construyó.
-
-> **[PENDIENTE Francisco]** De las diferencias con el agente PO, ¿cuál te hizo cambiar de opinión y cuál sostuviste contra su propuesta?
 
 **Login fallido tratado como sesión caducada (PR #56).** El backend responde `401 NO_AUTENTICADO` a una contraseña incorrecta y a una sesión revocada, y el interceptor de 401 mandaba ambas a «sesión expirada». Ahora el interceptor ignora las peticiones públicas y `/entrar` muestra su propio mensaje (L-10); ese error es el paso 1 del guion.
 
@@ -45,13 +43,13 @@ Antes de S11 los agentes produjeron primeras versiones del esquema, del backend 
 
 Antes, cuando un borrador afirmaba más de lo implementado. Esta semana, por lo que las pruebas no veían (L-26 y L-42) y por una pregunta del seed que se cambió por F3 (L-22).
 
-> **[PENDIENTE Francisco]** ¿En qué PR de esta semana rechazaste o cambiaste lo que propuso el agente, y por qué?
+El PO cambió dos propuestas antes de fusionar. En el PR #84 el agente dejó RF-11 (fotos) como «Parcial» y el PO pidió bajarlo a «No implementado», porque solo existen la tabla y las referencias `fotoIds` y ningún criterio de aceptación se cumple. En F10 limitó Documentos a una pantalla de «Próximamente», sin subida de archivos ni backend.
 
 ### ¿Cómo cambió la forma de programar?
 
 Cada tarea la construyó un subagente y la sesión principal volvió a correr las pruebas de PLAN.md (sección 8) antes de abrir el PR; en F10 eso detectó que el subagente había entregado sin e2e (L-39). Cada PR declara «Decisiones a revisar» y «No verificado», y el PO revisó y fusionó cada uno. Los cambios de alcance entraron solo con su aprobación.
 
-> **[PENDIENTE Francisco]** ¿Qué te sorprendió más de trabajar con el agente programando y tú revisando?
+Lo que más sorprendió al PO fue la velocidad: 23 PR en tres días con una sola persona revisando, que es también la razón por la que la revisión se quedó corta.
 
 ## B. Resultado del producto
 
