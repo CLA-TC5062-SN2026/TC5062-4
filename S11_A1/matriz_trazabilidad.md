@@ -59,9 +59,9 @@ Ningún RF alcanza todavía la cobertura completa de sus criterios. El cambio de
 | RF-08 | Parcial | Parcial | Pruebas de integración de lectura con historial compartido. |
 | RF-09 | Parcial | Parcial | Pantalla de nueva conversación conectada (F4). |
 | RF-10 | Parcial | Parcial | `PUT .../respuesta` (B2) y borrador conectado (F5). |
+| RF-11 | Parcial | No implementado | Reclasificado: el código no cambió. Solo existen la tabla y las referencias `fotoIds`; no hay carga de fotos. |
 | RF-12 | Parcial | Parcial | Envío desde la pantalla, con pendientes y reintento seguro. |
 | RF-13 | Parcial | Parcial | Aviso con botón «Llamar al 911» en tres pantallas. |
-| RF-11 | Parcial | No implementado | Reclasificado: el código no cambió. Solo existen la tabla y las referencias `fotoIds`; no hay carga de fotos. |
 | RF-14 | Parcial | Parcial | Hilo de la cuidadora y de la médica con mensajes (F6, F7). |
 | RF-15 | No implementado | Parcial | `POST .../indicaciones` (B4) y formulario de la médica (F7). |
 | RF-16 | Parcial | Parcial | Transición a `EN_REVISION` (B3), bandeja y detalle (F7). |
