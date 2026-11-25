@@ -300,3 +300,10 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** PyYAML no está instalado y `pip` está bloqueado fuera de un venv.
 - **Solución:** `node -e "require('./frontend/node_modules/js-yaml').load(require('fs').readFileSync('S05_S06_A1/openapi_equipo.yaml','utf8'))"`.
 - **Cómo evitarlo:** usar ese comando cada vez que se toque el contrato.
+
+### L-39. Un subagente no puede levantar los servidores de desarrollo
+- **Fecha / quién:** 2026-11-24, agente (F10)
+- **Síntoma:** el subagente de F10 entregó sin e2e ni capturas: `curl` a `:4000` y `:3000` daba «Couldn't connect» y su intento de `npm run dev` fue bloqueado.
+- **Causa:** los servidores se cayeron durante la noche (L-27) y solo la sesión principal puede iniciarlos desde el panel de vista previa.
+- **Solución:** la sesión principal los levantó (`dafi-backend`, `dafi-frontend`) y corrió ella misma las e2e y las capturas.
+- **Cómo evitarlo:** antes de delegar una tarea con e2e, comprobar `curl localhost:4000/api/v1/health` y `curl -I localhost:3000`.

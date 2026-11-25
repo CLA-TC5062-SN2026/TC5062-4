@@ -348,6 +348,9 @@ function Contenido({ perfilId }: { perfilId: string }) {
           <Button fullWidth onClick={() => router.push(`/perfiles/${perfil.id}/conversaciones/nueva`)}>
             Nueva conversación
           </Button>
+          <Button variant="secundario" fullWidth onClick={() => router.push(`/perfiles/${perfil.id}/documentos`)}>
+            Docs (recetas, análisis…)
+          </Button>
           {puedeEditar && (
             <>
               <Button variant="secundario" fullWidth onClick={abrirEdicion}>Editar perfil</Button>
