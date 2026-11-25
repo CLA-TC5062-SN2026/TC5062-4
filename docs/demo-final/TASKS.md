@@ -161,7 +161,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 
 ## 3. E2E del guion completo
 
-### [ ] Q4. `e2e/demo.spec.ts`
+### [x] Q4. `e2e/demo.spec.ts`
 - Un solo test que recorre los pasos 1 a 11 de PLAN.md sección 3 con dos contextos de navegador (María y la médica).
 - Se corre antes de cada ensayo y es la condición para congelar código el miércoles.
 - **Terminado cuando:** pasa tres veces seguidas después de `demo:reset`.
@@ -170,7 +170,7 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 
 ## 4. Documentación y entrega
 
-### [ ] D1. Matriz de trazabilidad actualizada
+### [x] D1. Matriz de trazabilidad actualizada
 - Actualizar en `S11_A1/matriz_trazabilidad.md` los RF que cambian de estado (al menos RF-01, RF-04, RF-09, RF-10, RF-12, RF-14, RF-15, RF-16 y RF-18) y enlazar las pruebas nuevas de integración y e2e.
 
 ### [ ] D2. README actualizado
