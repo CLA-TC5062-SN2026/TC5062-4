@@ -13,9 +13,9 @@ import { useAuth } from '@/context/AuthContext';
  * 404 que aparece como error en la consola del navegador.
  */
 function Contenido() {
-  const { salir } = useAuth();
+  const { salir, usuario } = useAuth();
   return (
-    <AppShell titulo="Cuenta" nav={NAV_MEDICO} usuario={{ nombre: 'Dra. Lucía Torres', rol: 'Pediatría' }}>
+    <AppShell titulo="Cuenta" nav={NAV_MEDICO} usuario={{ nombre: usuario?.nombre ?? '', rol: usuario?.especialidad ?? 'Médica' }}>
       <EstadoVacio
         icono="usuarios"
         titulo="Cuenta"
