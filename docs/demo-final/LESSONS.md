@@ -321,3 +321,10 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** las pantallas sin construir pasaban a `AppShell` un usuario escrito a mano, heredado del prototipo.
 - **Solución:** usar `useAuth()` como en la bandeja.
 - **Cómo evitarlo:** `grep -rn "usuario={{ nombre: '" frontend/src/app` antes de grabar.
+
+### L-42. El e2e del guion cambia los perfiles de María mientras otros specs los leen
+- **Fecha / quién:** 2026-11-24, agente (Q4)
+- **Síntoma esperado:** `login.spec.ts` falla de forma intermitente con «3 perfiles» no visible cuando corre a la vez que `demo.spec.ts`.
+- **Causa:** el guion crea y borra un perfil en la cuenta de María (pasos 3 a 6) y Playwright corre los archivos en paralelo contra la misma base.
+- **Solución:** `login.spec.ts` y el paso 2 del guion comprueban los tres nombres del seed, no el conteo.
+- **Cómo evitarlo:** ningún spec debe afirmar conteos exactos sobre la cuenta de María; para eso, una cuenta desechable.
