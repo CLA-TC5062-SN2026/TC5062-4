@@ -173,13 +173,13 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 ### [x] D1. Matriz de trazabilidad actualizada
 - Actualizar en `S11_A1/matriz_trazabilidad.md` los RF que cambian de estado (al menos RF-01, RF-04, RF-09, RF-10, RF-12, RF-14, RF-15, RF-16 y RF-18) y enlazar las pruebas nuevas de integración y e2e.
 
-### [ ] D2. README actualizado
+### [x] D2. README actualizado
 - Sección «Aplicación en producción»: declarar que la demo es local y cómo reproducirla.
 - Capturas nuevas (bandeja de la médica, hilo con indicaciones, formulario con error).
 - Comandos `demo:reset`, `test:integration`, `e2e` y `test` del frontend.
 - Integrantes del equipo en «Equipo y documentación».
 
-### [ ] D3. Retrospectiva con ejemplos concretos (el agente redacta, Francisco aporta las anécdotas)
+### [x] D3. Retrospectiva con ejemplos concretos (el agente redacta, Francisco aporta las anécdotas)
 - Agregar ejemplos reales del uso del agente (la priorización del agente PO en S03-A1, el login 401 tratado como sesión caducada en el PR #56, el manejo de errores de bcrypt del PR #60) y lo aprendido en LESSONS.md esta semana.
 - Actualizar la sección B con lo que la demo ahora sí muestra.
 
