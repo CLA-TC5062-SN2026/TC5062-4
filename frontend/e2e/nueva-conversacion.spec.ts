@@ -6,10 +6,10 @@ import { entrarComo, llenarLogin } from './entrarComo';
 // Cada corrida deja borradores de Mateo (uno por proyecto); detalle-perfil.spec.ts
 // busca su conversación del seed en la primera página (5), así que se corre tras `demo:reset`.
 
-/** De /perfiles abre a Mateo y su «Nueva conversación». */
-async function nuevaParaMateo(page: Page) {
+/** De /perfiles abre el perfil (Mateo por defecto) y su «Nueva conversación». */
+async function nuevaParaMateo(page: Page, perfil = /^Mateo Ruán/) {
   await entrarComo(page, 'maria');
-  await page.getByRole('button', { name: /^Mateo Ruán/ }).click();
+  await page.getByRole('button', { name: perfil }).click();
   await page.getByRole('button', { name: 'Nueva conversación' }).click();
   await expect(page).toHaveURL(/\/perfiles\/[^/]+\/conversaciones\/nueva$/);
 }
@@ -26,6 +26,21 @@ test('María crea una conversación para Mateo y llega al borrador (paso 7)', as
   await expect(page.getByRole('heading', { name: titulo, level: 1 })).toBeVisible();
   await expect(page.getByText('Dra. Laura Méndez Ortiz')).toBeVisible();
   await expect(page.getByText('Mateo Ruán')).toBeVisible();
+});
+
+// F11. En Rosa y no en Mateo, para no empujar su conversación del seed a la página 2 (L-31).
+test('un borrador con «Piel» muestra sus preguntas del SRS (RF-10)', async ({ page }, info) => {
+  await nuevaParaMateo(page, /^Rosa Aguilar/);
+  await page.getByLabel('Título de la conversación').fill(`Piel e2e ${info.project.name} ${Date.now()}`);
+  await page.getByRole('checkbox', { name: 'Piel' }).click();
+  await page.getByRole('radio', { name: /Laura Méndez Ortiz/ }).click();
+  await page.getByRole('button', { name: 'Crear borrador' }).click();
+
+  await expect(page).toHaveURL(/\/conversaciones\/[0-9a-f-]{36}\/borrador$/);
+  for (const texto of ['¿En qué parte del cuerpo?', '¿Pica o duele?', '¿Ha crecido o se ha extendido?']) {
+    await expect(page.getByRole('heading', { name: texto, level: 3 })).toBeVisible();
+  }
+  await expect(page.getByRole('radio', { name: 'Zona del pañal o genital' })).toBeVisible();
 });
 
 test('sin etiqueta muestra el error y no envía nada', async ({ page }) => {
