@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guion del video DAFI</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f6f8f8; --surface: #ffffff; --surface-2: #eef3f3; --text: #18232a; --muted: #55656d;
+  --border: #d5dfe0; --accent: #1f7a85; --accent-text: #ffffff; --accent-soft: #e2f1f2;
+  --focus: #0b5f69; --warn: #a64b00; --warn-bg: #fff1e2; --ok: #1d6b3a;
+  --maria: #1f7a85; --maria-bg: #e2f1f2; --medica: #6b3fa0; --medica-bg: #efe8f8;
+  --otra: #55656d; --otra-bg: #eceff0;
+  --s0: #b0563a; --s1: #1f7a85; --s2: #4a5fa8; --s3: #7a5a12; --s4: #6b3fa0;
+  --phone: #1b2328; --active: #fff7d6; --active-border: #c99a00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1518; --surface: #172025; --surface-2: #1e2a30; --text: #e6eef0; --muted: #a2b2b8;
+    --border: #2c3a40; --accent: #4fb3bf; --accent-text: #0b1417; --accent-soft: #163338;
+    --focus: #8fdbe3; --warn: #ffb36b; --warn-bg: #3a2512; --ok: #7fd49c;
+    --maria: #6cc6d0; --maria-bg: #163338; --medica: #c3a3ec; --medica-bg: #2b2140;
+    --otra: #b3c0c5; --otra-bg: #263136;
+    --s0: #e08a6c; --s1: #4fb3bf; --s2: #8fa1e6; --s3: #d6b25a; --s4: #c3a3ec;
+    --phone: #000000; --active: #2e2a12; --active-border: #d9b23a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1518; --surface: #172025; --surface-2: #1e2a30; --text: #e6eef0; --muted: #a2b2b8;
+  --border: #2c3a40; --accent: #4fb3bf; --accent-text: #0b1417; --accent-soft: #163338;
+  --focus: #8fdbe3; --warn: #ffb36b; --warn-bg: #3a2512; --ok: #7fd49c;
+  --maria: #6cc6d0; --maria-bg: #163338; --medica: #c3a3ec; --medica-bg: #2b2140;
+  --otra: #b3c0c5; --otra-bg: #263136;
+  --s0: #e08a6c; --s1: #4fb3bf; --s2: #8fa1e6; --s3: #d6b25a; --s4: #c3a3ec;
+  --phone: #000000; --active: #2e2a12; --active-border: #d9b23a;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 72px; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-wrap: anywhere;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em;
+  background: var(--surface-2); padding: 0 .25em; border-radius: 4px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--muted); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+/* Barra de ensayo fija */
+.ensayo {
+  position: sticky; top: 0; z-index: 10; background: var(--surface);
+  border-bottom: 1px solid var(--border); box-shadow: 0 1px 6px rgba(0,0,0,.06);
+}
+.ensayo .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+.clock { font: 600 1.5rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; min-width: 5.5ch; }
+.clock small { font-size: .8rem; color: var(--muted); font-weight: 400; }
+.now { flex: 1 1 100%; order: 5; font-size: .875rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btns { display: flex; gap: 6px; margin-left: auto; }
+button.b {
+  font: inherit; font-size: .9rem; font-weight: 600; padding: 8px 12px; min-height: 40px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer;
+}
+button.b.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button.b:disabled { opacity: .45; cursor: default; }
+.over { color: var(--warn); }
+
+/* Cabecera */
+.top h1 { font-size: 1.6rem; line-height: 1.2; margin: 20px 0 4px; }
+.top .goal { margin: 0 0 16px; color: var(--muted); }
+.top .goal strong { color: var(--text); }
+.timeline { display: flex; height: 40px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+.tl-seg { display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none;
+  font-size: .75rem; font-weight: 600; min-width: 0; padding: 0 4px; }
+.tl-seg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-seg + .tl-seg { border-left: 2px solid var(--surface); }
+.tl-head { position: absolute; top: 0; bottom: 0; width: 3px; left: 0; background: var(--text); display: none; pointer-events: none; }
+.tl-scale { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); margin-top: 4px; }
+.legend { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .85rem; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.s0 { background: var(--s0); } .s1 { background: var(--s1); } .s2 { background: var(--s2); }
+.s3 { background: var(--s3); } .s4 { background: var(--s4); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tl-seg { color: #0b1417; } }
+:root[data-theme="dark"] .tl-seg { color: #0b1417; }
+
+nav.indice { margin: 20px 0 8px; }
+nav.indice h2 { font-size: 1rem; margin: 0 0 8px; }
+nav.indice ol { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr; gap: 4px; }
+nav.indice a { display: flex; gap: 10px; align-items: baseline; padding: 6px 10px; border-radius: 6px;
+  background: var(--surface); border: 1px solid var(--border); text-decoration: none; color: var(--text); }
+.idx-n { font-weight: 700; color: var(--accent); min-width: 1.5em; }
+.idx-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.idx-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: .85rem; }
+@media (min-width: 640px) { nav.indice ol { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1000px) { nav.indice ol { grid-template-columns: 1fr 1fr 1fr; } }
+
+/* Escenas */
+.escena { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; margin: 16px 0; display: grid; gap: 16px; transition: background .2s, border-color .2s; }
+.escena.activa { background: var(--active); border-color: var(--active-border); box-shadow: 0 0 0 2px var(--active-border); }
+.shots { display: flex; gap: 10px; justify-content: center; order: 2; }
+.phone { margin: 0; width: 100%; max-width: 260px; background: var(--phone); padding: 8px; border-radius: 26px; }
+.shots.two .phone { max-width: calc(50% - 5px); padding: 5px; border-radius: 18px; }
+.phone img { display: block; width: 100%; height: auto; border-radius: 18px; }
+.shots.two .phone img { border-radius: 13px; }
+.placeholder > div { aspect-ratio: 375 / 812; max-height: 260px; border-radius: 18px; background: var(--surface-2);
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; padding: 16px; text-align: center; }
+.ph-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.ph-text { font-size: .9rem; }
+.texto { min-width: 0; order: 1; }
+.esc-head { display: flex; gap: 12px; align-items: flex-start; }
+.esc-n { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--accent-text);
+  display: grid; place-items: center; font-weight: 700; font-size: 1.1rem; }
+.esc-head h2 { margin: 0; font-size: 1.25rem; line-height: 1.25; }
+.meta { margin: 2px 0 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+.tag { font-size: .8rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; }
+.tag.seg { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.seg { color: #0b1417; } }
+:root[data-theme="dark"] .tag.seg { color: #0b1417; }
+.v-maria { color: var(--maria); background: var(--maria-bg); border: 1px solid var(--maria); }
+.v-medica { color: var(--medica); background: var(--medica-bg); border: 1px solid var(--medica); }
+.v-otra { color: var(--otra); background: var(--otra-bg); border: 1px dashed var(--otra); }
+.tag code { background: transparent; padding: 0; }
+.accion { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
+.accion p { margin: 0; }
+.narr-wrap { margin-top: 14px; }
+.narr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.rate { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rate.alto { color: var(--warn); background: var(--warn-bg); padding: 1px 8px; border-radius: 6px; font-weight: 600; }
+.narr { position: relative; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 12px 52px 12px 14px; }
+.narr-text { margin: 0; font-size: 1.3rem; line-height: 1.55; }
+@media (min-width: 800px) { .narr-text { font-size: 1.45rem; } }
+.copy { position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); display: grid; place-items: center; padding: 0; }
+.copy svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.copy .i-ok { display: none; color: var(--ok); }
+.copy.ok .i-ok { display: block; } .copy.ok .i-copy { display: none; }
+@media (min-width: 800px) {
+  .escena { grid-template-columns: 260px minmax(0, 1fr); gap: 24px; padding: 20px; }
+  .shots { order: 0; flex-direction: column; justify-content: flex-start; align-items: stretch; }
+  .texto { order: 0; }
+  .shots.two .phone { max-width: 260px; padding: 8px; border-radius: 26px; }
+  .shots.two .phone img { border-radius: 18px; }
+  .placeholder > div { max-height: none; }
+}
+
+.pendientes { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin: 24px 0 40px; }
+.pendientes h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.pendientes li { margin: 6px 0; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .escena { transition: none; } }
+</style>
+</head>
+<body>
+<div class="ensayo" role="region" aria-label="Modo ensayo">
+  <div class="wrap">
+    <div class="clock" aria-live="off"><span id="clock">0:00</span> <small>/ 4:45</small></div>
+    <div class="btns">
+      <button type="button" class="b primary" id="start">Iniciar ensayo</button>
+      <button type="button" class="b" id="pause" disabled>Pausar</button>
+      <button type="button" class="b" id="reset" disabled>Reiniciar</button>
+    </div>
+    <div class="now" id="now" aria-live="polite">Modo ensayo detenido.</div>
+  </div>
+</div>
+
+<main class="wrap">
+  <header class="top">
+    <h1>Guion del video DAFI</h1>
+    <p class="goal">Meta: <strong>4:45</strong> (límite 5:00). Narrador: Francisco. 15 escenas.</p>
+    <div class="timeline" aria-label="Línea de tiempo por segmento"><a class="tl-seg s0" href="#escena-0" style="flex-grow:30" title="Problema: 0:00–0:30"><span>Problema</span></a><a class="tl-seg s1" href="#escena-1" style="flex-grow:180" title="Flujos: 0:30–3:30"><span>Flujos</span></a><a class="tl-seg s2" href="#escena-12" style="flex-grow:27" title="Decisión técnica: 3:30–3:57"><span>Decisión técnica</span></a><a class="tl-seg s3" href="#escena-13" style="flex-grow:25" title="Uso del agente: 3:57–4:22"><span>Uso del agente</span></a><a class="tl-seg s4" href="#escena-14" style="flex-grow:23" title="Qué haríamos diferente: 4:22–4:45"><span>Qué haríamos diferente</span></a><div class="tl-head" id="tlhead"></div></div>
+    <div class="tl-scale" aria-hidden="true"><span>0:00</span><span>4:45</span></div>
+    <ul class="legend"><li><span class="dot s0"></span>Problema <span class="muted">(30 s)</span></li><li><span class="dot s1"></span>Flujos <span class="muted">(180 s)</span></li><li><span class="dot s2"></span>Decisión técnica <span class="muted">(27 s)</span></li><li><span class="dot s3"></span>Uso del agente <span class="muted">(25 s)</span></li><li><span class="dot s4"></span>Qué haríamos diferente <span class="muted">(23 s)</span></li></ul>
+  </header>
+
+  <nav class="indice" aria-label="Índice de escenas">
+    <h2>Escenas</h2>
+    <ol><li><a href="#escena-0"><span class="idx-n">0</span><span class="idx-t">El problema</span><span class="idx-time">0:00</span></a></li><li><a href="#escena-1"><span class="idx-n">1</span><span class="idx-t">Contraseña mal escrita y entrada</span><span class="idx-time">0:30</span></a></li><li><a href="#escena-2"><span class="idx-n">2</span><span class="idx-t">Los 3 perfiles</span><span class="idx-time">0:45</span></a></li><li><a href="#escena-3"><span class="idx-n">3</span><span class="idx-t">Crear un perfil</span><span class="idx-time">0:55</span></a></li><li><a href="#escena-4"><span class="idx-n">4</span><span class="idx-t">El perfil en la lista</span><span class="idx-time">1:10</span></a></li><li><a href="#escena-5"><span class="idx-n">5</span><span class="idx-t">Editar alergias</span><span class="idx-time">1:15</span></a></li><li><a href="#escena-6"><span class="idx-n">6</span><span class="idx-t">Borrar con confirmación</span><span class="idx-time">1:27</span></a></li><li><a href="#escena-7"><span class="idx-n">7</span><span class="idx-t">Nueva conversación para Mateo</span><span class="idx-time">1:42</span></a></li><li><a href="#escena-8"><span class="idx-n">8</span><span class="idx-t">Preguntas de contexto y envío</span><span class="idx-time">2:02</span></a></li><li><a href="#escena-9"><span class="idx-n">9</span><span class="idx-t">Bandeja de la médica</span><span class="idx-time">2:27</span></a></li><li><a href="#escena-10"><span class="idx-n">10</span><span class="idx-t">La médica registra una indicación</span><span class="idx-time">2:42</span></a></li><li><a href="#escena-11"><span class="idx-n">11</span><span class="idx-t">María ve la indicación y contesta</span><span class="idx-time">3:10</span></a></li><li><a href="#escena-12"><span class="idx-n">12</span><span class="idx-t">Decisión técnica</span><span class="idx-time">3:30</span></a></li><li><a href="#escena-13"><span class="idx-n">13</span><span class="idx-t">Uso del agente</span><span class="idx-time">3:57</span></a></li><li><a href="#escena-14"><span class="idx-n">14</span><span class="idx-t">Qué haríamos diferente</span><span class="idx-time">4:22</span></a></li></ol>
+  </nav>
+
+  
+<section class="escena" id="escena-0" data-start="0" data-end="30" aria-labelledby="t-0">
+  <div class="shots"><figure class="phone placeholder" role="img" aria-label="Sin captura. En pantalla: pantalla de entrada de DAFI."><div><span class="ph-label">Sin captura</span><span class="ph-text">pantalla de entrada de DAFI.</span></div></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">0</span>
+      <div>
+        <h2 id="t-0"><span class="sr-only">Escena 0. </span>El problema</h2>
+        <p class="meta"><span class="time">0:00–0:30</span> · <span class="dur">30 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s0">Problema</span>
+      <span class="tag ven v-maria">María (<code>/entrar</code>)</span></p>
+    <div class="accion"><h3>En pantalla</h3><p>pantalla de entrada de DAFI.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="30"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Cuando una familia le escribe a su médico por mensaje, la información llega incompleta: falta la temperatura, desde cuándo empezó o qué alergias tiene la persona, y el médico tiene que preguntarlo todo otra vez. DAFI ordena esa información antes de que llegue al médico. No diagnostica ni atiende emergencias; la conclusión siempre la escribe un profesional. En esta demo usamos datos ficticios y dos ventanas: María, que cuida a su familia, y la doctora Laura Méndez.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-1" data-start="30" data-end="45" aria-labelledby="t-1">
+  <div class="shots"><figure class="phone"><img src="capturas/01-login-error.png" width="375" height="812" loading="lazy" alt="Escena 1, Contraseña mal escrita y entrada: captura de la app en la ventana de María (01-login-error.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">1</span>
+      <div>
+        <h2 id="t-1"><span class="sr-only">Escena 1. </span>Contraseña mal escrita y entrada</h2>
+        <p class="meta"><span class="time">0:30–0:45</span> · <span class="dur">15 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>escribir el correo de María con una contraseña incorrecta, pulsar «Entrar», leer el mensaje; corregir y entrar.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="15"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">María escribe mal su contraseña. El backend responde 401 y la pantalla le dice que el correo o la contraseña no son correctos, sin sacarla de ahí. Corrige y entra.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-2" data-start="45" data-end="55" aria-labelledby="t-2">
+  <div class="shots"><figure class="phone"><img src="capturas/02-perfiles.png" width="375" height="812" loading="lazy" alt="Escena 2, Los 3 perfiles: captura de la app en la ventana de María (02-perfiles.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">2</span>
+      <div>
+        <h2 id="t-2"><span class="sr-only">Escena 2. </span>Los 3 perfiles</h2>
+        <p class="meta"><span class="time">0:45–0:55</span> · <span class="dur">10 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>mostrar la lista de perfiles.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="10"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Estos tres perfiles vienen de la base de datos: el suyo, el de Mateo, de cinco años, y el de Rosa, una adulta a su cargo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-3" data-start="55" data-end="70" aria-labelledby="t-3">
+  <div class="shots"><figure class="phone"><img src="capturas/03-perfil-nuevo.png" width="375" height="812" loading="lazy" alt="Escena 3, Crear un perfil: captura de la app en la ventana de María (03-perfil-nuevo.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">3</span>
+      <div>
+        <h2 id="t-3"><span class="sr-only">Escena 3. </span>Crear un perfil</h2>
+        <p class="meta"><span class="time">0:55–1:10</span> · <span class="dur">15 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>«Agregar un perfil»; nombre «Sofía Ruán», fecha de nacimiento, alergia «penicilina»; «Guardar perfil».</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="15"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Agrega un perfil nuevo para Sofía, con su fecha de nacimiento y una alergia a la penicilina, y lo guarda.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-4" data-start="70" data-end="75" aria-labelledby="t-4">
+  <div class="shots"><figure class="phone"><img src="capturas/04-lista-con-nuevo.png" width="375" height="812" loading="lazy" alt="Escena 4, El perfil en la lista: captura de la app en la ventana de María (04-lista-con-nuevo.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">4</span>
+      <div>
+        <h2 id="t-4"><span class="sr-only">Escena 4. </span>El perfil en la lista</h2>
+        <p class="meta"><span class="time">1:10–1:15</span> · <span class="dur">5 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>la lista muestra a Sofía.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="5"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Sofía ya aparece en la lista.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-5" data-start="75" data-end="87" aria-labelledby="t-5">
+  <div class="shots"><figure class="phone"><img src="capturas/05-editar-alergias.png" width="375" height="812" loading="lazy" alt="Escena 5, Editar alergias: captura de la app en la ventana de María (05-editar-alergias.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">5</span>
+      <div>
+        <h2 id="t-5"><span class="sr-only">Escena 5. </span>Editar alergias</h2>
+        <p class="meta"><span class="time">1:15–1:27</span> · <span class="dur">12 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>abrir a Sofía, «Editar perfil», cambiar alergias a «penicilina, látex», «Guardar cambios».</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="12"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">María recuerda otra alergia. Abre el perfil, agrega el látex y guarda; el cambio se ve de inmediato.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-6" data-start="87" data-end="102" aria-labelledby="t-6">
+  <div class="shots two"><figure class="phone"><img src="capturas/06-borrar-confirmacion.png" width="375" height="812" loading="lazy" alt="Escena 6, Borrar con confirmación: captura de la app en la ventana de María (06-borrar-confirmacion.png)"></figure><figure class="phone"><img src="capturas/06b-lista-sin-perfil.png" width="375" height="812" loading="lazy" alt="Escena 6, Borrar con confirmación: captura de la app en la ventana de María (06b-lista-sin-perfil.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">6</span>
+      <div>
+        <h2 id="t-6"><span class="sr-only">Escena 6. </span>Borrar con confirmación</h2>
+        <p class="meta"><span class="time">1:27–1:42</span> · <span class="dur">15 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>«Borrar perfil»; leer el aviso; «Sí, borrar el perfil»; la lista vuelve a 3.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="15"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Si se equivocó, puede borrarlo. Antes de hacerlo, DAFI le dice qué se borra y qué no, y que no se puede deshacer. Confirma y la lista vuelve a sus tres perfiles.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-7" data-start="102" data-end="122" aria-labelledby="t-7">
+  <div class="shots"><figure class="phone"><img src="capturas/07-nueva-conversacion.png" width="375" height="812" loading="lazy" alt="Escena 7, Nueva conversación para Mateo: captura de la app en la ventana de María (07-nueva-conversacion.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">7</span>
+      <div>
+        <h2 id="t-7"><span class="sr-only">Escena 7. </span>Nueva conversación para Mateo</h2>
+        <p class="meta"><span class="time">1:42–2:02</span> · <span class="dur">20 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>abrir a Mateo, «Nueva conversación»; título «Fiebre desde ayer», etiqueta «Fiebre», médica «Laura Méndez Ortiz»; «Crear borrador». («Necesito respuesta pronto» es opcional.)</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="20"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Mateo tiene fiebre desde ayer. María abre una conversación desde su perfil, le pone título, marca la etiqueta «Fiebre» y elige a la doctora Méndez, que ya está en el círculo de la familia. Todavía no se envía nada: queda como borrador.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-8" data-start="122" data-end="147" aria-labelledby="t-8">
+  <div class="shots"><figure class="phone"><img src="capturas/08-contexto.png" width="375" height="812" loading="lazy" alt="Escena 8, Preguntas de contexto y envío: captura de la app en la ventana de María (08-contexto.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">8</span>
+      <div>
+        <h2 id="t-8"><span class="sr-only">Escena 8. </span>Preguntas de contexto y envío</h2>
+        <p class="meta"><span class="time">2:02–2:27</span> · <span class="dur">25 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>temperatura «38.5», «Guardar»; «¿Desde cuándo tiene fiebre?» → «Desde ayer en la tarde», «Guardar»; «Enviar».</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="25"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Por la etiqueta «Fiebre», DAFI le hace las preguntas que la médica haría de todos modos: la temperatura más alta y desde cuándo empezó. Cada respuesta se guarda por separado y el botón de enviar se activa hasta que las obligatorias están contestadas. También le recuerda que DAFI no atiende emergencias. María envía.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-9" data-start="147" data-end="162" aria-labelledby="t-9">
+  <div class="shots"><figure class="phone"><img src="capturas/09-bandeja-medica.png" width="375" height="812" loading="lazy" alt="Escena 9, Bandeja de la médica: captura de la app en la ventana de Médica (09-bandeja-medica.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">9</span>
+      <div>
+        <h2 id="t-9"><span class="sr-only">Escena 9. </span>Bandeja de la médica</h2>
+        <p class="meta"><span class="time">2:27–2:42</span> · <span class="dur">15 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-medica">Médica</span></p>
+    <div class="accion"><h3>Acción</h3><p>cambiar a la ventana de incógnito; entrar como la Dra. Méndez; señalar la conversación en «Enviadas».</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="15"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">En la otra ventana entra la doctora Méndez. Su bandeja agrupa las conversaciones por estado, y la de Mateo aparece en «Enviadas».</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-10" data-start="162" data-end="190" aria-labelledby="t-10">
+  <div class="shots two"><figure class="phone"><img src="capturas/10a-medica-en-revision.png" width="375" height="812" loading="lazy" alt="Escena 10, La médica registra una indicación: captura de la app en la ventana de Médica (10a-medica-en-revision.png)"></figure><figure class="phone"><img src="capturas/10b-indicacion.png" width="375" height="812" loading="lazy" alt="Escena 10, La médica registra una indicación: captura de la app en la ventana de Médica (10b-indicacion.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">10</span>
+      <div>
+        <h2 id="t-10"><span class="sr-only">Escena 10. </span>La médica registra una indicación</h2>
+        <p class="meta"><span class="time">2:42–3:10</span> · <span class="dur">28 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-medica">Médica</span></p>
+    <div class="accion"><h3>Acción</h3><p>abrir la conversación (estado «En revisión»); mostrar el perfil y las respuestas de contexto; «Registrar indicación»; texto «Paracetamol cada 8 horas por 2 días y consulta presencial si la fiebre sigue.», decisión «Consulta presencial», 2 días; registrar.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="28"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Al abrirla, la conversación pasa a «En revisión» y la familia lo ve. La doctora tiene a la vista la edad de Mateo, sus alergias y las respuestas de María, sin haber preguntado nada. Registra su indicación: el texto, la decisión de consulta presencial y en cuántos días. Esto es lo que distingue a DAFI: la conclusión la escribe la médica y DAFI solo ordena la información.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-11" data-start="190" data-end="210" aria-labelledby="t-11">
+  <div class="shots"><figure class="phone"><img src="capturas/11-hilo-indicacion.png" width="375" height="812" loading="lazy" alt="Escena 11, María ve la indicación y contesta: captura de la app en la ventana de María (11-hilo-indicacion.png)"></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">11</span>
+      <div>
+        <h2 id="t-11"><span class="sr-only">Escena 11. </span>María ve la indicación y contesta</h2>
+        <p class="meta"><span class="time">3:10–3:30</span> · <span class="dur">20 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s1">Flujos</span>
+      <span class="tag ven v-maria">María</span></p>
+    <div class="accion"><h3>Acción</h3><p>volver a la ventana de María; abrir la conversación; mostrar la indicación; escribir «Gracias, doctora. Ya le di la primera dosis.» y enviar.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="20"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">María abre el hilo y encuentra la indicación marcada como vigente, con la consulta en dos días, además del registro de cuándo la doctora abrió la conversación. Le contesta que ya le dio la primera dosis.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-12" data-start="210" data-end="237" aria-labelledby="t-12">
+  <div class="shots"><figure class="phone placeholder" role="img" aria-label="Sin captura. En pantalla: tabla de pruebas del README o el archivo del contrato."><div><span class="ph-label">Sin captura</span><span class="ph-text">tabla de pruebas del README o el archivo del contrato.</span></div></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">12</span>
+      <div>
+        <h2 id="t-12"><span class="sr-only">Escena 12. </span>Decisión técnica</h2>
+        <p class="meta"><span class="time">3:30–3:57</span> · <span class="dur">27 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s2">Decisión técnica</span>
+      <span class="tag ven v-otra">README o contrato</span></p>
+    <div class="accion"><h3>En pantalla</h3><p>tabla de pruebas del README o el archivo del contrato.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="27"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">El frontend está en Next.js y el backend en Express, que venía fijado por la especificación de requisitos, con PostgreSQL como base de datos. Los dos lados se construyeron contra un mismo contrato OpenAPI, que define cada ruta y cada código de error, como el 401 del inicio. La demo corre en local; no hay despliegue público.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-13" data-start="237" data-end="262" aria-labelledby="t-13">
+  <div class="shots"><figure class="phone placeholder" role="img" aria-label="Sin captura. En pantalla: la lección L-26 en LESSONS.md o la lista de PR fusionados."><div><span class="ph-label">Sin captura</span><span class="ph-text">la lección L-26 en LESSONS.md o la lista de PR fusionados.</span></div></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">13</span>
+      <div>
+        <h2 id="t-13"><span class="sr-only">Escena 13. </span>Uso del agente</h2>
+        <p class="meta"><span class="time">3:57–4:22</span> · <span class="dur">25 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s3">Uso del agente</span>
+      <span class="tag ven v-otra">LESSONS.md o lista de PR</span></p>
+    <div class="accion"><h3>En pantalla</h3><p>la lección L-26 en LESSONS.md o la lista de PR fusionados.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="25"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">En la última semana un agente de IA escribió el código y las pruebas, y cada tarea llegó como un PR que yo revisé y fusioné: 23 en tres días. No bastó con las pruebas automáticas. En la pantalla de crear cuenta, a ancho de teléfono, el mensaje de error quedaba tapado por la cabecera y la prueba pasaba igual; lo detectó una captura de pantalla.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="escena" id="escena-14" data-start="262" data-end="285" aria-labelledby="t-14">
+  <div class="shots"><figure class="phone placeholder" role="img" aria-label="Sin captura. En pantalla: el hilo de María con la indicación."><div><span class="ph-label">Sin captura</span><span class="ph-text">el hilo de María con la indicación.</span></div></figure></div>
+  <div class="texto">
+    <header class="esc-head">
+      <span class="esc-n" aria-hidden="true">14</span>
+      <div>
+        <h2 id="t-14"><span class="sr-only">Escena 14. </span>Qué haríamos diferente</h2>
+        <p class="meta"><span class="time">4:22–4:45</span> · <span class="dur">23 s</span></p>
+      </div>
+    </header>
+    <p class="tags"><span class="tag seg s4">Qué haríamos diferente</span>
+      <span class="tag ven v-maria">María (hilo)</span></p>
+    <div class="accion"><h3>En pantalla</h3><p>el hilo de María con la indicación.</p></div>
+    <div class="narr-wrap">
+      <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="23"></span></div>
+      <div class="narr">
+        <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+        <p class="narr-text">Conectaríamos una pantalla al backend desde el primer sprint, en lugar de dejar la integración para el final, y yo leería el diff completo de cada PR antes de fusionarlo. Quedan pendientes las invitaciones al círculo médico, las fotos y las notificaciones. Gracias.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <section class="pendientes" aria-labelledby="t-pend">
+    <h2 id="t-pend">Pendientes antes de grabar</h2>
+    <ul><li>Ensayo cronometrado (meta 4:45). Si se pasa, recortar primero las escenas 4 y 12.</li><li>Decidir quién narra cada parte: la actividad pide grabarlo en equipo.</li><li>Elegir qué se muestra en pantalla en las escenas 12 y 13.</li><li>El servidor de desarrollo de Next.js muestra un círculo «N» abajo a la izquierda; sale en la grabación y en casi todas las capturas.</li><li>En la demo usar «Fiebre» o «Piel»: «Respiratorio» no tiene preguntas en el seed.</li></ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var TOTAL = 285;
+  var MAX_RATE = 2.8;
+  var escenas = Array.prototype.slice.call(document.querySelectorAll(".escena"));
+
+  // Palabras y palabras por segundo de cada narración
+  function contarPalabras(t) {
+    return t.split(/\s+/).filter(function (w) { return /[\p{L}\p{N}]/u.test(w); }).length;
+  }
+  escenas.forEach(function (sec) {
+    var txt = sec.querySelector(".narr-text").textContent;
+    var rate = sec.querySelector(".rate");
+    var dur = Number(rate.dataset.dur);
+    var n = contarPalabras(txt);
+    var pps = n / dur;
+    rate.textContent = n + " palabras · " + pps.toFixed(2).replace(".", ",") + " palabras/s";
+    if (pps > MAX_RATE) {
+      rate.classList.add("alto");
+      rate.textContent += " (más de 2,8)";
+    }
+  });
+
+  // Copiar narración
+  function copiar(texto) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(texto);
+    return new Promise(function (ok, fail) {
+      var ta = document.createElement("textarea");
+      ta.value = texto; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy") ? ok() : fail(); } catch (e) { fail(e); }
+      document.body.removeChild(ta);
+    });
+  }
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest(".copy");
+    if (!btn) return;
+    var texto = btn.parentNode.querySelector(".narr-text").textContent.trim();
+    copiar(texto).then(function () {
+      btn.classList.add("ok"); btn.setAttribute("aria-label", "Narración copiada");
+      setTimeout(function () { btn.classList.remove("ok"); btn.setAttribute("aria-label", "Copiar narración"); }, 1500);
+    }, function () { btn.setAttribute("aria-label", "No se pudo copiar"); });
+  });
+
+  // Modo ensayo
+  var clock = document.getElementById("clock"), now = document.getElementById("now"), head = document.getElementById("tlhead");
+  var bStart = document.getElementById("start"), bPause = document.getElementById("pause"), bReset = document.getElementById("reset");
+  var acumulado = 0, inicio = null, timer = null, actual = -1;
+
+  function fmt(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function transcurrido() { return acumulado + (inicio === null ? 0 : (Date.now() - inicio) / 1000); }
+  function marcar(i) {
+    if (i === actual) return;
+    if (actual >= 0) escenas[actual].classList.remove("activa");
+    actual = i;
+    if (i < 0) return;
+    escenas[i].classList.add("activa");
+    escenas[i].scrollIntoView({ behavior: "smooth", block: "start" });
+    now.textContent = "Escena " + i + ": " + escenas[i].querySelector("h2").textContent.replace(/^Escena \d+\. /, "");
+  }
+  function tick() {
+    var t = transcurrido();
+    clock.textContent = fmt(t);
+    clock.classList.toggle("over", t > TOTAL);
+    head.style.display = "block";
+    head.style.left = Math.min(100, t / TOTAL * 100) + "%";
+    var i = escenas.findIndex(function (s) { return t >= Number(s.dataset.start) && t < Number(s.dataset.end); });
+    if (i >= 0) marcar(i);
+    else if (t >= TOTAL) now.textContent = "Tiempo cumplido (" + fmt(t) + ").";
+  }
+  bStart.addEventListener("click", function () {
+    if (timer) return;
+    inicio = Date.now(); timer = setInterval(tick, 250); tick();
+    bStart.disabled = true; bPause.disabled = false; bReset.disabled = false;
+    bStart.textContent = "Iniciar ensayo";
+  });
+  bPause.addEventListener("click", function () {
+    if (!timer) return;
+    acumulado = transcurrido(); inicio = null; clearInterval(timer); timer = null;
+    bStart.disabled = false; bStart.textContent = "Continuar"; bPause.disabled = true;
+    now.textContent = "En pausa en " + fmt(acumulado) + ".";
+  });
+  bReset.addEventListener("click", function () {
+    clearInterval(timer); timer = null; acumulado = 0; inicio = null;
+    marcar(-1); clock.textContent = "0:00"; clock.classList.remove("over"); head.style.display = "none";
+    bStart.disabled = false; bStart.textContent = "Iniciar ensayo"; bPause.disabled = true; bReset.disabled = true;
+    now.textContent = "Modo ensayo detenido.";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+})();
+</script>
+</body>
+</html>
