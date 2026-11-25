@@ -129,7 +129,8 @@ function Contenido({ conversacionId }: { conversacionId: string }) {
       if (!incierto) intentoIndicacion.current = null;
       if (e instanceof ApiError && e.esSesionInvalida) return;
       // 409 (estado) y 422 (datos) se corrigen aquí: junto al botón (L-26).
-      if (e instanceof ApiError && (e.status === 409 || e.status === 422)) setErrorGeneral(mensajeParaUsuario(e));
+      if (e instanceof ApiError && e.codigo === 'DATOS_INVALIDOS') setErrorGeneral(`Revise los datos: ${e.message}.`);
+      else if (e instanceof ApiError && (e.status === 409 || e.status === 422)) setErrorGeneral(mensajeParaUsuario(e));
       else await alertarError(e);
     } finally {
       setRegistrando(false);

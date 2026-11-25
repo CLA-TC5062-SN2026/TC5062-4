@@ -104,7 +104,8 @@ function Contenido({ conversacionId }: { conversacionId: string }) {
       marcar(q.id, { fase: 'guardado' });
     } catch (e) {
       if (e instanceof ApiError && e.esSesionInvalida) return;
-      marcar(q.id, { fase: 'error', mensaje: mensajeParaUsuario(e) });
+      const mensaje = e instanceof ApiError && e.codigo === 'DATOS_INVALIDOS' ? `Revise los datos: ${e.message}.` : mensajeParaUsuario(e);
+      marcar(q.id, { fase: 'error', mensaje });
       if (!(e instanceof ApiError && (e.status === 409 || e.status === 422))) await alertarError(e);
     }
   }
@@ -144,7 +145,9 @@ function Contenido({ conversacionId }: { conversacionId: string }) {
       setEnviando(false);
       if (e instanceof ApiError && e.esSesionInvalida) return;
       // 422 por pendientes y 409 se muestran junto al botón (L-26).
-      if (e instanceof ApiError && (e.codigo === 'CONVERSACION_INCOMPLETA' || e.status === 409)) {
+      if (e instanceof ApiError && e.codigo === 'DATOS_INVALIDOS') {
+        setErrorEnvio(`Revise los datos: ${e.message}.`);
+      } else if (e instanceof ApiError && (e.codigo === 'CONVERSACION_INCOMPLETA' || e.status === 409)) {
         setErrorEnvio(mensajeParaUsuario(e));
       } else {
         await alertarError(e);
