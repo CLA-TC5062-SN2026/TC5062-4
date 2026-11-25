@@ -448,7 +448,7 @@ h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color:
   </div>
 </section>
 <section class="escena" id="escena-12" data-start="210" data-end="237" aria-labelledby="t-12">
-  <div class="shots"><figure class="phone placeholder" role="img" aria-label="Sin captura. En pantalla: tabla de pruebas del README o el archivo del contrato."><div><span class="ph-label">Sin captura</span><span class="ph-text">tabla de pruebas del README o el archivo del contrato.</span></div></figure></div>
+  <div class="shots"><figure class="phone placeholder" role="img" aria-label="Sin captura. En pantalla: el contrato de la API (`S05_S06_A1/openapi_equipo.yaml`)."><div><span class="ph-label">Sin captura</span><span class="ph-text">el contrato de la API (<code>S05_S06_A1/openapi_equipo.yaml</code>).</span></div></figure></div>
   <div class="texto">
     <header class="esc-head">
       <span class="esc-n" aria-hidden="true">12</span>
@@ -458,13 +458,13 @@ h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color:
       </div>
     </header>
     <p class="tags"><span class="tag seg s2">Decisión técnica</span>
-      <span class="tag ven v-otra">README o contrato</span></p>
-    <div class="accion"><h3>En pantalla</h3><p>tabla de pruebas del README o el archivo del contrato.</p></div>
+      <span class="tag ven v-otra">Contrato OpenAPI</span></p>
+    <div class="accion"><h3>En pantalla</h3><p>el contrato de la API (<code>S05_S06_A1/openapi_equipo.yaml</code>).</p></div>
     <div class="narr-wrap">
       <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="27"></span></div>
       <div class="narr">
         <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
-        <p class="narr-text">El frontend está en Next.js y el backend en Express, que venía fijado por la especificación de requisitos, con PostgreSQL como base de datos. Los dos lados se construyeron contra un mismo contrato OpenAPI, que define cada ruta y cada código de error, como el 401 del inicio. La demo corre en local; no hay despliegue público.</p>
+        <p class="narr-text">La decisión técnica que más pesó fue escribir primero el contrato de la API en OpenAPI y construir el frontend y el backend contra él. Eso permitió que las pantallas avanzaran con datos de muestra mientras el backend se construía por separado; al conectarlas en la última semana, las rutas y los códigos de error, como el 401 del inicio, ya estaban acordados.</p>
       </div>
     </div>
   </div>
@@ -486,7 +486,7 @@ h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color:
       <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="25"></span></div>
       <div class="narr">
         <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
-        <p class="narr-text">En la última semana un agente de IA escribió el código y las pruebas, y cada tarea llegó como un PR que yo revisé y fusioné: 23 en tres días. No bastó con las pruebas automáticas. En la pantalla de crear cuenta, a ancho de teléfono, el mensaje de error quedaba tapado por la cabecera y la prueba pasaba igual; lo detectó una captura de pantalla.</p>
+        <p class="narr-text">El agente de IA fue más útil en la fase de implementación: en la última semana escribió el código y las pruebas de 23 PR en tres días, que yo revisé y fusioné. Falló en la verificación: en crear cuenta, a ancho de teléfono, el mensaje de error quedaba tapado por la cabecera y la prueba pasaba igual. Lo detectó una captura y hubo que corregirlo.</p>
       </div>
     </div>
   </div>
@@ -508,7 +508,7 @@ h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color:
       <div class="narr-head"><h3>Narración</h3><span class="rate" data-dur="23"></span></div>
       <div class="narr">
         <button type="button" class="copy" aria-label="Copiar narración" title="Copiar narración"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg><svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
-        <p class="narr-text">Conectaríamos una pantalla al backend desde el primer sprint, en lugar de dejar la integración para el final, y yo leería el diff completo de cada PR antes de fusionarlo. Quedan pendientes las invitaciones al círculo médico, las fotos y las notificaciones. Gracias.</p>
+        <p class="narr-text">La limitación más importante es que la familia no puede invitar a su médico: la doctora Méndez está en el círculo porque la cargamos con los datos de la demo. Con más tiempo construiríamos las invitaciones y el consentimiento, que es lo que permitiría usar DAFI con una familia real. Y conectaríamos cada pantalla al backend desde el primer sprint. Gracias.</p>
       </div>
     </div>
   </div>
@@ -516,7 +516,7 @@ h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color:
 
   <section class="pendientes" aria-labelledby="t-pend">
     <h2 id="t-pend">Pendientes antes de grabar</h2>
-    <ul><li>Ensayo cronometrado (meta 4:45). Si se pasa, recortar primero las escenas 4 y 12.</li><li>Decidir quién narra cada parte: la actividad pide grabarlo en equipo.</li><li>Elegir qué se muestra en pantalla en las escenas 12 y 13.</li><li>El servidor de desarrollo de Next.js muestra un círculo «N» abajo a la izquierda; sale en la grabación y en casi todas las capturas.</li><li>En la demo usar «Fiebre» o «Piel»: «Respiratorio» no tiene preguntas en el seed.</li></ul>
+    <ul><li>Ensayo cronometrado (meta 4:45). Si se pasa, recortar primero las escenas 4 y 12.</li><li>Decidir quién maneja el teclado y quién narra cada parte: la actividad pide grabarlo en equipo, con narración por turnos o integrantes en cámara.</li><li>Elegir qué se muestra en pantalla en la escena 13.</li><li>El servidor de desarrollo de Next.js muestra un círculo «N» abajo a la izquierda; sale en la grabación y en casi todas las capturas.</li><li>En la demo usar «Fiebre» o «Piel»: «Respiratorio» no tiene preguntas en el seed.</li></ul>
   </section>
 </main>
 

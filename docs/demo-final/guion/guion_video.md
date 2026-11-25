@@ -2,7 +2,7 @@
 
 Borrador para ensayo. Meta: **4:45** (límite 5:00). Narrador de todas las escenas: Francisco (cambiar aquí si alguien más del equipo narra una parte).
 
-Antes de grabar: `npm --prefix backend run demo:reset`, una ventana normal con María y una de incógnito con la Dra. Laura Méndez, ambas a ancho de teléfono. Datos ficticios. Cuentas y contraseña de demo: ver [README](../../../README.md).
+Antes de grabar: `npm --prefix backend run demo:reset`, una ventana normal con María y una de incógnito con la Dra. Laura Méndez, ambas a ancho de teléfono y con la sesión de la médica sin iniciar. El video es una sola toma continua, sin cortes de edición: el cambio entre ventanas se hace en vivo. Datos ficticios. Cuentas y contraseña de demo: ver [README](../../../README.md).
 
 La vista web con capturas está en [guion_video.html](guion_video.html).
 
@@ -20,7 +20,7 @@ La vista web con capturas está en [guion_video.html](guion_video.html).
 | 9 | 2:27–2:42 | Flujos | Bandeja de la médica | Médica | `09-bandeja-medica.png` |
 | 10 | 2:42–3:10 | Flujos | La médica registra una indicación | Médica | `10a-medica-en-revision.png`, `10b-indicacion.png` |
 | 11 | 3:10–3:30 | Flujos | María ve la indicación y contesta | María | `11-hilo-indicacion.png` |
-| 12 | 3:30–3:57 | Decisión técnica | Decisión técnica | README o contrato | — |
+| 12 | 3:30–3:57 | Decisión técnica | Decisión técnica | Contrato OpenAPI | — |
 | 13 | 3:57–4:22 | Uso del agente | Uso del agente | LESSONS.md o lista de PR | — |
 | 14 | 4:22–4:45 | Qué haríamos diferente | Qué haríamos diferente | María (hilo) | — |
 
@@ -110,29 +110,29 @@ María abre el hilo y encuentra la indicación marcada como vigente, con la cons
 
 ## Escena 12. Decisión técnica (3:30–3:57)
 
-**En pantalla:** tabla de pruebas del README o el archivo del contrato.
+**En pantalla:** el contrato de la API (`S05_S06_A1/openapi_equipo.yaml`).
 
 **Narración:**
-El frontend está en Next.js y el backend en Express, que venía fijado por la especificación de requisitos, con PostgreSQL como base de datos. Los dos lados se construyeron contra un mismo contrato OpenAPI, que define cada ruta y cada código de error, como el 401 del inicio. La demo corre en local; no hay despliegue público.
+La decisión técnica que más pesó fue escribir primero el contrato de la API en OpenAPI y construir el frontend y el backend contra él. Eso permitió que las pantallas avanzaran con datos de muestra mientras el backend se construía por separado; al conectarlas en la última semana, las rutas y los códigos de error, como el 401 del inicio, ya estaban acordados.
 
 ## Escena 13. Uso del agente (3:57–4:22)
 
 **En pantalla:** la lección L-26 en LESSONS.md o la lista de PR fusionados.
 
 **Narración:**
-En la última semana un agente de IA escribió el código y las pruebas, y cada tarea llegó como un PR que yo revisé y fusioné: 23 en tres días. No bastó con las pruebas automáticas. En la pantalla de crear cuenta, a ancho de teléfono, el mensaje de error quedaba tapado por la cabecera y la prueba pasaba igual; lo detectó una captura de pantalla.
+El agente de IA fue más útil en la fase de implementación: en la última semana escribió el código y las pruebas de 23 PR en tres días, que yo revisé y fusioné. Falló en la verificación: en crear cuenta, a ancho de teléfono, el mensaje de error quedaba tapado por la cabecera y la prueba pasaba igual. Lo detectó una captura y hubo que corregirlo.
 
 ## Escena 14. Qué haríamos diferente (4:22–4:45)
 
 **En pantalla:** el hilo de María con la indicación.
 
 **Narración:**
-Conectaríamos una pantalla al backend desde el primer sprint, en lugar de dejar la integración para el final, y yo leería el diff completo de cada PR antes de fusionarlo. Quedan pendientes las invitaciones al círculo médico, las fotos y las notificaciones. Gracias.
+La limitación más importante es que la familia no puede invitar a su médico: la doctora Méndez está en el círculo porque la cargamos con los datos de la demo. Con más tiempo construiríamos las invitaciones y el consentimiento, que es lo que permitiría usar DAFI con una familia real. Y conectaríamos cada pantalla al backend desde el primer sprint. Gracias.
 
 ## Pendientes antes de grabar
 
 - Ensayo cronometrado (meta 4:45). Si se pasa, recortar primero las escenas 4 y 12.
-- Decidir quién narra cada parte: la actividad pide grabarlo en equipo.
-- Elegir qué se muestra en pantalla en las escenas 12 y 13.
+- Decidir quién maneja el teclado y quién narra cada parte: la actividad pide grabarlo en equipo, con narración por turnos o integrantes en cámara.
+- Elegir qué se muestra en pantalla en la escena 13.
 - El servidor de desarrollo de Next.js muestra un círculo «N» abajo a la izquierda; sale en la grabación y en casi todas las capturas.
 - En la demo usar «Fiebre» o «Piel»: «Respiratorio» no tiene preguntas en el seed.
