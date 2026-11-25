@@ -304,7 +304,7 @@ ESLint frontend:
 npm --prefix frontend run lint
 ```
 
-Build frontend y validaciones de Next.js/TypeScript (no se volvió a correr para esta versión del README):
+Build frontend y validaciones de Next.js/TypeScript (pasa en `main` el 24 de noviembre de 2026; córrelo con el servidor de desarrollo detenido):
 
 ```bash
 npm --prefix frontend run build
