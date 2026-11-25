@@ -1,74 +1,99 @@
 # Retrospectiva del proyecto DAFI
 
-Con base en el código, las pruebas y el historial versionado del proyecto, esta retrospectiva describe el resultado observado y separa las funcionalidades demostradas de los prototipos y las brechas.
+Con base en el código, los PR y las lecciones registradas, esta retrospectiva separa lo que la demo muestra de lo que sigue pendiente.
 
 ## A. Proceso de trabajo
 
 ### ¿Qué salió bien?
 
-- La separación entre contrato OpenAPI, esquema relacional y rutas permitió contrastar requisitos con artefactos concretos. La revisión de SQL registra correcciones a partir del OpenAPI y el diagrama en [S05_S06_A1/revision_sql.md](../S05_S06_A1/revision_sql.md).
-- PostgreSQL sostiene los datos de perfiles y conversaciones en la implementación backend. El esquema versionado es [S05_S06_A1/esquema_bd.sql](../S05_S06_A1/esquema_bd.sql).
-- La autenticación JWT y la autorización por rol se ejercitan en el backend y se documentan en [S05_S06_A2/revision_seguridad.md](../S05_S06_A2/revision_seguridad.md).
-- La revisión de componentes detectó problemas concretos de accesibilidad, hidratación y comportamiento de formularios, y documentó los cambios aplicados en [S07_S08_A1/revision_componentes.md](../S07_S08_A1/revision_componentes.md).
-- Las actividades de auditoría y trazabilidad hicieron visibles las diferencias entre el contrato, el código, las pruebas y las pantallas.
+- En la semana de la demo, una rama y un PR por tarea de [TASKS.md](../docs/demo-final/TASKS.md) mantuvo los cambios chicos: entre el 22 y el 24 de noviembre se fusionaron 23 PR (#62 a #84).
+- Las lecciones se anotaron el mismo día en [LESSONS.md](../docs/demo-final/LESSONS.md) y varias se volvieron reglas de prueba o de grabación.
 
 ### ¿Qué no salió bien?
 
-- Parte del frontend presenta vistas de conversación, bandeja e historial con fixtures; su apariencia no demuestra integración funcional con el API.
-- La cobertura del OpenAPI es parcial. El contrato contiene operaciones que no están implementadas en las rutas actuales, entre ellas recuperación de cuenta, notificaciones y flujos completos de consentimiento.
-- Afirmaciones documentales requirieron comprobación repetida contra código y salidas de prueba. En particular, algunas referencias de línea quedaron desactualizadas al cambiar los archivos.
-- Se produjo retrabajo al convertir explicaciones genéricas en evidencia local concreta y al sanitizar salidas que podían incluir datos de demostración.
-- Hubo conflictos de Git y comandos ejecutados desde rutas incorrectas. El historial disponible no permite atribuir cada incidente a una herramienta o agente.
-- Algunas propuestas de diseño cubrían un alcance mayor que el producto funcional demostrado; fue necesario distinguir objetivos del SRS de lo implementado.
+- La integración llegó tarde: después del PR #56 solo `/perfiles` usaba datos reales, y la conversación se conectó en la última semana.
+- El build del frontend que PLAN.md pedía antes de cada PR no se corrió en los PR #76, #77, #79 y #82 (chocaba con el servidor de desarrollo); se comprobó en `main` hasta el 24 de noviembre.
+- Las e2e dependen del estado de la base y exigen `demo:reset` entre corridas (L-31).
 
 ### ¿Qué haríamos diferente?
 
-La comparación de cada criterio de aceptación con una ruta, una prueba reproducible y una pantalla integrada habría comenzado antes de redactar conclusiones de avance. Una revisión de cambios y enlaces al cerrar cada actividad habría reducido referencias de línea obsoletas y discrepancias entre documentos. Las capturas y salidas de prueba se habrían sanitizado al generarse, conservando el comando, el resultado y el contexto suficiente para reproducirlas sin divulgar credenciales.
+Conectaríamos una pantalla al backend con su e2e desde el primer sprint, en lugar de construir las vistas con datos de muestra y conectarlas al final. Montaríamos las pruebas de integración antes de S09, cuando el backend no tenía ninguna ([code_review.md](../S09_A1/code_review.md)). También revisaríamos cada pantalla con captura a 375 px además de la e2e (L-26).
+
+> **[PENDIENTE Francisco]** Si repitieras esta semana, ¿qué cambiarías en tu forma de revisar y fusionar los PR del agente?
 
 ### ¿En qué fases fueron útiles los agentes?
 
-Los agentes fueron útiles al comparar diseños y contratos; producir versiones iniciales del esquema SQL, del backend Express y de componentes; revisar seguridad; proponer y estructurar pruebas; localizar hallazgos; y organizar documentación. Hay evidencia directa de la propuesta inicial de SQL y del backend en [S05_S06_A1/revision_sql.md](../S05_S06_A1/revision_sql.md), de los componentes en [S07_S08_A1/revision_componentes.md](../S07_S08_A1/revision_componentes.md), de la revisión de seguridad en [S05_S06_A2/revision_seguridad.md](../S05_S06_A2/revision_seguridad.md) y de hallazgos de código en [S09_A1/code_review.md](../S09_A1/code_review.md). La utilidad estuvo en acelerar borradores y análisis, no en sustituir la verificación contra el repositorio y las ejecuciones locales.
+Antes de S11 los agentes produjeron primeras versiones del esquema, del backend y de los componentes, y localizaron hallazgos de código; en la semana de la demo escribieron el código, las pruebas y los borradores de documentación ([PLAN.md](../docs/demo-final/PLAN.md), sección 6).
+
+**Priorización del agente PO (S03-A1).** Un agente independiente priorizó las 18 historias sin ver nuestro orden. Coincidió en las ocho primeras y bajó el resumen de contexto a Media porque al principio no hay historial que resumir. Mantuvimos HU-13 en Alta, condicionamos HU-14 a una prueba técnica y adoptamos su argumento sobre eliminación de datos como regla de liberación ([priorizacion_comparada.md](../S03_A1/priorizacion_comparada.md), [respuesta del agente](../S03_A1/evidencia/priorizacion_agente_PO.md), [ajustes_backlog.md](../S03_A1/ajustes_backlog.md)). El resumen que defendimos como Alta no se construyó.
+
+> **[PENDIENTE Francisco]** De las diferencias con el agente PO, ¿cuál te hizo cambiar de opinión y cuál sostuviste contra su propuesta?
+
+**Login fallido tratado como sesión caducada (PR #56).** El backend responde `401 NO_AUTENTICADO` a una contraseña incorrecta y a una sesión revocada, y el interceptor de 401 mandaba ambas a «sesión expirada». Ahora el interceptor ignora las peticiones públicas y `/entrar` muestra su propio mensaje (L-10); ese error es el paso 1 del guion.
+
+**Errores de bcrypt (PR #60).** El hallazgo F-05 de la revisión de código señaló que el login convertía cualquier excepción de bcrypt en «credenciales incorrectas». El PR quitó esa captura, conservó el hash de respaldo y agregó dos pruebas con mocks ([refactorizacion.md](../S09_A1/refactorizacion.md)).
+
+**Lo aprendido en la semana de la demo** ([LESSONS.md](../docs/demo-final/LESSONS.md)):
+
+- L-26: a 375 px, el error de «Crear cuenta» quedaba tapado por la cabecera fija y la e2e pasaba igual. Una captura lo detectó y el error se movió junto al botón.
+- L-39: un subagente no pudo levantar los servidores y entregó sin e2e. La sesión principal los levantó y corrió las pruebas.
+- L-37: sin migraciones, el tipo de sangre no llega solo a la base de demo; tras un cambio de esquema se corre `demo:reset`.
+- L-42: el e2e del guion borra un perfil mientras otro spec, en paralelo, contaba perfiles; ahora comprueba nombres.
+- L-33: con la máquina saturada falló el login; antes de grabar se revisa la carga.
 
 ### ¿En qué fases generaron retrabajo?
 
-El retrabajo apareció cuando un borrador contenía afirmaciones que no coincidían con el alcance real, cuando las referencias de línea cambiaron, cuando la documentación era genérica y cuando una salida necesitaba sanitización. También hubo conflictos Git y ejecuciones desde rutas incorrectas; esos incidentes no se atribuyen a IA porque el historial no demuestra esa relación. Las propuestas de mayor alcance que la implementación necesitaron reducción y clasificación como brechas, no como capacidades existentes.
+Antes, cuando un borrador afirmaba más de lo implementado. Esta semana, por lo que las pruebas no veían (L-26 y L-42) y por una pregunta del seed que se cambió por F3 (L-22).
+
+> **[PENDIENTE Francisco]** ¿En qué PR de esta semana rechazaste o cambiaste lo que propuso el agente, y por qué?
 
 ### ¿Cómo cambió la forma de programar?
 
-El flujo observado pasó de usar generación como punto de partida a contrastar cada cambio con el contrato, las reglas del dominio, la autorización, las pruebas y el estado del repositorio. La revisión humana comprobó nombres de campos, rutas, permisos y comportamiento; las pruebas y la documentación conservaron los límites del resultado. El agente sirvió para acelerar exploración y primeras versiones, mientras que la decisión de integrar dependió de evidencia verificable.
+El agente abría el PR solo después de correr las pruebas de PLAN.md (sección 8); en F10 construyó un subagente y la sesión principal volvió a correr las e2e (L-39). Cada PR declara «Decisiones a revisar» y «No verificado», y el PO revisó y fusionó cada uno. Los cambios de alcance entraron solo con su aprobación.
+
+> **[PENDIENTE Francisco]** ¿Qué te sorprendió más de trabajar con el agente programando y tú revisando?
 
 ## B. Resultado del producto
 
 ### ¿DAFI resuelve el problema original?
 
-DAFI atiende parcialmente la coordinación de información entre cuidadores y profesionales de salud mediante cuentas, perfiles y operaciones backend para conversaciones. No resuelve de extremo a extremo el problema original: los flujos principales de conversación no están integrados por completo en la interfaz y faltan capacidades del contrato. DAFI no diagnostica ni sustituye atención médica urgente.
+Parcialmente. El ciclo central funciona en local contra el backend y PostgreSQL: la familia envía una conversación con contexto, la médica registra una indicación y la familia la ve y contesta. Aun así, según la [matriz](matriz_trazabilidad.md), ningún RF está completo: 17 son parciales y 6 no están implementados. La médica entra al círculo por el seed. DAFI no diagnostica ni sustituye atención urgente.
 
 ### ¿Qué evidencia concreta lo demuestra?
 
-- La autenticación y los controles de acceso del backend están descritos con rutas y resultados observados en [S05_S06_A2/revision_seguridad.md](../S05_S06_A2/revision_seguridad.md).
-- El listado de perfiles con datos ficticios desde PostgreSQL se documenta y se muestra en [S07_S08_A2/evidencia/perfiles_datos_reales.png](../S07_S08_A2/evidencia/perfiles_datos_reales.png).
-- El backend incluye rutas de perfiles y conversaciones en `backend/src/routes/`; el esquema que las respalda es [S05_S06_A1/esquema_bd.sql](../S05_S06_A1/esquema_bd.sql).
-- Las colecciones y salidas locales documentadas prueban solicitudes seleccionadas, no la totalidad de los criterios del OpenAPI. La auditoría S09 separa sus hallazgos estáticos de las pruebas ejecutadas en [S09_A1/code_review.md](../S09_A1/code_review.md).
-- La evidencia de interfaz de [S07_S08_A2/evidencia/error_sweetalert.png](../S07_S08_A2/evidencia/error_sweetalert.png) registra una condición de error visual; no acredita por sí sola el funcionamiento integral de las vistas.
+- [demo.spec.ts](../frontend/e2e/demo.spec.ts) recorre los 11 pasos del guion con dos navegadores, en escritorio y a 375 px.
+- En `main`, el 24 de noviembre, pasaron 69 pruebas unitarias y 32 de integración del backend, 55 de Vitest y 60 e2e, y el build del frontend ([README](../README.md#pruebas-y-calidad)); no hay salida versionada de esa corrida.
+- Capturas de la [bandeja](../docs/capturas/bandeja-medica-375.png), del [hilo](../docs/capturas/hilo-cuidadora-indicacion-375.png) y del [error del login](../docs/capturas/login-error-contrasena-375.png).
 
 ### ¿Qué partes no se resolvieron?
 
-No se completaron recuperación de cuenta, verificación de correo, invitaciones y consentimiento de extremo a extremo, ciclo completo de mensajes e indicaciones, carga segura de fotos, notificaciones, administración de reportes ni resumen de contexto. Las vistas de conversación, bandeja e historial que consumen fixtures no demuestran integración con el backend. La cobertura de OpenAPI y de las pruebas es parcial.
-
-PostgreSQL es la base de datos implementada y vigente. El SRS conserva una referencia histórica a MongoDB que constituye una inconsistencia documental.
+No existen verificación de correo, recuperación de cuenta, invitaciones, consentimiento, fotos, solicitud de información, cierre de conversación, notificaciones, resumen de contexto ni reportes. La sección 8 de la matriz declara además que cerrar sesión solo borra el token del navegador (L-40), que borrar un perfil arrastra su historial (L-28) y que el catálogo de preguntas está incompleto, y lista los cambios de alcance aprobados por el PO. La mención del SRS a MongoDB es una inconsistencia documental; la base implementada es PostgreSQL.
 
 ### ¿Qué quedó fuera de alcance?
 
-No hay despliegue público documentado. La solución usa datos ficticios y tiene propósito académico; no se deben introducir datos médicos reales. DAFI no formula diagnósticos ni reemplaza servicios de emergencia o atención urgente. Las funcionalidades que no aparecen en el código ni en pruebas verificables no se consideran parte del producto entregado.
+No hay despliegue público: la demo corre en local con datos ficticios, sin lo excluido en la sección 5 de PLAN.md.
 
 ### ¿Qué mostraríamos primero al stakeholder y por qué?
 
-Primero mostraríamos el inicio de sesión y el listado de perfiles respaldado por PostgreSQL, indicando que los datos son ficticios. Es el recorrido con evidencia de integración más clara y permite explicar la separación de roles y datos sin presentar los prototipos de conversación como flujos terminados. Después distinguiríamos una operación backend de conversación de las vistas que aún usan fixtures.
+El paso 10, la indicación de la médica, porque es lo que distingue a DAFI: la conclusión la escribe la médica y DAFI solo ordena la información.
 
 ## Guion recomendado para la demo final
 
-1. **Problema:** explicar la necesidad de coordinar información entre cuidadores y profesionales, y delimitar que DAFI no diagnostica ni sustituye atención urgente.
-2. **Flujos principales:** mostrar autenticación y listado de perfiles con datos ficticios respaldados por PostgreSQL; diferenciar las pantallas de conversación que usan fixtures.
-3. **Decisión técnica:** describir Next.js, Express, JWT y PostgreSQL. PostgreSQL es la base implementada; la referencia a MongoDB permanece como inconsistencia histórica del SRS.
-4. **Uso del agente:** presentar ejemplos de borradores de SQL y componentes, revisión de seguridad y hallazgos, junto con la verificación humana mediante código y pruebas.
-5. **Limitación y mejora:** declarar la integración parcial, las operaciones no construidas y la ausencia de producción pública; priorizar la integración del flujo de conversación y sus pruebas representativas.
+Sigue los segmentos de D4 en [TASKS.md](../docs/demo-final/TASKS.md) y la sección 3 de [PLAN.md](../docs/demo-final/PLAN.md).
+
+1. **Problema (30 s):** coordinar información entre cuidadores y profesionales; DAFI no diagnostica.
+2. **Flujos (3 min),** con una ventana para María y otra de incógnito para la médica:
+   1. María escribe mal la contraseña, ve el 401 y entra.
+   2. Ve sus 3 perfiles.
+   3. Crea un perfil.
+   4. Lo ve en la lista.
+   5. Edita alergias.
+   6. Lo borra con confirmación.
+   7. Abre conversación para Mateo: «Fiebre», médica y prioridad.
+   8. Responde el contexto y envía.
+   9. La médica la ve en «Enviadas».
+   10. La abre («En revisión») y registra una indicación.
+   11. María ve la indicación y contesta.
+3. **Decisión técnica (30 s):** Next.js, Express y PostgreSQL, fijados por el SRS.
+4. **Uso del agente (30 s):** el error tapado que la e2e no detectó (L-26) y la revisión de cada PR.
+5. **Qué haríamos diferente (30 s):** integrar desde el primer sprint; círculo médico, fotos y notificaciones siguen pendientes.
