@@ -149,12 +149,12 @@ Todas las pantallas: estados de carga, error con «Reintentar» y vacío; errore
 - El PO aprobó modificar `openapi_equipo.yaml` y `esquema_bd.sql` para esto. No está en el SRS: se declara como desviación en la matriz (D1).
 - **Unit:** validador del tipo de sangre. **Integration:** crear y editar con valor válido, valor inválido da 422. **E2E:** guardar el tipo de sangre y verlo tras recargar.
 
-### [ ] F10. Pantalla informativa «Documentos» (pedido del PO, 23 nov)
+### [x] F10. Pantalla informativa «Documentos» (pedido del PO, 23 nov)
 - Botón «Docs (recetas, análisis…)» en el detalle del perfil que abre una pantalla marcada como «Próximamente»: explica que la familia podrá guardar recetas, análisis e imágenes en DAFI y compartirlos con su médico. No guarda archivos.
 - Se redacta como archivo personal de la familia, no como expediente clínico (el SRS excluye recetas y documentos con validez de expediente, RD-04). Desviación declarada en D1.
 - **E2E:** el botón abre la pantalla y se puede volver al perfil.
 
-### [ ] F11. Preguntas de contexto para «Piel» en el seed (pedido del PO, 23 nov)
+### [x] F11. Preguntas de contexto para «Piel» en el seed (pedido del PO, 23 nov)
 - `demo_seed.mjs` carga las preguntas de piel definidas en el SRS (RF-10), para que un borrador con «Piel» no salga vacío.
 - **Integration:** el seed sigue corriendo dos veces sin duplicar. **E2E:** un borrador con «Piel» muestra sus preguntas.
 ---
