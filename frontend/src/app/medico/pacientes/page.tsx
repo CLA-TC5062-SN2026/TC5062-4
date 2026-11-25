@@ -3,6 +3,7 @@
 import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell, { NAV_MEDICO } from '@/components/dafi/Shell';
 import { EstadoVacio } from '@/components/dafi/Bloques';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Sección prevista en el diseño y en el SRS, todavía sin construir.
@@ -11,8 +12,9 @@ import { EstadoVacio } from '@/components/dafi/Bloques';
  * 404 que aparece como error en la consola del navegador.
  */
 function Contenido() {
+  const { usuario } = useAuth();
   return (
-    <AppShell titulo="Pacientes" nav={NAV_MEDICO} usuario={{ nombre: 'Dra. Lucía Torres', rol: 'Pediatría' }}>
+    <AppShell titulo="Pacientes" nav={NAV_MEDICO} usuario={{ nombre: usuario?.nombre ?? '', rol: usuario?.especialidad ?? 'Médica' }}>
       <EstadoVacio
         icono="usuarios"
         titulo="Pacientes"

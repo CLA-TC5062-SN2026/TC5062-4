@@ -307,3 +307,17 @@ Si la lección cambia una regla de trabajo, también se agrega a [PLAN.md](PLAN.
 - **Causa:** los servidores se cayeron durante la noche (L-27) y solo la sesión principal puede iniciarlos desde el panel de vista previa.
 - **Solución:** la sesión principal los levantó (`dafi-backend`, `dafi-frontend`) y corrió ella misma las e2e y las capturas.
 - **Cómo evitarlo:** antes de delegar una tarea con e2e, comprobar `curl localhost:4000/api/v1/health` y `curl -I localhost:3000`.
+
+### L-40. Cerrar sesión solo borra el token en el navegador
+- **Fecha / quién:** 2026-11-24, agente (F8)
+- **Síntoma esperado:** tras «Cerrar sesión», un token copiado antes sigue siendo válido en la API hasta que caduca por inactividad (30 min).
+- **Causa:** el backend no tiene endpoint para cerrar la sesión (`DELETE /sesiones/actual` no existe); `cerrarSesion()` solo limpia el almacenamiento local.
+- **Solución:** ninguna para la demo; se declara como limitación en la matriz (D1).
+- **Cómo evitarlo:** no presentar el cierre de sesión como revocación del token en el video ni en el README.
+
+### L-41. Nombre de usuario fijo en pantallas marcadoras
+- **Fecha / quién:** 2026-11-24, agente (F8)
+- **Síntoma:** en escritorio, `/medico/pacientes`, `/medico/familias` y `/medico/cuenta` mostraban «Dra. Lucía Torres» aunque la sesión era de Laura Méndez.
+- **Causa:** las pantallas sin construir pasaban a `AppShell` un usuario escrito a mano, heredado del prototipo.
+- **Solución:** usar `useAuth()` como en la bandeja.
+- **Cómo evitarlo:** `grep -rn "usuario={{ nombre: '" frontend/src/app` antes de grabar.

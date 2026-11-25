@@ -106,7 +106,8 @@ export function CajaMensaje({
       const incierto = e instanceof ApiError && (e.esFalloDeRed || e.status >= 500);
       if (!incierto) intentoMensaje.current = null;
       if (e instanceof ApiError && e.esSesionInvalida) return false;
-      if (e instanceof ApiError && (e.status === 409 || e.status === 422)) setErrorMensaje(mensajeParaUsuario(e));
+      if (e instanceof ApiError && e.codigo === 'DATOS_INVALIDOS') setErrorMensaje(`Revise los datos: ${e.message}.`);
+      else if (e instanceof ApiError && (e.status === 409 || e.status === 422)) setErrorMensaje(mensajeParaUsuario(e));
       else await alertarError(e);
       return false;
     } finally {

@@ -3,6 +3,8 @@
 import RutaProtegida from '@/components/dafi/RutaProtegida';
 import AppShell, { NAV_MEDICO } from '@/components/dafi/Shell';
 import { EstadoVacio } from '@/components/dafi/Bloques';
+import Button from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Sección prevista en el diseño y en el SRS, todavía sin construir.
@@ -11,12 +13,14 @@ import { EstadoVacio } from '@/components/dafi/Bloques';
  * 404 que aparece como error en la consola del navegador.
  */
 function Contenido() {
+  const { salir, usuario } = useAuth();
   return (
-    <AppShell titulo="Cuenta" nav={NAV_MEDICO} usuario={{ nombre: 'Dra. Lucía Torres', rol: 'Pediatría' }}>
+    <AppShell titulo="Cuenta" nav={NAV_MEDICO} usuario={{ nombre: usuario?.nombre ?? '', rol: usuario?.especialidad ?? 'Médica' }}>
       <EstadoVacio
         icono="usuarios"
         titulo="Cuenta"
-        texto="Datos del médico, especialidad y cierre de sesión. Sección prevista en el SRS, todavía sin construir."
+        texto="Datos del médico y especialidad. Sección prevista en el SRS, todavía sin construir; por ahora aquí solo puede cerrar sesión."
+        accion={<Button variant="secundario" onClick={salir}>Cerrar sesión</Button>}
       />
     </AppShell>
   );
